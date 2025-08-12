@@ -9,7 +9,13 @@
         *ngFor="let t of tabs"
         class="tab"
         [class.active]="activeTab === t.key"
-        (click)="t.key === 'upload' ? openAddCandidate() : setActiveTab(t.key)"
+        (click)="
+          t.key === 'upload' 
+            ? openAddCandidate() 
+            : t.key === 'schedule' 
+              ? goToQuestionBank(getActiveCandidate()) 
+              : setActiveTab(t.key)
+        "
       >
         {{ t.label }}
       </button>
@@ -55,9 +61,10 @@
                 >
                   <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
                 </select>
+                <!-- Updated click handler -->
                 <button class="tiny-icon" (click)="editDetails(card); $event.stopPropagation();" title="Schedule">
-                  ⤓
-                </button>
+                  ⏺
+                </button>                
               </div>
             </div>
 

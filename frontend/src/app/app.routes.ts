@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { RecruiterRegisterLoginComponent } from './pages/recruiter-register-login/recruiter-register-login.component';
 import { RecruiterDashboardComponent } from './pages/recruiter-dashboard/recruiter-dashboard.component';
+import { QuestionBankDashboardComponent } from './pages/question-bank-dashboard/question-bank-dashboard.component';
 
 export const routes: Routes = [
   {
@@ -21,6 +22,10 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: RecruiterDashboardComponent
+  },
+  {
+    path: 'question-bank',
+    component: QuestionBankDashboardComponent
   },
   {
     path: '**',

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AddCandidatePopupComponent } from '../../components/add-candidate-popup/add-candidate-popup.component';
+import { Router } from '@angular/router';
 
 interface CandidateCard {
   id: number;
@@ -22,6 +23,25 @@ interface CandidateCard {
   styleUrls: ['./recruiter-dashboard.component.scss'],
 })
 export class RecruiterDashboardComponent {
+  constructor(private router: Router) { }
+
+  // Navigate to question bank dashboard with proceeding candidate object
+  getActiveCandidate() {
+    return this.candidates.find(c => c.active);
+  }  
+  
+  goToQuestionBank(card: any) {
+    if (!card) {
+      console.warn('No candidate selected');
+      return;
+    }
+    // Store candidate in sessionStorage so it survives refresh
+    sessionStorage.setItem('selectedCandidate', JSON.stringify(card));
+    this.router.navigate(['/question-bank']);
+  }
+  
+  
+  
   // add candidate pop up open & close
   showAddCandidatePopup = false;
 

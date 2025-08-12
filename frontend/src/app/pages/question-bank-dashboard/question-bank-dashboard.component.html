@@ -1,0 +1,189 @@
+<div class="qbd-root">
+    <!-- Top Header -->
+    <header class="qbd-header">  
+      <div class="left-controls">
+        <button class="btn create-category" (click)="openCreateCategoryModal()">
+          <img src="/assets/icons/plus.svg" alt="" /> Create Category
+        </button>
+        <div class="search-wrapper">
+          <input
+            type="text"
+            placeholder="Search Questions to add in to Question bank"
+            [(ngModel)]="searchQuery"
+            aria-label="Search questions"
+          />
+          <button class="btn search-btn" (click)="$event.preventDefault()">🔍</button>
+        </div>
+      </div>
+  
+      <div class="right-controls">
+        <div class="duration-display">
+          <label>Interview Duration</label>
+          <div class="duration-clock">
+            {{ formatDuration(interviewDurationSeconds).hrs }} :
+            {{ formatDuration(interviewDurationSeconds).mins }} :
+            {{ formatDuration(interviewDurationSeconds).secs }}
+          </div>
+        </div>
+        <button
+          class="btn schedule-top"
+          [class.disabled]="booklet.length === 0"
+          [disabled]="booklet.length === 0"
+          (click)="scheduleInterview()"
+        >
+          Schedule Interview
+        </button>
+      </div>
+    </header>
+  
+    <main class="qbd-main">
+      <!-- Left panel: Categories -->
+      <aside class="panel categories-panel">
+        <div class="panel-content">
+          <div class="create-top-space"></div>
+          <div
+            class="category-card"
+            *ngFor="let cat of categories"
+            [class.selected]="cat.selected"
+            (click)="selectCategory(cat.id)"
+          >
+            <div class="cat-icon">
+              <img [src]="cat.icon || '/assets/icons/default-cat.svg'" alt="cat" />
+            </div>
+            <div class="cat-body">
+              <h4>{{ cat.name }}</h4>
+              <p class="cat-desc">{{ cat.description }}</p>
+              <span class="count">{{ cat.questionCount ?? 0 }} Questions</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+  
+      <!-- Center panel: Question Bank -->
+      <section class="panel question-bank-panel">
+        <div class="panel-header">
+          <h3>Question Bank</h3>
+        </div>
+  
+        <div *ngIf="loadingQuestions" class="loading">Loading questions...</div>
+  
+        <div *ngIf="!loadingQuestions" class="questions-list">
+          <div
+            class="question-card"
+            *ngFor="let q of filteredQuestions; trackBy: trackByQuestion"
+          >
+            <div class="q-left">
+              <div class="q-heading">Q. {{ q.heading }}</div>
+              <div class="q-meta">
+                <div class="q-time">{{ (q.estimatedSeconds / 60) | number: '1.0-0' }} min</div>
+                <div class="q-diff" [ngClass]="difficultyClass(q.difficulty)">
+                  {{ q.difficulty }}
+                </div>
+              </div>
+            </div>
+            <div class="q-right">
+              <button
+                class="btn add-btn"
+                [disabled]="isQuestionInBooklet(q.id)"
+                (click)="addToBooklet(q)"
+              >
+                +
+              </button>
+            </div>
+          </div>
+  
+          <div *ngIf="filteredQuestions.length === 0" class="empty">
+            No questions found for this category / search.
+          </div>
+        </div>
+      </section>
+  
+      <!-- Right panel: Booklet -->
+      <aside class="panel booklet-panel">
+        <div class="panel-header booklet-header">
+          <h4>Selected Questions</h4>
+          <div class="interview-timer small">
+            {{ formatDuration(interviewDurationSeconds).hrs }} :
+            {{ formatDuration(interviewDurationSeconds).mins }} :
+            {{ formatDuration(interviewDurationSeconds).secs }}
+          </div>
+        </div>
+  
+        <div class="booklet-list">
+          <div class="booklet-card" *ngFor="let b of booklet">
+            <div class="booklet-left">
+              <div class="q-heading">{{ b.question.heading }}</div>
+              <div class="q-meta">
+                <span class="q-time">{{ (b.question.estimatedSeconds / 60) | number: '1.0-0' }} min</span>
+                <span class="q-diff" [ngClass]="difficultyClass(b.question.difficulty)">
+                  {{ b.question.difficulty }}
+                </span>
+              </div>
+            </div>
+            <div class="booklet-right">
+              <button class="btn remove-btn" (click)="removeFromBooklet(b.question.id)">–</button>
+            </div>
+          </div>
+  
+          <div *ngIf="booklet.length === 0" class="empty">No questions selected yet.</div>
+        </div>
+  
+        <div class="booklet-actions">
+          <button class="btn save" (click)="saveQuestionBank()">SAVE QUESTION BANK</button>
+          <button
+            class="btn schedule"
+            [class.disabled]="booklet.length === 0"
+            [disabled]="booklet.length === 0"
+            (click)="scheduleInterview()"
+          >
+            SCHEDULE INTERVIEW
+          </button>
+        </div>
+      </aside>
+    </main>
+  
+    <!-- Create Category Modal -->
+    <div class="modal-backdrop" *ngIf="showCreateCategoryModal">
+      <div class="modal">
+        <h3>Create Category</h3>
+        <form [formGroup]="createCategoryForm" (ngSubmit)="submitCreateCategory()">
+          <label>
+            Category Name
+            <input formControlName="name" type="text" />
+            <span class="error" *ngIf="createCategoryForm.controls['name'].invalid && (createCategoryForm.controls['name'].touched || createCategoryForm.touched)">
+              Name is required.
+            </span>
+          </label>
+  
+          <label>
+            Interview Round
+            <input formControlName="round" type="text" placeholder="Eg: Round 1 - HR" />
+            <span class="error" *ngIf="createCategoryForm.controls['round'].invalid && (createCategoryForm.controls['round'].touched || createCategoryForm.touched)">
+              Round is required.
+            </span>
+          </label>
+  
+          <label>
+            Role / Experience
+            <input formControlName="role" type="text" placeholder="Eg: Junior, Senior" />
+            <span class="error" *ngIf="createCategoryForm.controls['role'].invalid && (createCategoryForm.controls['role'].touched || createCategoryForm.touched)">
+              Role is required.
+            </span>
+          </label>
+  
+          <label>
+            Description
+            <textarea formControlName="description" rows="2"></textarea>
+          </label>
+  
+          <div class="modal-actions">
+            <button type="button" class="btn cancel" (click)="cancelCreateCategory()">Cancel</button>
+            <button type="submit" class="btn create" [disabled]="creatingCategory">
+              {{ creatingCategory ? 'Creating...' : 'Create Category' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  

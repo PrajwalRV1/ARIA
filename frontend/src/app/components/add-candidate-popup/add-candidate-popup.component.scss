@@ -1,0 +1,222 @@
+/* Scoped styles for Add Candidate popup */
+
+/* Overlay dims the background */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(25, 40, 50, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 20px;
+}
+
+/* Popup card */
+.popup-card {
+  width: 100%;
+  max-width: 1100px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(14, 55, 75, 0.28);
+  border: 2px solid rgba(15, 126, 206, 0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e6f2fa;
+  background: linear-gradient(180deg, #fbfdff, #f3fbff);
+}
+
+.popup-header h2 {
+  margin: 0;
+  color: #1b5870;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #234b5f;
+}
+
+/* Body with two main columns */
+.popup-body {
+  display: flex;
+  gap: 18px;
+  padding: 20px;
+}
+
+/* Left column: upload items */
+.left-col {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+}
+
+/* Upload card style */
+.upload-card {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #dfeff9;
+  padding: 12px;
+  background: linear-gradient(#fff, #fbfdff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.upload-illustration {
+  width: 86px;
+  height: auto;
+}
+
+.upload-label {
+  font-weight: 700;
+  color: #1f6f96;
+}
+
+/* mark required visually */
+.upload-label.required {
+  color: #0b5c84;
+}
+
+/* file input as invisible but clickable area */
+.upload-card input[type="file"] {
+  width: 100%;
+  opacity: 0;
+  position: relative;
+  height: 38px;
+  cursor: pointer;
+}
+
+/* show file name */
+.filename {
+  font-size: 13px;
+  color: #3b6f85;
+  width: 100%;
+  text-align: center;
+  word-break: break-all;
+}
+
+.filename.required { color: #c44747; }
+
+/* Right column: fields */
+.right-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* grid of smaller fields (two-column) */
+.fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Each small field block */
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  font-weight: 600;
+  color: #164b60;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.req {
+  color: #c43b3b;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+/* inputs & selects */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  border: 1px solid #cfe6f5;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: linear-gradient(#e9f8ff, #dff4ff);
+  outline: none;
+  font-size: 13px;
+  color: #0e3b4b;
+}
+
+/* textarea bigger blocks */
+.big-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.big-field label {
+  font-weight: 600;
+  color: #164b60;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+/* error messages */
+.error {
+  color: #b13b3b;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+/* buttons area */
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.btn {
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+
+.btn.cancel {
+  background: linear-gradient(#ffffff, #f4fbff);
+  color: #2d6f88;
+  border: 1px solid #cfe6f6;
+}
+
+.btn.save {
+  background: linear-gradient(#5fb9ea, #3b98d4);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(33, 118, 175, 0.18);
+}
+
+/* responsive behaviour */
+@media (max-width: 1000px) {
+  .popup-card { max-width: 960px; }
+  .popup-body { flex-direction: column; }
+  .left-col { width: 100%; flex-direction: row; justify-content: space-around; }
+  .fields-grid { grid-template-columns: 1fr; }
+  .actions { justify-content: space-between; padding: 0 20px 12px; }
+}

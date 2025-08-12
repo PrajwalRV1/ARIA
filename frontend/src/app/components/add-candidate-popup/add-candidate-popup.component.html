@@ -1,0 +1,113 @@
+<!-- Overlay -->
+<div class="overlay" *ngIf="visible" (click)="onOverlayClick($event)">
+  <div class="popup-card" role="dialog" aria-modal="true" aria-labelledby="addCandidateTitle">
+    <!-- Header -->
+    <div class="popup-header">
+      <h2 id="addCandidateTitle">
+        {{ mode === 'edit' ? 'View & Edit Candidate' : 'Add Candidate' }}
+      </h2>
+      <button class="close-btn" type="button" (click)="onClose()" aria-label="Close popup">✕</button>
+    </div>
+
+    <!-- Body: two-column layout -->
+    <form [formGroup]="form" (ngSubmit)="saveCandidate()" class="popup-body" novalidate>
+      <!-- Left column: uploads / icons -->
+      <div class="left-col">
+        <div class="upload-card picture-upload">
+          <img src="/assets/images/avatar.png" alt="avatar icon" class="upload-illustration" />
+          <label class="upload-label">Upload picture</label>
+          <input type="file" accept="image/*" (change)="onPictureSelected($event)" />
+          <div class="filename" *ngIf="pictureName">{{ pictureName }}</div>
+        </div>
+
+        <div class="upload-card resume-upload">
+          <img src="/assets/images/resume_icon.png" alt="resume icon" class="upload-illustration" />
+          <label class="upload-label required">Upload resume</label>
+          <input type="file" accept=".pdf,.doc,.docx" (change)="onResumeSelected($event)" />
+          <div class="filename required" *ngIf="resumeName">{{ resumeName }}</div>
+          <div class="error" *ngIf="f['uploadResume'].touched && f['uploadResume'].invalid">
+            Resume is required.
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: form fields -->
+      <div class="right-col">
+        <div class="fields-grid">
+          <div class="field">
+            <label>Requisition ID <span class="req">*</span></label>
+            <input formControlName="requisitionId" type="text" />
+            <div class="error" *ngIf="f['requisitionId'].touched && f['requisitionId'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Total Experience <span class="req">*</span></label>
+            <input formControlName="totalExperience" type="number" min="0" />
+            <div class="error" *ngIf="f['totalExperience'].touched && f['totalExperience'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Candidate name <span class="req">*</span></label>
+            <input formControlName="candidateName" type="text" />
+            <div class="error" *ngIf="f['candidateName'].touched && f['candidateName'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Relevant Experience <span class="req">*</span></label>
+            <input formControlName="relevantExperience" type="number" min="0" />
+            <div class="error" *ngIf="f['relevantExperience'].touched && f['relevantExperience'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Applied role <span class="req">*</span></label>
+            <input formControlName="appliedRole" type="text" />
+            <div class="error" *ngIf="f['appliedRole'].touched && f['appliedRole'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Interview Round <span class="req">*</span></label>
+            <select formControlName="interviewRound">
+              <option value="">-- Select --</option>
+              <option *ngFor="let r of interviewRounds" [value]="r">{{ r }}</option>
+            </select>
+            <div class="error" *ngIf="f['interviewRound'].touched && f['interviewRound'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Application date <span class="req">*</span></label>
+            <input formControlName="applicationDate" type="date" />
+            <div class="error" *ngIf="f['applicationDate'].touched && f['applicationDate'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Status</label>
+            <select formControlName="status">
+              <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Job Description -->
+        <div class="big-field">
+          <label>Job Description <span class="req">*</span></label>
+          <textarea formControlName="jobDescription" rows="5"></textarea>
+          <div class="error" *ngIf="f['jobDescription'].touched && f['jobDescription'].invalid">Required</div>
+        </div>
+
+        <!-- Key Responsibilities -->
+        <div class="big-field">
+          <label>Key Responsibilities / Technical Leadership</label>
+          <textarea formControlName="keyResponsibilities" rows="3"></textarea>
+        </div>
+
+        <!-- Buttons -->
+        <div class="actions">
+          <button type="button" class="btn cancel" (click)="cancel()">Cancel</button>
+          <button type="submit" class="btn save">
+            {{ mode === 'edit' ? 'Update Candidate' : 'Save Candidate' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

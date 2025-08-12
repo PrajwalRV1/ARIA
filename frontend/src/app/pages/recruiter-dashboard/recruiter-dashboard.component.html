@@ -1,0 +1,98 @@
+<div class="dashboard-root">
+  <!-- Header / Title -->
+  <div class="dashboard-header">
+    <h1>Upcomming Interview candidate details</h1>
+
+    <!-- Top Tabs / Nav -->
+    <div class="top-tabs">
+      <button
+        *ngFor="let t of tabs"
+        class="tab"
+        [class.active]="activeTab === t.key"
+        (click)="t.key === 'upload' ? openAddCandidate() : setActiveTab(t.key)"
+      >
+        {{ t.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Main content area -->
+  <div class="dashboard-content">
+    <!-- Left column: candidate cards -->
+    <div class="left-col">
+      <div class="cards-wrapper">
+        <div
+          *ngFor="let card of candidates"
+          class="candidate-card"
+          [class.card-active]="card.active"
+          (click)="selectCard(card)"
+        >
+          <div class="card-left">
+            <img class="avatar" src="assets/images/avatar.png" alt="">
+          </div>
+
+          <div class="card-main">
+            <div class="card-row top">
+              <div class="name-group">
+                <span class="candidate-name">{{ card.name }}</span>
+                <span class="requisition">Requisition ID : {{ card.requisitionId }}</span>
+              </div>
+
+              <div class="actions">
+                <a class="view" (click)="openEditCandidate(card); $event.stopPropagation();">View & edit details</a>
+                <span class="eye" title="Preview" (click)="openEditCandidate(card); $event.stopPropagation();">👁️</span>
+              </div>
+            </div>
+
+            <div class="card-row middle">
+              <div class="job-title">{{ card.jobTitle }}</div>
+              <div class="spacer"></div>
+              <div class="status-block" (click)="$event.stopPropagation()">
+                <select
+                  class="status-select"
+                  [value]="card.status"
+                  (change)="onStatusChange(card, $event)"
+                >
+                  <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+                </select>
+                <button class="tiny-icon" (click)="editDetails(card); $event.stopPropagation();" title="Schedule">
+                  ⤓
+                </button>
+              </div>
+            </div>
+
+            <div class="card-row bottom">
+              <div class="experience">{{ card.experience }}</div>
+              <div class="feedback">
+                <a (click)="openFeedback(card); $event.stopPropagation()">Interview Feedback</a>
+                <button class="small-feedback" (click)="openFeedback(card); $event.stopPropagation()">📝</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: actions / info -->
+    <div class="right-col">
+      <div class="right-block">
+        <h3>Quick Actions</h3>
+        <button class="full" (click)="openAddCandidate()">Add Candidate</button>
+        <button class="full" (click)="quickAction('bulk-upload')">Bulk Upload</button>
+      </div>
+
+      <div class="right-block info">
+        <h3>Notes</h3>
+        <p>Use the candidate cards to view details, update status, and provide feedback.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Candidate popup (Add or Edit) -->
+<app-add-candidate-popup
+  [visible]="showAddCandidatePopup"
+  [mode]="popupMode"
+  [candidateData]="selectedCandidate"
+  (close)="closeAddCandidatePopup()">
+</app-add-candidate-popup>

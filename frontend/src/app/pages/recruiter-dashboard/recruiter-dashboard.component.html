@@ -1,7 +1,10 @@
 <div class="dashboard-root">
   <!-- Header / Title -->
   <div class="dashboard-header">
-    <h1>Upcomming Interview candidate details</h1>
+    <h1>
+      <i class="fas fa-users"></i>
+      Upcoming Interview Candidate Details
+    </h1>
 
     <!-- Top Tabs / Nav -->
     <div class="top-tabs">
@@ -17,6 +20,7 @@
               : setActiveTab(t.key)
         "
       >
+        <i [class]="t.icon"></i>
         {{ t.label }}
       </button>
     </div>
@@ -26,53 +30,99 @@
   <div class="dashboard-content">
     <!-- Left column: candidate cards -->
     <div class="left-col">
-      <div class="cards-wrapper">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="loading-spinner">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && candidates.length === 0" class="empty-state">
+        <i class="fas fa-user-slash"></i>
+        <h3>No Candidates Found</h3>
+        <p>Start by adding candidates or uploading resumes to begin the interview process.</p>
+      </div>
+
+      <!-- Candidate Cards -->
+      <div *ngIf="!isLoading && candidates.length > 0" class="cards-wrapper">
         <div
-          *ngFor="let card of candidates"
+          *ngFor="let card of candidates; let i = index"
           class="candidate-card"
           [class.card-active]="card.active"
+          [style.animation-delay]="(i * 0.1) + 's'"
           (click)="selectCard(card)"
         >
-          <div class="card-left">
-            <img class="avatar" src="assets/images/avatar.png" alt="">
-          </div>
-
-          <div class="card-main">
-            <div class="card-row top">
-              <div class="name-group">
-                <span class="candidate-name">{{ card.name }}</span>
-                <span class="requisition">Requisition ID : {{ card.requisitionId }}</span>
-              </div>
-
-              <div class="actions">
-                <a class="view" (click)="openEditCandidate(card); $event.stopPropagation();">View & edit details</a>
-                <span class="eye" title="Preview" (click)="openEditCandidate(card); $event.stopPropagation();">👁️</span>
+          <div class="card-content">
+            <div class="card-left">
+              <div class="avatar-wrapper">
+                <div class="avatar">
+                  {{ getInitials(card.name) }}
+                </div>
+                <div class="status-indicator" 
+                     [class]="getStatusClass(card.status)"
+                     [title]="'Status: ' + card.status">
+                </div>
               </div>
             </div>
 
-            <div class="card-row middle">
-              <div class="job-title">{{ card.jobTitle }}</div>
-              <div class="spacer"></div>
-              <div class="status-block" (click)="$event.stopPropagation()">
-                <select
-                  class="status-select"
-                  [value]="card.status"
-                  (change)="onStatusChange(card, $event)"
-                >
-                  <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
-                </select>
-                <!-- Updated click handler -->
-                <button class="tiny-icon" (click)="editDetails(card); $event.stopPropagation();" title="Schedule">
-                  ⏺
-                </button>                
-              </div>
-            </div>
+            <div class="card-main">
+              <div class="card-row top">
+                <div class="name-group">
+                  <span class="candidate-name">{{ card.name }}</span>
+                  <span class="requisition">
+                    <i class="fas fa-id-badge"></i>
+                    Requisition ID: {{ card.requisitionId }}
+                  </span>
+                </div>
 
-            <div class="card-row bottom">
-              <div class="experience">{{ card.experience }}</div>
-              <div class="feedback">
-                <a (click)="openFeedback(card); $event.stopPropagation()">Interview Feedback</a>
-                <button class="small-feedback" (click)="openFeedback(card); $event.stopPropagation()">📝</button>
+                <div class="actions">
+                  <a class="view" (click)="openEditCandidate(card); $event.stopPropagation();">
+                    <i class="fas fa-edit"></i>
+                    View & edit details
+                  </a>
+                  <span class="eye" title="Preview" (click)="openEditCandidate(card); $event.stopPropagation();">
+                    <i class="fas fa-eye"></i>
+                  </span>
+                </div>
+              </div>
+
+              <div class="card-row middle">
+                <div class="job-title">
+                  <i class="fas fa-briefcase"></i>
+                  {{ card.jobTitle }}
+                </div>
+                <div class="spacer"></div>
+                <div class="status-block" (click)="$event.stopPropagation()">
+                  <select
+                    class="status-select"
+                    [value]="card.status"
+                    (change)="onStatusChange(card, $event)"
+                  >
+                    <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+                  </select>
+                  <button class="tiny-icon" 
+                          (click)="editDetails(card); $event.stopPropagation();" 
+                          title="Schedule Interview">
+                    <i class="fas fa-calendar-plus"></i>
+                  </button>                
+                </div>
+              </div>
+
+              <div class="card-row bottom">
+                <div class="experience">
+                  <i class="fas fa-user-graduate"></i>
+                  {{ card.experience }}
+                </div>
+                <div class="feedback">
+                  <a (click)="openFeedback(card); $event.stopPropagation()">
+                    <i class="fas fa-comments"></i>
+                    Interview Feedback
+                  </a>
+                  <button class="small-feedback" 
+                          (click)="openFeedback(card); $event.stopPropagation()"
+                          title="View Feedback">
+                    <i class="fas fa-file-alt"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -82,15 +132,91 @@
 
     <!-- Right column: actions / info -->
     <div class="right-col">
-      <div class="right-block">
-        <h3>Quick Actions</h3>
-        <button class="full" (click)="openAddCandidate()">Add Candidate</button>
-        <button class="full" (click)="quickAction('bulk-upload')">Bulk Upload</button>
+      <!-- Quick Actions Block -->
+      <div class="right-block actions-block">
+        <h3>
+          <i class="fas fa-bolt"></i>
+          Quick Actions
+        </h3>
+        <button class="full add-candidate" (click)="openAddCandidate()">
+          <i class="fas fa-user-plus"></i>
+          <span>Add Candidate</span>
+        </button>
+        <button class="full bulk-upload" (click)="quickAction('bulk-upload')">
+          <i class="fas fa-upload"></i>
+          <span>Bulk Upload</span>
+        </button>
+        <button class="full schedule-interview" (click)="scheduleInterview()">
+          <i class="fas fa-calendar-check"></i>
+          <span>Schedule Interviews</span>
+        </button>
       </div>
 
-      <div class="right-block info">
-        <h3>Notes</h3>
-        <p>Use the candidate cards to view details, update status, and provide feedback.</p>
+      <!-- Statistics Block -->
+      <div class="right-block stats-block">
+        <h3>
+          <i class="fas fa-chart-bar"></i>
+          Statistics
+        </h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-number">{{ getTotalCandidates() }}</div>
+            <div class="stat-label">Total Candidates</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ getPendingInterviews() }}</div>
+            <div class="stat-label">Pending Interviews</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ getCompletedInterviews() }}</div>
+            <div class="stat-label">Completed</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ getHiredCandidates() }}</div>
+            <div class="stat-label">Hired</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes / Info Block -->
+      <div class="right-block info-block">
+        <h3>
+          <i class="fas fa-sticky-note"></i>
+          Quick Guide
+        </h3>
+        <div class="info-content">
+          <div class="tip">
+            <i class="fas fa-lightbulb"></i>
+            <p>Click on candidate cards to view detailed information and update their status.</p>
+          </div>
+          <div class="tip">
+            <i class="fas fa-mouse-pointer"></i>
+            <p>Use the dropdown menus to quickly update interview stages.</p>
+          </div>
+          <div class="tip">
+            <i class="fas fa-calendar-alt"></i>
+            <p>Schedule interviews directly from the candidate cards.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Block -->
+      <div class="right-block activity-block" *ngIf="recentActivities && recentActivities.length > 0">
+        <h3>
+          <i class="fas fa-clock"></i>
+          Recent Activity
+        </h3>
+        <div class="activity-list">
+          <div *ngFor="let activity of recentActivities.slice(0, 5)" class="activity-item">
+            <div class="activity-icon">
+              <i [class]="activity.icon"></i>
+            </div>
+            <div class="activity-content">
+              <div class="activity-text">{{ activity.text }}</div>
+              <div class="activity-time">{{ activity.time | date:'short' }}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -103,3 +229,30 @@
   [candidateData]="selectedCandidate"
   (close)="closeAddCandidatePopup()">
 </app-add-candidate-popup>
+
+<!-- Confirmation Modal -->
+<div *ngIf="showConfirmation" class="modal-overlay" (click)="closeConfirmation()">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-question-circle"></i>
+        Confirm Action
+      </h3>
+    </div>
+    <div class="modal-body">
+      <p>{{ confirmationMessage }}</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" (click)="closeConfirmation()">Cancel</button>
+      <button class="btn-confirm" (click)="confirmAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div *ngIf="isProcessing" class="loading-overlay">
+  <div class="loading-content">
+    <div class="spinner-large"></div>
+    <p>Processing...</p>
+  </div>
+</div>

@@ -1,189 +1,309 @@
 <div class="qbd-root">
-    <!-- Top Header -->
-    <header class="qbd-header">  
-      <div class="left-controls">
-        <button class="btn create-category" (click)="openCreateCategoryModal()">
-          <img src="/assets/icons/plus.svg" alt="" /> Create Category
+  
+  <!-- Candidate Info Bar -->
+  <div class="candidate-info" *ngIf="candidate">
+    <div class="info-item">
+      <label>Full Name:</label>
+      <span>{{ candidate.fullName }}</span>
+    </div>
+    <div class="info-item">
+      <label>Applied Role:</label>
+      <span>{{ candidate.appliedRole }}</span>
+    </div>
+    <div class="info-item">
+      <label>Requisition ID:</label>
+      <span>{{ candidate.requisitionId }}</span>
+    </div>
+  </div>
+
+  <!-- Show message if no candidate is selected -->
+  <div class="candidate-info-missing" *ngIf="!candidate">
+    <p>⚠️ No candidate selected. Please go back to the recruiter dashboard and select a candidate first.</p>
+  </div>
+
+  <!-- Top Header -->
+  <header class="qbd-header">  
+    <div class="left-controls">
+      <button class="btn create-category" (click)="openCreateCategoryModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Create Category
+      </button>
+      <div class="search-wrapper">
+        <input
+          type="text"
+          placeholder="Search Questions to add in to Question bank"
+          [(ngModel)]="searchQuery"
+          aria-label="Search questions"
+        />
+        <button class="btn search-btn" (click)="$event.preventDefault()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
-        <div class="search-wrapper">
-          <input
-            type="text"
-            placeholder="Search Questions to add in to Question bank"
-            [(ngModel)]="searchQuery"
-            aria-label="Search questions"
-          />
-          <button class="btn search-btn" (click)="$event.preventDefault()">🔍</button>
+      </div>
+    </div>
+
+    <div class="right-controls">
+      <div class="duration-display">
+        <label>Interview Duration</label>
+        <div class="duration-clock">
+          {{ formatDuration(interviewDurationSeconds).hrs }}:{{ formatDuration(interviewDurationSeconds).mins }}:{{ formatDuration(interviewDurationSeconds).secs }}
         </div>
       </div>
-  
-      <div class="right-controls">
-        <div class="duration-display">
-          <label>Interview Duration</label>
-          <div class="duration-clock">
-            {{ formatDuration(interviewDurationSeconds).hrs }} :
-            {{ formatDuration(interviewDurationSeconds).mins }} :
-            {{ formatDuration(interviewDurationSeconds).secs }}
+      <button
+        class="btn schedule-top"
+        [class.disabled]="booklet.length === 0"
+        [disabled]="booklet.length === 0"
+        (click)="scheduleInterview()"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px;">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+          <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+          <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+          <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        Schedule Interview
+      </button>
+    </div>
+  </header>
+
+  <main class="qbd-main">
+    <!-- Left panel: Categories -->
+    <aside class="panel categories-panel">
+      <div class="panel-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-right: 8px; vertical-align: middle;">
+            <path d="M4 6H20M4 10H20M4 14H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Categories
+        </h3>
+      </div>
+      <div class="panel-content">
+        <div class="create-top-space"></div>
+        <div
+          class="category-card"
+          *ngFor="let cat of categories"
+          [class.selected]="cat.selected"
+          (click)="selectCategory(cat.id)"
+        >
+          <div class="cat-icon">
+            <img [src]="cat.icon || '/assets/icons/default-cat.svg'" alt="cat" />
+          </div>
+          <div class="cat-body">
+            <h4>{{ cat.name }}</h4>
+            <p class="cat-desc">{{ cat.description }}</p>
+            <span class="count">{{ cat.questionCount ?? 0 }} Questions</span>
           </div>
         </div>
+      </div>
+    </aside>
+
+    <!-- Center panel: Question Bank -->
+    <section class="panel question-bank-panel">
+      <div class="panel-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-right: 8px; vertical-align: middle;">
+            <path d="M9 11H15M9 15H15M17 21H3A2 2 0 0 1 1 19V5A2 2 0 0 1 3 3H17A2 2 0 0 1 19 5V19A2 2 0 0 1 17 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Question Bank
+        </h3>
+      </div>
+
+      <div *ngIf="loadingQuestions" class="loading">
+        <div style="display: inline-flex; align-items: center; gap: 12px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="animation: spin 1s linear infinite;">
+            <path d="M21 12A9 9 0 1 1 12 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Loading questions...
+        </div>
+      </div>
+
+      <div *ngIf="!loadingQuestions" class="questions-list">
+        <div
+          class="question-card"
+          *ngFor="let q of filteredQuestions; trackBy: trackByQuestion"
+        >
+          <div class="q-left">
+            <div class="q-heading">Q. {{ q.heading }}</div>
+            <div class="q-meta">
+              <div class="q-time">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px; vertical-align: middle;">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{ (q.estimatedSeconds / 60) | number: '1.0-0' }} min
+              </div>
+              <div class="q-diff" [ngClass]="difficultyClass(q.difficulty)">
+                {{ q.difficulty }}
+              </div>
+            </div>
+          </div>
+          <div class="q-right">
+            <button
+              class="btn add-btn"
+              [disabled]="isQuestionInBooklet(q.id)"
+              (click)="addToBooklet(q)"
+              [title]="isQuestionInBooklet(q.id) ? 'Already added to booklet' : 'Add to booklet'"
+            >
+              <svg *ngIf="!isQuestionInBooklet(q.id)" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <svg *ngIf="isQuestionInBooklet(q.id)" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="filteredQuestions.length === 0" class="empty">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.3;">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p>No questions found for this category / search.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right panel: Booklet -->
+    <aside class="panel booklet-panel">
+      <div class="panel-header booklet-header">
+        <h4>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; margin-right: 8px; vertical-align: middle;">
+            <path d="M14 2H6A2 2 0 0 0 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Selected Questions ({{ booklet.length }})
+        </h4>
+        <div class="interview-timer small">
+          {{ formatDuration(interviewDurationSeconds).hrs }}:{{ formatDuration(interviewDurationSeconds).mins }}:{{ formatDuration(interviewDurationSeconds).secs }}
+        </div>
+      </div>
+
+      <div class="booklet-list">
+        <div class="booklet-card" *ngFor="let b of booklet; let i = index">
+          <div class="booklet-left">
+            <div class="q-heading">{{ i + 1 }}. {{ b.question.heading }}</div>
+            <div class="q-meta">
+              <span class="q-time">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 3px; vertical-align: middle;">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <polyline points="12,6 12,12 16,14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{ (b.question.estimatedSeconds / 60) | number: '1.0-0' }} min
+              </span>
+              <span class="q-diff" [ngClass]="difficultyClass(b.question.difficulty)">
+                {{ b.question.difficulty }}
+              </span>
+            </div>
+          </div>
+          <div class="booklet-right">
+            <button class="btn remove-btn" (click)="removeFromBooklet(b.question.id)" title="Remove from booklet">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="booklet.length === 0" class="empty">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="opacity: 0.3;">
+              <path d="M14 2H6A2 2 0 0 0 4 4V20A2 2 0 0 0 6 22H18A2 2 0 0 0 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p>No questions selected yet.</p>
+            <small style="color: #9ca3af;">Add questions from the question bank to create your interview booklet.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="booklet-actions">
+        <button class="btn save" (click)="saveQuestionBank()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px; vertical-align: middle;">
+            <path d="M19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H16L21 8V19A2 2 0 0 1 19 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="17,21 17,13 7,13 7,21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="7,3 7,8 15,8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Save Question Bank
+        </button>
         <button
-          class="btn schedule-top"
+          class="btn schedule"
           [class.disabled]="booklet.length === 0"
           [disabled]="booklet.length === 0"
           (click)="scheduleInterview()"
         >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 6px; vertical-align: middle;">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+            <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+            <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+            <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+          </svg>
           Schedule Interview
         </button>
       </div>
-    </header>
-  
-    <main class="qbd-main">
-      <!-- Left panel: Categories -->
-      <aside class="panel categories-panel">
-        <div class="panel-content">
-          <div class="create-top-space"></div>
-          <div
-            class="category-card"
-            *ngFor="let cat of categories"
-            [class.selected]="cat.selected"
-            (click)="selectCategory(cat.id)"
-          >
-            <div class="cat-icon">
-              <img [src]="cat.icon || '/assets/icons/default-cat.svg'" alt="cat" />
-            </div>
-            <div class="cat-body">
-              <h4>{{ cat.name }}</h4>
-              <p class="cat-desc">{{ cat.description }}</p>
-              <span class="count">{{ cat.questionCount ?? 0 }} Questions</span>
-            </div>
-          </div>
-        </div>
-      </aside>
-  
-      <!-- Center panel: Question Bank -->
-      <section class="panel question-bank-panel">
-        <div class="panel-header">
-          <h3>Question Bank</h3>
-        </div>
-  
-        <div *ngIf="loadingQuestions" class="loading">Loading questions...</div>
-  
-        <div *ngIf="!loadingQuestions" class="questions-list">
-          <div
-            class="question-card"
-            *ngFor="let q of filteredQuestions; trackBy: trackByQuestion"
-          >
-            <div class="q-left">
-              <div class="q-heading">Q. {{ q.heading }}</div>
-              <div class="q-meta">
-                <div class="q-time">{{ (q.estimatedSeconds / 60) | number: '1.0-0' }} min</div>
-                <div class="q-diff" [ngClass]="difficultyClass(q.difficulty)">
-                  {{ q.difficulty }}
-                </div>
-              </div>
-            </div>
-            <div class="q-right">
-              <button
-                class="btn add-btn"
-                [disabled]="isQuestionInBooklet(q.id)"
-                (click)="addToBooklet(q)"
-              >
-                +
-              </button>
-            </div>
-          </div>
-  
-          <div *ngIf="filteredQuestions.length === 0" class="empty">
-            No questions found for this category / search.
-          </div>
-        </div>
-      </section>
-  
-      <!-- Right panel: Booklet -->
-      <aside class="panel booklet-panel">
-        <div class="panel-header booklet-header">
-          <h4>Selected Questions</h4>
-          <div class="interview-timer small">
-            {{ formatDuration(interviewDurationSeconds).hrs }} :
-            {{ formatDuration(interviewDurationSeconds).mins }} :
-            {{ formatDuration(interviewDurationSeconds).secs }}
-          </div>
-        </div>
-  
-        <div class="booklet-list">
-          <div class="booklet-card" *ngFor="let b of booklet">
-            <div class="booklet-left">
-              <div class="q-heading">{{ b.question.heading }}</div>
-              <div class="q-meta">
-                <span class="q-time">{{ (b.question.estimatedSeconds / 60) | number: '1.0-0' }} min</span>
-                <span class="q-diff" [ngClass]="difficultyClass(b.question.difficulty)">
-                  {{ b.question.difficulty }}
-                </span>
-              </div>
-            </div>
-            <div class="booklet-right">
-              <button class="btn remove-btn" (click)="removeFromBooklet(b.question.id)">–</button>
-            </div>
-          </div>
-  
-          <div *ngIf="booklet.length === 0" class="empty">No questions selected yet.</div>
-        </div>
-  
-        <div class="booklet-actions">
-          <button class="btn save" (click)="saveQuestionBank()">SAVE QUESTION BANK</button>
-          <button
-            class="btn schedule"
-            [class.disabled]="booklet.length === 0"
-            [disabled]="booklet.length === 0"
-            (click)="scheduleInterview()"
-          >
-            SCHEDULE INTERVIEW
+    </aside>
+  </main>
+
+  <!-- Create Category Modal -->
+  <div class="modal-backdrop" *ngIf="showCreateCategoryModal">
+    <div class="modal">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: #667eea;">
+          <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h3 style="margin: 0;">Create New Category</h3>
+      </div>
+      <form [formGroup]="createCategoryForm" (ngSubmit)="submitCreateCategory()">
+        <label>
+          Category Name *
+          <input formControlName="name" type="text" placeholder="e.g., Communication Skills" />
+          <span class="error" *ngIf="createCategoryForm.controls['name'].invalid && (createCategoryForm.controls['name'].touched || createCategoryForm.touched)">
+            Name is required.
+          </span>
+        </label>
+
+        <label>
+          Interview Round *
+          <input formControlName="round" type="text" placeholder="e.g., Round 1 - HR" />
+          <span class="error" *ngIf="createCategoryForm.controls['round'].invalid && (createCategoryForm.controls['round'].touched || createCategoryForm.touched)">
+            Round is required.
+          </span>
+        </label>
+
+        <label>
+          Role / Experience Level *
+          <input formControlName="role" type="text" placeholder="e.g., Junior, Senior" />
+          <span class="error" *ngIf="createCategoryForm.controls['role'].invalid && (createCategoryForm.controls['role'].touched || createCategoryForm.touched)">
+            Role is required.
+          </span>
+        </label>
+
+        <label>
+          Description
+          <textarea formControlName="description" rows="2" placeholder="Brief description of this category..."></textarea>
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="btn cancel" (click)="cancelCreateCategory()">Cancel</button>
+          <button type="submit" class="btn create" [disabled]="creatingCategory">
+            {{ creatingCategory ? 'Creating...' : 'Create Category' }}
           </button>
         </div>
-      </aside>
-    </main>
-  
-    <!-- Create Category Modal -->
-    <div class="modal-backdrop" *ngIf="showCreateCategoryModal">
-      <div class="modal">
-        <h3>Create Category</h3>
-        <form [formGroup]="createCategoryForm" (ngSubmit)="submitCreateCategory()">
-          <label>
-            Category Name
-            <input formControlName="name" type="text" />
-            <span class="error" *ngIf="createCategoryForm.controls['name'].invalid && (createCategoryForm.controls['name'].touched || createCategoryForm.touched)">
-              Name is required.
-            </span>
-          </label>
-  
-          <label>
-            Interview Round
-            <input formControlName="round" type="text" placeholder="Eg: Round 1 - HR" />
-            <span class="error" *ngIf="createCategoryForm.controls['round'].invalid && (createCategoryForm.controls['round'].touched || createCategoryForm.touched)">
-              Round is required.
-            </span>
-          </label>
-  
-          <label>
-            Role / Experience
-            <input formControlName="role" type="text" placeholder="Eg: Junior, Senior" />
-            <span class="error" *ngIf="createCategoryForm.controls['role'].invalid && (createCategoryForm.controls['role'].touched || createCategoryForm.touched)">
-              Role is required.
-            </span>
-          </label>
-  
-          <label>
-            Description
-            <textarea formControlName="description" rows="2"></textarea>
-          </label>
-  
-          <div class="modal-actions">
-            <button type="button" class="btn cancel" (click)="cancelCreateCategory()">Cancel</button>
-            <button type="submit" class="btn create" [disabled]="creatingCategory">
-              {{ creatingCategory ? 'Creating...' : 'Create Category' }}
-            </button>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
   </div>
-  
+</div>
+
+<style>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+</style>

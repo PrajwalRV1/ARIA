@@ -1,3 +1,5 @@
+<!-- Minor HTML updates for improved alignment and responsive behavior -->
+
 <div class="dashboard-root">
   <!-- Header / Title -->
   <div class="dashboard-header">
@@ -21,7 +23,7 @@
         "
       >
         <i [class]="t.icon"></i>
-        {{ t.label }}
+        <span>{{ t.label }}</span> <!-- Wrapped label in span for better control -->
       </button>
     </div>
   </div>
@@ -70,14 +72,14 @@
                   <span class="candidate-name">{{ card.name }}</span>
                   <span class="requisition">
                     <i class="fas fa-id-badge"></i>
-                    Requisition ID: {{ card.requisitionId }}
+                    <span>Requisition ID: {{ card.requisitionId }}</span>
                   </span>
                 </div>
 
                 <div class="actions">
                   <a class="view" (click)="openEditCandidate(card); $event.stopPropagation();">
                     <i class="fas fa-edit"></i>
-                    View & edit details
+                    <span>View & edit details</span>
                   </a>
                   <span class="eye" title="Preview" (click)="openEditCandidate(card); $event.stopPropagation();">
                     <i class="fas fa-eye"></i>
@@ -88,7 +90,7 @@
               <div class="card-row middle">
                 <div class="job-title">
                   <i class="fas fa-briefcase"></i>
-                  {{ card.jobTitle }}
+                  <span>{{ card.jobTitle }}</span>
                 </div>
                 <div class="spacer"></div>
                 <div class="status-block" (click)="$event.stopPropagation()">
@@ -110,12 +112,12 @@
               <div class="card-row bottom">
                 <div class="experience">
                   <i class="fas fa-user-graduate"></i>
-                  {{ card.experience }}
+                  <span>{{ card.experience }}</span>
                 </div>
                 <div class="feedback">
                   <a (click)="openFeedback(card); $event.stopPropagation()">
                     <i class="fas fa-comments"></i>
-                    Interview Feedback
+                    <span>Interview Feedback</span>
                   </a>
                   <button class="small-feedback" 
                           (click)="openFeedback(card); $event.stopPropagation()"
@@ -152,7 +154,7 @@
         </button>
       </div>
 
-      <!-- Statistics Block -->
+      <!-- Statistics Block - Enhanced structure for better alignment -->
       <div class="right-block stats-block">
         <h3>
           <i class="fas fa-chart-bar"></i>
@@ -230,7 +232,7 @@
   (close)="closeAddCandidatePopup()">
 </app-add-candidate-popup>
 
-<!-- Confirmation Modal -->
+<!-- Enhanced Confirmation Modal -->
 <div *ngIf="showConfirmation" class="modal-overlay" (click)="closeConfirmation()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">

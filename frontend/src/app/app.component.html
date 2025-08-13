@@ -1,1 +1,10 @@
 <router-outlet></router-outlet>
+
+<div *ngIf="showExpiryWarning" class="session-warning">
+  <div class="session-warning-content">
+    <h2>Session Expiring Soon</h2>
+    <p>Your session will expire in {{ secondsLeft / 60 }} minutes.</p>
+    <button (click)="extendSession()">Stay Signed In</button>
+    <button (click)="logoutNow()">Logout Now</button>
+  </div>
+</div>

@@ -17,3 +17,17 @@ export interface AuthResponse {
   fullName: string;
   email: string;
 }
+
+export interface SendOtpRequest {
+  email: string;
+}
+
+export interface VerifyOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface OtpResponse {
+  message: string;
+  success: boolean;
+}

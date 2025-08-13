@@ -1,148 +1,151 @@
 <main class="login-container" role="main">
-    <div class="content-wrapper">
-        <!-- Left image/hero -->
-        <section class="image-section" aria-hidden="true">
-            <div class="hero-content">
+  <div class="content-wrapper">
+    <!-- Left image/hero -->
+    <section class="image-section" aria-hidden="true">
+      <div class="hero-content">
+        <div class="hero-icon">
+          <i class="fas fa-users-cog" aria-hidden="true"></i>
+        </div>
+        <h2 class="hero-title">Meet ARIA. <br>A better way to hire.</h2>
+        <p class="hero-subtitle">
+          Automate interviewing and recruiting with ARIA, your autonomous AI recruiter.
+        </p>
+      </div>
+    </section>
 
-                <!-- Logo -->
-                <div class="hero-icon">
-                    <i class="fas fa-users-cog" aria-hidden="true"></i>
-                </div>
-                <h2 class="hero-title">Meet ARIA. <br>
-                                A better way to hire.</h2>
-                <p class="hero-subtitle">
-                    Automate interviewing and recruiting with ARIA, your autonomous AI recruiter.
-                </p>
-            </div>
-        </section>
+    <!-- Form section -->
+    <section class="form-section" aria-labelledby="auth-title">
+      <div class="brand-header">
+        <div class="brand-logo">
+          <i class="fas fa-briefcase" aria-hidden="true"></i> ARIA
+        </div>
+        <h1 id="auth-title" class="login-title">
+          {{ mode === 'login' ? 'Recruiter Login' : 'Recruiter Register' }}
+        </h1>
+        <p class="login-subtitle">
+          {{ mode === 'login' ? 'Access your recruitment dashboard' : 'Create an account to start hiring' }}
+        </p>
+      </div>
 
-        <!-- Form section -->
-        <section class="form-section" aria-labelledby="auth-title">
-            <div class="brand-header">
-                <div class="brand-logo">
-                    <i class="fas fa-briefcase" aria-hidden="true"></i> ARIA
-                </div>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form" novalidate>
+        <!-- Full name (register only) -->
+        <div class="input-group" *ngIf="mode === 'register'">
+          <i class="fas fa-user input-icon" aria-hidden="true"></i>
+          <label for="fullName" class="visually-hidden">Full Name</label>
+          <input id="fullName" type="text" class="form-input" placeholder="Full Name"
+                 formControlName="fullName" autocomplete="name"
+                 [attr.aria-invalid]="f['fullName'].invalid && f['fullName'].touched ? 'true' : 'false'" />
+          <div class="error" *ngIf="f['fullName'].touched && f['fullName'].invalid" style="color:#dc2626; margin-top:6px;">
+            <small *ngIf="f['fullName'].errors?.['required']">Full name is required.</small>
+          </div>
+        </div>
 
-                <h1 id="auth-title" class="login-title">
-                    {{ mode === 'login' ? 'Recruiter Login' : 'Recruiter Register' }}
-                </h1>
-                <p class="login-subtitle">
-                    {{ mode === 'login' ? 'Access your recruitment dashboard' : 'Create an account to start hiring' }}
-                </p>
-            </div>
+        <!-- Email -->
+        <div class="input-group">
+          <i class="fas fa-envelope input-icon" aria-hidden="true"></i>
+          <label for="email" class="visually-hidden">Email</label>
+          <input id="email" type="email" class="form-input" placeholder="Email address"
+                 formControlName="email" autocomplete="email"
+                 [attr.aria-invalid]="f['email'].invalid && f['email'].touched ? 'true' : 'false'" />
+          <div class="error" *ngIf="f['email'].touched && f['email'].invalid" style="color:#dc2626; margin-top:6px;">
+            <small *ngIf="f['email'].errors?.['required']">Email is required.</small>
+            <small *ngIf="f['email'].errors?.['email']">Enter a valid email address.</small>
+          </div>
+        </div>
 
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login-form" novalidate>
-                <!-- Full name (register only) -->
-                <div class="input-group" *ngIf="mode === 'register'">
-                    <i class="fas fa-user input-icon" aria-hidden="true"></i>
-                    <label for="fullName" class="visually-hidden">Full Name</label>
-                    <input id="fullName" type="text" class="form-input" placeholder="Full Name"
-                        formControlName="fullName" autocomplete="name"
-                        [attr.aria-invalid]="f['fullName'].invalid && f['fullName'].touched ? 'true' : 'false'" />
-                    <div class="error" *ngIf="f['fullName'].touched && f['fullName'].invalid"
-                        style="color:#dc2626; margin-top:6px; font-size:0.9rem;">
-                        <small *ngIf="f['fullName'].errors?.['required']">Full name is required.</small>
-                    </div>
-                </div>
+        <!-- Password -->
+        <div class="input-group">
+          <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+          <label for="password" class="visually-hidden">Password</label>
+          <input id="password" class="form-input" [type]="showPassword ? 'text' : 'password'"
+                 placeholder="Enter your password" formControlName="password"
+                 autocomplete="current-password"
+                 [attr.aria-invalid]="f['password'].invalid && f['password'].touched ? 'true' : 'false'" />
+          <button type="button" class="password-toggle" (click)="togglePasswordVisibility()">
+            <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+          </button>
+          <div class="error" *ngIf="f['password'].touched && f['password'].invalid" style="color:#dc2626; margin-top:6px;">
+            <small *ngIf="f['password'].errors?.['required']">Password is required.</small>
+            <small *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters.</small>
+          </div>
+        </div>
 
-                <!-- Email -->
-                <div class="input-group">
-                    <i class="fas fa-envelope input-icon" aria-hidden="true"></i>
-                    <label for="email" class="visually-hidden">Email</label>
-                    <input id="email" type="email" class="form-input" placeholder="Email address"
-                        formControlName="email" autocomplete="email"
-                        [attr.aria-invalid]="f['email'].invalid && f['email'].touched ? 'true' : 'false'" />
-                    <div class="error" *ngIf="f['email'].touched && f['email'].invalid"
-                        style="color:#dc2626; margin-top:6px; font-size:0.9rem;">
-                        <small *ngIf="f['email'].errors?.['required']">Email is required.</small>
-                        <small *ngIf="f['email'].errors?.['email']">Enter a valid email address.</small>
-                    </div>
-                </div>
+        <!-- Confirm password (register only) -->
+        <div class="input-group" *ngIf="mode === 'register'">
+          <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+          <label for="confirmPassword" class="visually-hidden">Confirm Password</label>
+          <input id="confirmPassword" class="form-input" [type]="showConfirmPassword ? 'text' : 'password'"
+                 placeholder="Confirm password" formControlName="confirmPassword"
+                 autocomplete="new-password"
+                 [attr.aria-invalid]="(form.errors?.['passwordsMismatch'] || (f['confirmPassword'].invalid && f['confirmPassword'].touched)) ? 'true' : 'false'" />
+          <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()">
+            <i class="fas" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+          </button>
+          <div class="error"
+               *ngIf="(form.errors?.['passwordsMismatch'] && (f['confirmPassword'].touched || f['password'].touched))"
+               style="color:#dc2626; margin-top:6px;">
+            <small>Passwords do not match.</small>
+          </div>
+          <div class="error"
+               *ngIf="f['confirmPassword'].touched && f['confirmPassword'].invalid"
+               style="color:#dc2626; margin-top:6px;">
+            <small *ngIf="f['confirmPassword'].errors?.['required']">Confirm password is required.</small>
+          </div>
+        </div>
 
-                <!-- Password -->
-                <div class="input-group">
-                    <i class="fas fa-lock input-icon" aria-hidden="true"></i>
-                    <label for="password" class="visually-hidden">Password</label>
-                    <input id="password" class="form-input" [type]="showPassword ? 'text' : 'password'"
-                        placeholder="Enter your password" formControlName="password" autocomplete="current-password"
-                        [attr.aria-invalid]="f['password'].invalid && f['password'].touched ? 'true' : 'false'" />
-                    <button type="button" class="password-toggle" (click)="togglePasswordVisibility()"
-                        [attr.aria-pressed]="showPassword ? 'true' : 'false'">
-                        <i class="fas" [ngClass]="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
-                    </button>
+        <!-- OTP Section -->
+        <div *ngIf="mode === 'register' && otpSent" class="input-group">
+          <i class="fas fa-key input-icon"></i>
+          <input id="otp" type="text" class="form-input" placeholder="Enter OTP"
+                 formControlName="otp" autocomplete="one-time-code" />
+          <div class="error" *ngIf="errorMessage" style="color:#dc2626; margin-top:6px;">
+            <small>{{ errorMessage }}</small>
+          </div>
+          <button type="button" class="sign-in-button"
+                  (click)="verifyOtp()" [disabled]="loading || otpVerified">
+            {{ otpVerified ? 'OTP Verified' : 'Verify OTP' }}
+          </button>
+          <button type="button" class="forgot-password"
+                  (click)="resendOtp()" [disabled]="otpCooldown > 0">
+            Resend OTP {{ otpCooldown > 0 ? '(' + otpCooldown + 's)' : '' }}
+          </button>
+        </div>
 
-                    <div class="error" *ngIf="f['password'].touched && f['password'].invalid"
-                        style="color:#dc2626; margin-top:6px; font-size:0.9rem;">
-                        <small *ngIf="f['password'].errors?.['required']">Password is required.</small>
-                        <small *ngIf="f['password'].errors?.['minlength']">Password must be at least 6
-                            characters.</small>
-                    </div>
-                </div>
+        <!-- Login remember me -->
+        <div class="form-actions">
+          <div class="remember-forgot" *ngIf="mode === 'login'">
+            <label class="remember-me">
+              <input type="checkbox" class="remember-checkbox" formControlName="rememberMe" />
+              Remember me
+            </label>
+            <a class="forgot-password" href="#" (click)="onForgotPassword($event)">Forgot Password?</a>
+          </div>
 
-                <!-- Confirm password (register only) -->
-                <div class="input-group" *ngIf="mode === 'register'">
-                    <i class="fas fa-lock input-icon" aria-hidden="true"></i>
-                    <label for="confirmPassword" class="visually-hidden">Confirm Password</label>
-                    <input id="confirmPassword" class="form-input" [type]="showConfirmPassword ? 'text' : 'password'"
-                        placeholder="Confirm password" formControlName="confirmPassword" autocomplete="new-password"
-                        [attr.aria-invalid]="(form.errors?.['passwordsMismatch'] || (f['confirmPassword'].invalid && f['confirmPassword'].touched)) ? 'true' : 'false'" />
-                    <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()"
-                        [attr.aria-pressed]="showConfirmPassword ? 'true' : 'false'">
-                        <i class="fas" [ngClass]="showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
-                    </button>
+          <button type="submit" class="sign-in-button"
+                  [class.loading]="loading"
+                  [disabled]="loading || (mode === 'register' && !otpVerified)"
+                  [attr.aria-busy]="loading ? 'true' : 'false'">
+            {{ loading ? '' : (mode === 'login' ? 'Sign In' : 'Create Account') }}
+          </button>
+        </div>
+      </form>
 
-                    <div class="error"
-                        *ngIf="(form.errors?.['passwordsMismatch'] && (f['confirmPassword'].touched || f['password'].touched))"
-                        style="color:#dc2626; margin-top:6px; font-size:0.9rem;">
-                        <small>Passwords do not match.</small>
-                    </div>
+      <div class="divider"><span>or continue with</span></div>
+      <div class="social-login">
+        <button class="social-btn google-btn" (click)="onSocialLogin('google')">
+          <i class="fab fa-google"></i> Google
+        </button>
+        <button class="social-btn linkedin-btn" (click)="onSocialLogin('linkedin')">
+          <i class="fab fa-linkedin-in"></i> LinkedIn
+        </button>
+      </div>
 
-                    <div class="error"
-                        *ngIf="f['confirmPassword'].touched && f['confirmPassword'].invalid && f['confirmPassword'].errors"
-                        style="color:#dc2626; margin-top:6px; font-size:0.9rem;">
-                        <small *ngIf="f['confirmPassword'].errors?.['required']">Confirm password is required.</small>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <div class="remember-forgot" *ngIf="mode === 'login'">
-                        <label class="remember-me">
-                            <input type="checkbox" class="remember-checkbox" formControlName="rememberMe" />
-                            Remember me
-                        </label>
-                        <a class="forgot-password" href="#" (click)="onForgotPassword($event)">Forgot Password?</a>
-                    </div>
-
-                    <button type="submit" class="sign-in-button" [class.loading]="loading" [disabled]="loading"
-                        [attr.aria-busy]="loading ? 'true' : 'false'">
-                        {{ loading ? '' : (mode === 'login' ? 'Sign In' : 'Create Account') }}
-                    </button>
-                </div>
-            </form>
-
-            <div class="divider">
-                <span>or continue with</span>
-            </div>
-
-            <div class="social-login">
-                <button class="social-btn google-btn" (click)="onSocialLogin('google')"
-                    aria-label="Sign in with Google">
-                    <i class="fab fa-google" aria-hidden="true"></i>
-                    Google
-                </button>
-                <button class="social-btn linkedin-btn" (click)="onSocialLogin('linkedin')"
-                    aria-label="Sign in with LinkedIn">
-                    <i class="fab fa-linkedin-in" aria-hidden="true"></i>
-                    LinkedIn
-                </button>
-            </div>
-
-            <div style="text-align:center; margin-top:1.25rem;">
-                <button class="forgot-password" style="background:none; border:none; cursor:pointer; font-weight:600;"
-                    (click)="toggleMode()">
-                    {{ mode === 'login' ? 'Create an account' : 'Already have an account? Sign in' }}
-                </button>
-            </div>
-        </section>
-    </div>
+      <div style="text-align:center; margin-top:1.25rem;">
+        <button class="forgot-password" style="background:none; border:none; cursor:pointer; font-weight:600;"
+                (click)="toggleMode()">
+          {{ mode === 'login' ? 'Create an account' : 'Already have an account? Sign in' }}
+        </button>
+      </div>
+    </section>
+  </div>
 </main>

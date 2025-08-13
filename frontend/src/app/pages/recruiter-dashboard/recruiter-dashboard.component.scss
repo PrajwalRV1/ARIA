@@ -1,4 +1,732 @@
-/* Enhanced SCSS for recruiter dashboard component */
+// /* Enhanced SCSS for recruiter dashboard component */
+
+// // Color Palette
+// $primary-color: #667eea;
+// $secondary-color: #764ba2;
+// $accent-color: #4facfe;
+// $success-color: #4CAF50;
+// $warning-color: #FF9800;
+// $danger-color: #F44336;
+// $info-color: #2196F3;
+
+// $text-primary: #2c3e50;
+// $text-secondary: #7f8c8d;
+// $text-muted: #95a5a6;
+
+// $background-light: #f8f9fa;
+// $background-white: #ffffff;
+// $border-light: rgba(0, 0, 0, 0.08);
+// $border-medium: rgba(0, 0, 0, 0.12);
+
+// // Mixins
+// @mixin card-shadow($level: 1) {
+//   @if $level == 1 {
+//     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+//   } @else if $level == 2 {
+//     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+//   } @else if $level == 3 {
+//     box-shadow: 0 20px 40px rgba($primary-color, 0.15);
+//   }
+// }
+
+// @mixin gradient-bg($color1: $primary-color, $color2: $secondary-color) {
+//   background: linear-gradient(135deg, $color1 0%, $color2 100%);
+// }
+
+// @mixin button-hover-effect {
+//   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  
+//   &:hover {
+//     transform: translateY(-2px);
+//     @include card-shadow(2);
+//   }
+  
+//   &:active {
+//     transform: translateY(0);
+//   }
+// }
+
+// @mixin fade-in-up($delay: 0s) {
+//   animation: fadeInUp 0.6s ease-out #{$delay} forwards;
+//   opacity: 0;
+// }
+
+// // Animations
+// @keyframes fadeInUp {
+//   from {
+//     opacity: 0;
+//     transform: translateY(30px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
+
+// @keyframes slideUp {
+//   from {
+//     opacity: 0;
+//     transform: translateY(30px);
+//   }
+//   to {
+//     opacity: 1;
+//     transform: translateY(0);
+//   }
+// }
+
+// @keyframes spin {
+//   0% { transform: rotate(0deg); }
+//   100% { transform: rotate(360deg); }
+// }
+
+// @keyframes pulse {
+//   0% { transform: scale(1); opacity: 1; }
+//   50% { transform: scale(1.1); opacity: 0.7; }
+//   100% { transform: scale(1); opacity: 1; }
+// }
+
+// @keyframes shimmer {
+//   0% { left: -100%; }
+//   100% { left: 100%; }
+// }
+
+// // Root Component
+// .dashboard-root {
+//   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+//   color: $text-primary;
+//   background: $background-white;
+//   border-radius: 20px;
+//   @include card-shadow(2);
+//   overflow: hidden;
+//   animation: slideUp 0.6s ease-out;
+//   border: 1px solid $border-light;
+// }
+
+// // Header Section
+// .dashboard-header {
+//   @include gradient-bg();
+//   color: white;
+//   padding: 30px 40px;
+//   display: flex;
+//   align-items: center;
+//   justify-content: space-between;
+//   position: relative;
+//   overflow: hidden;
+
+//   &::before {
+//     content: '';
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     right: 0;
+//     bottom: 0;
+//     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" patternUnits="userSpaceOnUse" width="100" height="100"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+//   }
+
+//   h1 {
+//     font-size: 28px;
+//     font-weight: 700;
+//     margin: 0;
+//     position: relative;
+//     z-index: 1;
+//     display: flex;
+//     align-items: center;
+//     gap: 15px;
+
+//     i {
+//       font-size: 24px;
+//       opacity: 0.9;
+//     }
+//   }
+// }
+
+// // Top Tabs
+// .top-tabs {
+//   display: flex;
+//   gap: 12px;
+//   align-items: center;
+//   position: relative;
+//   z-index: 1;
+// }
+
+// .tab {
+//   background: rgba(255, 255, 255, 0.15);
+//   border: 1px solid rgba(255, 255, 255, 0.2);
+//   padding: 12px 20px;
+//   border-radius: 25px;
+//   font-weight: 600;
+//   color: white;
+//   cursor: pointer;
+//   backdrop-filter: blur(10px);
+//   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+//   display: flex;
+//   align-items: center;
+//   gap: 8px;
+//   font-size: 14px;
+
+//   i {
+//     font-size: 16px;
+//   }
+
+//   &:hover {
+//     background: rgba(255, 255, 255, 0.25);
+//     transform: translateY(-2px);
+//     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+//   }
+
+//   &.active {
+//     background: rgba(255, 255, 255, 0.95);
+//     color: $primary-color;
+//     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+//   }
+// }
+
+// // Main Content Layout
+// .dashboard-content {
+//   display: flex;
+//   gap: 30px;
+//   padding: 40px;
+// }
+
+// // Left Column - Candidate Cards
+// .left-col {
+//   flex: 1;
+// }
+
+// .cards-wrapper {
+//   display: flex;
+//   flex-direction: column;
+//   gap: 20px;
+// }
+
+// // Loading States
+// .loading-spinner {
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   height: 200px;
+
+//   .spinner {
+//     width: 50px;
+//     height: 50px;
+//     border: 3px solid #f3f3f3;
+//     border-top: 3px solid $primary-color;
+//     border-radius: 50%;
+//     animation: spin 1s linear infinite;
+//   }
+// }
+
+// .loading-overlay {
+//   position: fixed;
+//   top: 0;
+//   left: 0;
+//   right: 0;
+//   bottom: 0;
+//   background: rgba(0, 0, 0, 0.5);
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   z-index: 9999;
+
+//   .loading-content {
+//     background: white;
+//     padding: 40px;
+//     border-radius: 16px;
+//     text-align: center;
+//     @include card-shadow(2);
+
+//     .spinner-large {
+//       width: 60px;
+//       height: 60px;
+//       border: 4px solid #f3f3f3;
+//       border-top: 4px solid $primary-color;
+//       border-radius: 50%;
+//       animation: spin 1s linear infinite;
+//       margin: 0 auto 20px;
+//     }
+
+//     p {
+//       color: $text-secondary;
+//       font-weight: 600;
+//       margin: 0;
+//     }
+//   }
+// }
+
+// // Empty State
+// .empty-state {
+//   text-align: center;
+//   padding: 80px 20px;
+//   color: $text-muted;
+
+//   i {
+//     font-size: 72px;
+//     color: #bdc3c7;
+//     margin-bottom: 25px;
+//     display: block;
+//   }
+
+//   h3 {
+//     font-size: 20px;
+//     margin-bottom: 12px;
+//     color: $text-secondary;
+//     font-weight: 600;
+//   }
+
+//   p {
+//     font-size: 14px;
+//     line-height: 1.6;
+//     max-width: 400px;
+//     margin: 0 auto;
+//   }
+// }
+
+// // Enhanced Candidate Cards
+// .candidate-card {
+//   background: $background-white;
+//   border-radius: 16px;
+//   @include card-shadow(1);
+//   border: 1px solid $border-light;
+//   overflow: hidden;
+//   cursor: pointer;
+//   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+//   position: relative;
+//   @include fade-in-up();
+
+//   @for $i from 1 through 10 {
+//     &:nth-child(#{$i}) {
+//       animation-delay: #{$i * 0.1}s;
+//     }
+//   }
+
+//   &:hover {
+//     transform: translateY(-8px);
+//     @include card-shadow(3);
+//   }
+
+//   &.card-active {
+//     background: linear-gradient(135deg, rgba($primary-color, 0.08) 0%, rgba($secondary-color, 0.08) 100%);
+//     border-color: rgba($primary-color, 0.3);
+//     box-shadow: 0 8px 30px rgba($primary-color, 0.2);
+
+//     &::before {
+//       opacity: 1;
+//     }
+//   }
+
+//   &::before {
+//     content: '';
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     width: 4px;
+//     height: 100%;
+//     @include gradient-bg();
+//     opacity: 0;
+//     transition: opacity 0.3s ease;
+//   }
+// }
+
+// // Card Content Layout
+// .card-content {
+//   display: flex;
+//   align-items: stretch;
+//   padding: 25px;
+//   gap: 20px;
+// }
+
+// // Avatar Section
+// .card-left {
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   min-width: 80px;
+// }
+
+// .avatar-wrapper {
+//   position: relative;
+
+//   .avatar {
+//     width: 64px;
+//     height: 64px;
+//     border-radius: 50%;
+//     @include gradient-bg();
+//     display: flex;
+//     align-items: center;
+//     justify-content: center;
+//     color: white;
+//     font-size: 20px;
+//     font-weight: 700;
+//     border: 3px solid rgba($primary-color, 0.2);
+//     transition: all 0.3s ease;
+//   }
+
+//   .status-indicator {
+//     position: absolute;
+//     bottom: 2px;
+//     right: 2px;
+//     width: 18px;
+//     height: 18px;
+//     background: $success-color;
+//     border: 3px solid white;
+//     border-radius: 50%;
+//     animation: pulse 2s infinite;
+
+//     &.screening { background: $warning-color; }
+//     &.interview { background: $info-color; }
+//     &.offer { background: $accent-color; }
+//     &.hired { background: $success-color; }
+//     &.rejected { background: $danger-color; }
+//   }
+// }
+
+// .candidate-card:hover .avatar {
+//   border-color: rgba($primary-color, 0.4);
+//   transform: scale(1.05);
+// }
+
+// // Main Card Content
+// .card-main {
+//   flex: 1;
+//   display: flex;
+//   flex-direction: column;
+//   gap: 12px;
+// }
+
+// // Card Rows
+// .card-row {
+//   &.top {
+//     display: flex;
+//     justify-content: space-between;
+//     align-items: flex-start;
+//     gap: 15px;
+//   }
+
+//   &.middle {
+//     display: flex;
+//     align-items: center;
+//     gap: 15px;
+//     padding: 12px 0;
+//     border-top: 1px solid $border-light;
+//     border-bottom: 1px solid $border-light;
+//   }
+
+//   &.bottom {
+//     display: flex;
+//     align-items: center;
+//     justify-content: space-between;
+//     gap: 15px;
+//   }
+// }
+
+// // Name Group
+// .name-group {
+//   display: flex;
+//   flex-direction: column;
+//   gap: 4px;
+// }
+
+// .candidate-name {
+//   font-weight: 700;
+//   color: $text-primary;
+//   font-size: 18px;
+//   line-height: 1.2;
+// }
+
+// .requisition {
+//   font-size: 12px;
+//   color: $text-secondary;
+//   font-weight: 500;
+//   background: rgba($primary-color, 0.1);
+//   padding: 4px 8px;
+//   border-radius: 6px;
+//   display: inline-flex;
+//   align-items: center;
+//   gap: 4px;
+//   width: fit-content;
+
+//   i {
+//     font-size: 10px;
+//   }
+// }
+
+// // Actions
+// .actions {
+//   display: flex;
+//   align-items: center;
+//   gap: 12px;
+// }
+
+// .view {
+//   color: $primary-color;
+//   text-decoration: none;
+//   font-weight: 600;
+//   font-size: 13px;
+//   cursor: pointer;
+//   display: flex;
+//   align-items: center;
+//   gap: 6px;
+//   padding: 6px 12px;
+//   border-radius: 6px;
+//   background: rgba($primary-color, 0.1);
+//   transition: all 0.3s ease;
+
+//   &:hover {
+//     background: rgba($primary-color, 0.2);
+//     transform: translateX(2px);
+//   }
+
+//   i {
+//     font-size: 12px;
+//   }
+// }
+
+// .eye {
+//   width: 36px;
+//   height: 36px;
+//   @include gradient-bg();
+//   border-radius: 8px;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   color: white;
+//   cursor: pointer;
+//   transition: all 0.3s ease;
+
+//   &:hover {
+//     transform: scale(1.1);
+//     box-shadow: 0 4px 15px rgba($primary-color, 0.3);
+//   }
+
+//   i {
+//     font-size: 14px;
+//   }
+// }
+
+// // Job Title
+// .job-title {
+//   color: $text-primary;
+//   font-weight: 600;
+//   font-size: 16px;
+//   display: flex;
+//   align-items: center;
+//   gap: 8px;
+
+//   i {
+//     color: $primary-color;
+//     font-size: 14px;
+//   }
+// }
+
+// .spacer { 
+//   flex: 1; 
+// }
+
+// // Status Block
+// .status-block {
+//   display: flex;
+//   align-items: center;
+//   gap: 8px;
+// }
+
+// .status-select {
+//   padding: 8px 12px;
+//   border-radius: 8px;
+//   border: 2px solid rgba($primary-color, 0.2);
+//   background: white;
+//   font-weight: 600;
+//   color: $primary-color;
+//   cursor: pointer;
+//   transition: all 0.3s ease;
+//   outline: none;
+//   font-size: 13px;
+
+//   &:focus {
+//     border-color: $primary-color;
+//     box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+//   }
+// }
+
+// .tiny-icon {
+//   width: 36px;
+//   height: 36px;
+//   border: 2px solid rgba($primary-color, 0.2);
+//   background: white;
+//   border-radius: 8px;
+//   cursor: pointer;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   color: $primary-color;
+//   transition: all 0.3s ease;
+
+//   &:hover {
+//     background: $primary-color;
+//     color: white;
+//     transform: scale(1.05);
+//   }
+
+//   i {
+//     font-size: 12px;
+//   }
+// }
+
+// // Experience & Feedback
+// .experience {
+//   color: $text-secondary;
+//   font-size: 14px;
+//   font-weight: 500;
+//   display: flex;
+//   align-items: center;
+//   gap: 6px;
+
+//   i {
+//     color: $text-muted;
+//     font-size: 12px;
+//   }
+// }
+
+// .feedback {
+//   display: flex;
+//   align-items: center;
+//   gap: 10px;
+
+//   a {
+//     color: $primary-color;
+//     font-weight: 600;
+//     cursor: pointer;
+//     text-decoration: none;
+//     display: flex;
+//     align-items: center;
+//     gap: 6px;
+//     padding: 6px 12px;
+//     border-radius: 6px;
+//     background: rgba($primary-color, 0.1);
+//     transition: all 0.3s ease;
+//     font-size: 13px;
+
+//     &:hover {
+//       background: rgba($primary-color, 0.2);
+//     }
+
+//     i {
+//       font-size: 12px;
+//     }
+//   }
+// }
+
+// .small-feedback {
+//   width: 36px;
+//   height: 36px;
+//   border: 2px solid rgba($primary-color, 0.2);
+//   background: white;
+//   border-radius: 8px;
+//   cursor: pointer;
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   color: $primary-color;
+//   transition: all 0.3s ease;
+
+//   &:hover {
+//     background: $primary-color;
+//     color: white;
+//     transform: scale(1.05);
+//   }
+
+//   i {
+//     font-size: 12px;
+//   }
+// }
+
+// // Right Column
+// .right-col {
+//   width: 320px;
+//   display: flex;
+//   flex-direction: column;
+//   gap: 25px;
+// }
+
+// .right-block {
+//   background: $background-white;
+//   border-radius: 16px;
+//   padding: 25px;
+//   @include card-shadow(1);
+//   border: 1px solid $border-light;
+//   transition: all 0.3s ease;
+
+//   &:hover {
+//     @include card-shadow(2);
+//   }
+
+//   h3 {
+//     margin: 0 0 20px 0;
+//     color: $text-primary;
+//     font-size: 18px;
+//     font-weight: 700;
+//     display: flex;
+//     align-items: center;
+//     gap: 10px;
+
+//     i {
+//       color: $primary-color;
+//       font-size: 16px;
+//     }
+//   }
+// }
+
+// // Quick Actions
+// .actions-block {
+//   .full {
+//     display: block;
+//     width: 100%;
+//     padding: 14px 20px;
+//     margin-bottom: 12px;
+//     border-radius: 12px;
+//     border: none;
+//     color: white;
+//     font-weight: 700;
+//     cursor: pointer;
+//     position: relative;
+//     overflow: hidden;
+//     display: flex;
+//     align-items: center;
+//     justify-content: center;
+//     gap: 10px;
+//     font-size: 14px;
+//     @include button-hover-effect();
+
+//     &.add-candidate {
+//       @include gradient-bg($primary-color, $secondary-color);
+//     }
+
+//     &.bulk-upload {
+//       @include gradient-bg($info-color, $accent-color);
+//     }
+
+//     &.schedule-interview {
+//       @include gradient-bg($success-color, #66BB6A);
+//     }
+
+//     &::before {
+//       content: '';
+//       position: absolute;
+//       top: 0;
+//       left: -100%;
+//       width: 100%;
+//       height: 100%;
+//       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+//       transition: left 0.5s;
+//     }
+
+//     &:hover::before {
+//       left: 100%;
+//     }
+//   }
+// }
+
+// version 2
+/* Enhanced SCSS for recruiter dashboard component - Improved Alignment & Responsiveness */
 
 // Color Palette
 $primary-color: #667eea;
@@ -17,6 +745,12 @@ $background-light: #f8f9fa;
 $background-white: #ffffff;
 $border-light: rgba(0, 0, 0, 0.08);
 $border-medium: rgba(0, 0, 0, 0.12);
+
+// Breakpoints for responsive design
+$breakpoint-xl: 1200px;
+$breakpoint-lg: 992px;
+$breakpoint-md: 768px;
+$breakpoint-sm: 576px;
 
 // Mixins
 @mixin card-shadow($level: 1) {
@@ -49,6 +783,13 @@ $border-medium: rgba(0, 0, 0, 0.12);
 @mixin fade-in-up($delay: 0s) {
   animation: fadeInUp 0.6s ease-out #{$delay} forwards;
   opacity: 0;
+}
+
+// Responsive grid mixin
+@mixin responsive-grid($columns, $gap: 20px) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  gap: $gap;
 }
 
 // Animations
@@ -90,7 +831,7 @@ $border-medium: rgba(0, 0, 0, 0.12);
   100% { left: 100%; }
 }
 
-// Root Component
+// Root Component - Enhanced responsive design
 .dashboard-root {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: $text-primary;
@@ -100,9 +841,16 @@ $border-medium: rgba(0, 0, 0, 0.12);
   overflow: hidden;
   animation: slideUp 0.6s ease-out;
   border: 1px solid $border-light;
+  min-height: 100vh;
+  
+  // Responsive adjustments
+  @media (max-width: $breakpoint-md) {
+    border-radius: 0;
+    min-height: 100vh;
+  }
 }
 
-// Header Section
+// Header Section - Improved responsive behavior
 .dashboard-header {
   @include gradient-bg();
   color: white;
@@ -112,6 +860,21 @@ $border-medium: rgba(0, 0, 0, 0.12);
   justify-content: space-between;
   position: relative;
   overflow: hidden;
+  flex-wrap: wrap;
+  gap: 20px;
+
+  // Responsive header adjustments
+  @media (max-width: $breakpoint-md) {
+    padding: 25px 20px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 15px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 20px 15px;
+  }
 
   &::before {
     content: '';
@@ -124,7 +887,7 @@ $border-medium: rgba(0, 0, 0, 0.12);
   }
 
   h1 {
-    font-size: 28px;
+    font-size: clamp(20px, 4vw, 28px); // Responsive font size
     font-weight: 700;
     margin: 0;
     position: relative;
@@ -132,21 +895,33 @@ $border-medium: rgba(0, 0, 0, 0.12);
     display: flex;
     align-items: center;
     gap: 15px;
+    line-height: 1.2;
+
+    @media (max-width: $breakpoint-sm) {
+      gap: 10px;
+    }
 
     i {
-      font-size: 24px;
+      font-size: clamp(18px, 3vw, 24px);
       opacity: 0.9;
     }
   }
 }
 
-// Top Tabs
+// Top Tabs - Enhanced responsive tabs
 .top-tabs {
   display: flex;
   gap: 12px;
   align-items: center;
   position: relative;
   z-index: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: 8px;
+    width: 100%;
+  }
 }
 
 .tab {
@@ -163,9 +938,20 @@ $border-medium: rgba(0, 0, 0, 0.12);
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  white-space: nowrap;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 10px 16px;
+    font-size: 13px;
+    gap: 6px;
+  }
 
   i {
     font-size: 16px;
+    
+    @media (max-width: $breakpoint-sm) {
+      font-size: 14px;
+    }
   }
 
   &:hover {
@@ -181,30 +967,57 @@ $border-medium: rgba(0, 0, 0, 0.12);
   }
 }
 
-// Main Content Layout
+// Main Content Layout - Enhanced responsive grid
 .dashboard-content {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 320px;
   gap: 30px;
   padding: 40px;
+
+  @media (max-width: $breakpoint-xl) {
+    gap: 25px;
+    padding: 30px;
+  }
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 25px;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 20px;
+    gap: 25px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 15px;
+    gap: 20px;
+  }
 }
 
-// Left Column - Candidate Cards
+// Left Column - Improved spacing
 .left-col {
-  flex: 1;
+  min-width: 0; // Prevent flex overflow
 }
 
 .cards-wrapper {
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: 15px;
+  }
 }
 
-// Loading States
+// Loading States - Centered and responsive
 .loading-spinner {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 200px;
+  padding: 20px;
 
   .spinner {
     width: 50px;
@@ -227,6 +1040,7 @@ $border-medium: rgba(0, 0, 0, 0.12);
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 20px;
 
   .loading-content {
     background: white;
@@ -234,6 +1048,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
     border-radius: 16px;
     text-align: center;
     @include card-shadow(2);
+    max-width: 90vw;
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 30px 20px;
+    }
 
     .spinner-large {
       width: 60px;
@@ -253,21 +1072,25 @@ $border-medium: rgba(0, 0, 0, 0.12);
   }
 }
 
-// Empty State
+// Empty State - Better text alignment
 .empty-state {
   text-align: center;
   padding: 80px 20px;
   color: $text-muted;
 
+  @media (max-width: $breakpoint-sm) {
+    padding: 60px 20px;
+  }
+
   i {
-    font-size: 72px;
+    font-size: clamp(48px, 8vw, 72px);
     color: #bdc3c7;
     margin-bottom: 25px;
     display: block;
   }
 
   h3 {
-    font-size: 20px;
+    font-size: clamp(16px, 3vw, 20px);
     margin-bottom: 12px;
     color: $text-secondary;
     font-weight: 600;
@@ -281,7 +1104,7 @@ $border-medium: rgba(0, 0, 0, 0.12);
   }
 }
 
-// Enhanced Candidate Cards
+// Enhanced Candidate Cards - Better responsive behavior
 .candidate-card {
   background: $background-white;
   border-radius: 16px;
@@ -327,20 +1150,36 @@ $border-medium: rgba(0, 0, 0, 0.12);
   }
 }
 
-// Card Content Layout
+// Card Content Layout - Improved responsive stacking
 .card-content {
   display: flex;
   align-items: stretch;
   padding: 25px;
   gap: 20px;
+
+  @media (max-width: $breakpoint-md) {
+    padding: 20px;
+    gap: 15px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 15px;
+  }
 }
 
-// Avatar Section
+// Avatar Section - Better alignment
 .card-left {
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 80px;
+
+  @media (max-width: $breakpoint-sm) {
+    min-width: auto;
+  }
 }
 
 .avatar-wrapper {
@@ -359,6 +1198,12 @@ $border-medium: rgba(0, 0, 0, 0.12);
     font-weight: 700;
     border: 3px solid rgba($primary-color, 0.2);
     transition: all 0.3s ease;
+
+    @media (max-width: $breakpoint-sm) {
+      width: 56px;
+      height: 56px;
+      font-size: 18px;
+    }
   }
 
   .status-indicator {
@@ -371,6 +1216,12 @@ $border-medium: rgba(0, 0, 0, 0.12);
     border: 3px solid white;
     border-radius: 50%;
     animation: pulse 2s infinite;
+
+    @media (max-width: $breakpoint-sm) {
+      width: 16px;
+      height: 16px;
+      border-width: 2px;
+    }
 
     &.screening { background: $warning-color; }
     &.interview { background: $info-color; }
@@ -385,21 +1236,32 @@ $border-medium: rgba(0, 0, 0, 0.12);
   transform: scale(1.05);
 }
 
-// Main Card Content
+// Main Card Content - Better text alignment
 .card-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0; // Prevent text overflow
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+  }
 }
 
-// Card Rows
+// Card Rows - Improved responsive behavior
 .card-row {
   &.top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 15px;
+
+    @media (max-width: $breakpoint-sm) {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
   }
 
   &.middle {
@@ -409,6 +1271,13 @@ $border-medium: rgba(0, 0, 0, 0.12);
     padding: 12px 0;
     border-top: 1px solid $border-light;
     border-bottom: 1px solid $border-light;
+
+    @media (max-width: $breakpoint-sm) {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 0;
+    }
   }
 
   &.bottom {
@@ -416,14 +1285,24 @@ $border-medium: rgba(0, 0, 0, 0.12);
     align-items: center;
     justify-content: space-between;
     gap: 15px;
+
+    @media (max-width: $breakpoint-sm) {
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
   }
 }
 
-// Name Group
+// Name Group - Better text hierarchy
 .name-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
+
+  @media (max-width: $breakpoint-sm) {
+    align-items: center;
+  }
 }
 
 .candidate-name {
@@ -431,6 +1310,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   color: $text-primary;
   font-size: 18px;
   line-height: 1.2;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 16px;
+    text-align: center;
+  }
 }
 
 .requisition {
@@ -450,11 +1334,16 @@ $border-medium: rgba(0, 0, 0, 0.12);
   }
 }
 
-// Actions
+// Actions - Better responsive alignment
 .actions {
   display: flex;
   align-items: center;
   gap: 12px;
+
+  @media (max-width: $breakpoint-sm) {
+    justify-content: center;
+    gap: 10px;
+  }
 }
 
 .view {
@@ -470,6 +1359,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   border-radius: 6px;
   background: rgba($primary-color, 0.1);
   transition: all 0.3s ease;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 
   &:hover {
     background: rgba($primary-color, 0.2);
@@ -493,6 +1387,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   cursor: pointer;
   transition: all 0.3s ease;
 
+  @media (max-width: $breakpoint-sm) {
+    width: 32px;
+    height: 32px;
+  }
+
   &:hover {
     transform: scale(1.1);
     box-shadow: 0 4px 15px rgba($primary-color, 0.3);
@@ -500,10 +1399,14 @@ $border-medium: rgba(0, 0, 0, 0.12);
 
   i {
     font-size: 14px;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 12px;
+    }
   }
 }
 
-// Job Title
+// Job Title - Better font hierarchy
 .job-title {
   color: $text-primary;
   font-weight: 600;
@@ -511,6 +1414,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 15px;
+    justify-content: center;
+  }
 
   i {
     color: $primary-color;
@@ -520,13 +1428,21 @@ $border-medium: rgba(0, 0, 0, 0.12);
 
 .spacer { 
   flex: 1; 
+  
+  @media (max-width: $breakpoint-sm) {
+    display: none;
+  }
 }
 
-// Status Block
+// Status Block - Improved alignment and responsive design
 .status-block {
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @media (max-width: $breakpoint-sm) {
+    justify-content: center;
+  }
 }
 
 .status-select {
@@ -540,6 +1456,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   transition: all 0.3s ease;
   outline: none;
   font-size: 13px;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 
   &:focus {
     border-color: $primary-color;
@@ -560,6 +1481,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   color: $primary-color;
   transition: all 0.3s ease;
 
+  @media (max-width: $breakpoint-sm) {
+    width: 32px;
+    height: 32px;
+  }
+
   &:hover {
     background: $primary-color;
     color: white;
@@ -568,10 +1494,14 @@ $border-medium: rgba(0, 0, 0, 0.12);
 
   i {
     font-size: 12px;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 11px;
+    }
   }
 }
 
-// Experience & Feedback
+// Experience & Feedback - Better text alignment
 .experience {
   color: $text-secondary;
   font-size: 14px;
@@ -579,6 +1509,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   gap: 6px;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: 13px;
+    justify-content: center;
+  }
 
   i {
     color: $text-muted;
@@ -590,6 +1525,10 @@ $border-medium: rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   gap: 10px;
+
+  @media (max-width: $breakpoint-sm) {
+    justify-content: center;
+  }
 
   a {
     color: $primary-color;
@@ -604,6 +1543,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
     background: rgba($primary-color, 0.1);
     transition: all 0.3s ease;
     font-size: 13px;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 12px;
+      padding: 6px 10px;
+    }
 
     &:hover {
       background: rgba($primary-color, 0.2);
@@ -628,6 +1572,11 @@ $border-medium: rgba(0, 0, 0, 0.12);
   color: $primary-color;
   transition: all 0.3s ease;
 
+  @media (max-width: $breakpoint-sm) {
+    width: 32px;
+    height: 32px;
+  }
+
   &:hover {
     background: $primary-color;
     color: white;
@@ -636,17 +1585,32 @@ $border-medium: rgba(0, 0, 0, 0.12);
 
   i {
     font-size: 12px;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 11px;
+    }
   }
 }
 
-// Right Column
+// Right Column - Enhanced responsive behavior
 .right-col {
   width: 320px;
   display: flex;
   flex-direction: column;
   gap: 25px;
+
+  @media (max-width: $breakpoint-lg) {
+    width: 100%;
+    @include responsive-grid(2, 20px);
+  }
+
+  @media (max-width: $breakpoint-md) {
+    @include responsive-grid(1, 20px);
+    gap: 20px;
+  }
 }
 
+// Right Block - Improved padding and typography
 .right-block {
   background: $background-white;
   border-radius: 16px;
@@ -654,6 +1618,10 @@ $border-medium: rgba(0, 0, 0, 0.12);
   @include card-shadow(1);
   border: 1px solid $border-light;
   transition: all 0.3s ease;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: 20px;
+  }
 
   &:hover {
     @include card-shadow(2);
@@ -668,14 +1636,23 @@ $border-medium: rgba(0, 0, 0, 0.12);
     align-items: center;
     gap: 10px;
 
+    @media (max-width: $breakpoint-sm) {
+      font-size: 16px;
+      margin-bottom: 15px;
+    }
+
     i {
       color: $primary-color;
       font-size: 16px;
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: 14px;
+      }
     }
   }
 }
 
-// Quick Actions
+// Quick Actions - Better button alignment and sizing
 .actions-block {
   .full {
     display: block;
@@ -695,6 +1672,16 @@ $border-medium: rgba(0, 0, 0, 0.12);
     gap: 10px;
     font-size: 14px;
     @include button-hover-effect();
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 12px 16px;
+      font-size: 13px;
+      gap: 8px;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
 
     &.add-candidate {
       @include gradient-bg($primary-color, $secondary-color);
@@ -722,5 +1709,387 @@ $border-medium: rgba(0, 0, 0, 0.12);
     &:hover::before {
       left: 100%;
     }
+
+    i {
+      font-size: 14px;
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: 12px;
+      }
+    }
+  }
+}
+
+/* Improved Statistics Block - Better alignment and spacing */
+.stats-block {
+  .stats-grid {
+    @include responsive-grid(2, 16px);
+    
+    @media (max-width: $breakpoint-sm) {
+      @include responsive-grid(1, 12px);
+    }
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px 16px;
+    background: rgba($primary-color, 0.04);
+    border-radius: 12px;
+    border: 1px solid rgba($primary-color, 0.08);
+    transition: all 0.3s ease;
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 16px 12px;
+    }
+
+    &:hover {
+      background: rgba($primary-color, 0.08);
+      transform: translateY(-2px);
+    }
+  }
+
+  .stat-number {
+    font-size: 32px;
+    font-weight: 800;
+    color: $primary-color;
+    line-height: 1;
+    margin-bottom: 8px;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: $text-secondary;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 12px;
+    }
+  }
+}
+
+/* Enhanced Info Block - Better content spacing */
+.info-block {
+  .info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: rgba($accent-color, 0.04);
+    border-radius: 10px;
+    border-left: 3px solid $accent-color;
+    transition: all 0.3s ease;
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 14px 12px;
+      gap: 10px;
+    }
+
+    &:hover {
+      background: rgba($accent-color, 0.08);
+    }
+
+    i {
+      color: $accent-color;
+      font-size: 16px;
+      margin-top: 2px;
+      flex-shrink: 0;
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: 14px;
+      }
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: $text-secondary;
+      font-weight: 500;
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: 13px;
+      }
+    }
+  }
+}
+
+/* Enhanced Activity Block - Better list styling */
+.activity-block {
+  .activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: rgba($background-light, 0.5);
+    border-radius: 10px;
+    border: 1px solid $border-light;
+    transition: all 0.3s ease;
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 12px;
+      gap: 10px;
+    }
+
+    &:hover {
+      background: rgba($primary-color, 0.04);
+      border-color: rgba($primary-color, 0.1);
+    }
+  }
+
+  .activity-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba($primary-color, 0.1);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    @media (max-width: $breakpoint-sm) {
+      width: 32px;
+      height: 32px;
+    }
+
+    i {
+      color: $primary-color;
+      font-size: 14px;
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .activity-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .activity-text {
+    font-size: 14px;
+    color: $text-primary;
+    font-weight: 500;
+    margin-bottom: 4px;
+    line-height: 1.4;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 13px;
+    }
+  }
+
+  .activity-time {
+    font-size: 12px;
+    color: $text-muted;
+    font-weight: 500;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 11px;
+    }
+  }
+}
+
+/* Enhanced Modal Styles - Better responsive behavior */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.confirmation-modal {
+  background: white;
+  border-radius: 16px;
+  @include card-shadow(3);
+  max-width: 90vw;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+
+  .modal-header {
+    padding: 25px 30px 20px;
+    border-bottom: 1px solid $border-light;
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 20px 20px 15px;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: $text-primary;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: 18px;
+        gap: 10px;
+      }
+
+      i {
+        color: $warning-color;
+        font-size: 18px;
+
+        @media (max-width: $breakpoint-sm) {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 25px 30px;
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 20px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.6;
+      color: $text-secondary;
+
+      @media (max-width: $breakpoint-sm) {
+        font-size: 15px;
+      }
+    }
+  }
+
+  .modal-actions {
+    padding: 20px 30px 30px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+
+    @media (max-width: $breakpoint-sm) {
+      padding: 15px 20px 20px;
+      flex-direction: column-reverse;
+    }
+
+    .btn-cancel,
+    .btn-confirm {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      font-size: 14px;
+
+      @media (max-width: $breakpoint-sm) {
+        padding: 14px 20px;
+        width: 100%;
+      }
+    }
+
+    .btn-cancel {
+      background: rgba($text-muted, 0.1);
+      color: $text-secondary;
+      border-color: rgba($text-muted, 0.2);
+
+      &:hover {
+        background: rgba($text-muted, 0.2);
+        color: $text-primary;
+      }
+    }
+
+    .btn-confirm {
+      @include gradient-bg($primary-color, $secondary-color);
+      color: white;
+
+      &:hover {
+        transform: translateY(-2px);
+        @include card-shadow(2);
+      }
+    }
+  }
+}
+
+/* Additional Responsive Utilities */
+@media (max-width: $breakpoint-sm) {
+  // Hide decorative elements on mobile
+  .candidate-card::before {
+    display: none;
+  }
+  
+  // Ensure proper text wrapping
+  .candidate-name,
+  .job-title,
+  .experience {
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  // Improve touch targets
+  button,
+  .tab,
+  .status-select,
+  .view,
+  .eye,
+  .tiny-icon,
+  .small-feedback {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Print styles for dashboard reports */
+@media print {
+  .dashboard-root {
+    box-shadow: none;
+    border: none;
+  }
+  
+  .dashboard-header {
+    background: none !important;
+    color: $text-primary !important;
+    
+    &::before {
+      display: none;
+    }
+  }
+  
+  .candidate-card {
+    break-inside: avoid;
+    margin-bottom: 20px;
+  }
+  
+  .right-col {
+    display: none;
   }
 }

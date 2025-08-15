@@ -229,8 +229,9 @@
   [visible]="showAddCandidatePopup"
   [mode]="popupMode"
   [candidateData]="selectedCandidate"
-  (close)="closeAddCandidatePopup()">
-</app-add-candidate-popup>
+  (close)="closeAddCandidatePopup()"
+  (save)="onCandidateSaved($event)"
+></app-add-candidate-popup>
 
 <!-- Enhanced Confirmation Modal -->
 <div *ngIf="showConfirmation" class="modal-overlay" (click)="closeConfirmation()">

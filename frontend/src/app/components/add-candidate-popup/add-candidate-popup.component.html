@@ -41,21 +41,21 @@
           </div>
 
           <div class="field">
-            <label>Total Experience <span class="req">*</span></label>
-            <input formControlName="totalExperience" type="number" min="0" />
-            <div class="error" *ngIf="f['totalExperience'].touched && f['totalExperience'].invalid">Required</div>
-          </div>
-
-          <div class="field">
             <label>Candidate name <span class="req">*</span></label>
             <input formControlName="candidateName" type="text" />
             <div class="error" *ngIf="f['candidateName'].touched && f['candidateName'].invalid">Required</div>
           </div>
 
           <div class="field">
-            <label>Relevant Experience <span class="req">*</span></label>
-            <input formControlName="relevantExperience" type="number" min="0" />
-            <div class="error" *ngIf="f['relevantExperience'].touched && f['relevantExperience'].invalid">Required</div>
+            <label>Candidate email <span class="req">*</span></label>
+            <input formControlName="candidateEmail" type="email" />
+            <div class="error" *ngIf="f['candidateEmail'].touched && f['candidateEmail'].invalid">Valid email required</div>
+          </div>
+
+          <div class="field">
+            <label>Candidate phone number <span class="req">*</span></label>
+            <input formControlName="candidatePhone" type="tel" />
+            <div class="error" *ngIf="f['candidatePhone'].touched && f['candidatePhone'].invalid">Valid phone required</div>
           </div>
 
           <div class="field">
@@ -65,18 +65,30 @@
           </div>
 
           <div class="field">
+            <label>Application date <span class="req">*</span></label>
+            <input formControlName="applicationDate" type="date" />
+            <div class="error" *ngIf="f['applicationDate'].touched && f['applicationDate'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Total Experience <span class="req">*</span></label>
+            <input formControlName="totalExperience" type="number" min="0" />
+            <div class="error" *ngIf="f['totalExperience'].touched && f['totalExperience'].invalid">Required</div>
+          </div>
+
+          <div class="field">
+            <label>Relevant Experience <span class="req">*</span></label>
+            <input formControlName="relevantExperience" type="number" min="0" />
+            <div class="error" *ngIf="f['relevantExperience'].touched && f['relevantExperience'].invalid">Required</div>
+          </div>
+
+          <div class="field">
             <label>Interview Round <span class="req">*</span></label>
             <select formControlName="interviewRound">
               <option value="">-- Select --</option>
               <option *ngFor="let r of interviewRounds" [value]="r">{{ r }}</option>
             </select>
             <div class="error" *ngIf="f['interviewRound'].touched && f['interviewRound'].invalid">Required</div>
-          </div>
-
-          <div class="field">
-            <label>Application date <span class="req">*</span></label>
-            <input formControlName="applicationDate" type="date" />
-            <div class="error" *ngIf="f['applicationDate'].touched && f['applicationDate'].invalid">Required</div>
           </div>
 
           <div class="field">

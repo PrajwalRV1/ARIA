@@ -10,6 +10,8 @@ import {
   AuthResponse,
 } from '../models/auth.model';
 import { environment } from '../../environments/environment';
+import { SendOtpRequest, VerifyOtpRequest, OtpResponse } from '../models/auth.model';
+
 
 @Injectable({
   providedIn: 'root',

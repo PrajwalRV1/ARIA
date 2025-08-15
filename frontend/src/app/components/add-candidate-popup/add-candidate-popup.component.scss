@@ -1,28 +1,62 @@
-/* Scoped styles for Add Candidate popup */
+$primary-color: #667eea;
+$secondary-color: #764ba2;
+$accent-color: #4facfe;
+$success-color: #4CAF50;
+$warning-color: #FF9800;
+$danger-color: #F44336;
+$info-color: #2196F3;
 
-/* Overlay dims the background */
+$text-primary: #2c3e50;
+$text-secondary: #7f8c8d;
+$text-muted: #95a5a6;
+
+$background-light: #f8f9fa;
+$background-white: #ffffff;
+$border-light: rgba(0, 0, 0, 0.08);
+
+$card-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+
+// Example mixins
+@mixin gradient-bg($from, $to) {
+  background: linear-gradient(135deg, $from, $to);
+}
+
+@mixin hover-shimmer {
+  background-size: 200% auto;
+  transition: background-position 0.3s ease;
+  &:hover {
+    background-position: right center;
+  }
+}
+
+
+/* Overlay */
 .overlay {
   position: fixed;
   inset: 0;
   background: rgba(25, 40, 50, 0.45);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1200;
   padding: 20px;
+  animation: fadeIn 0.3s ease;
 }
 
-/* Popup card */
+/* Modal Card */
 .popup-card {
   width: 100%;
   max-width: 1100px;
-  background: #ffffff;
-  border-radius: 10px;
+  background: $background-white;
+  border-radius: 1rem;
   box-shadow: 0 18px 50px rgba(14, 55, 75, 0.28);
-  border: 2px solid rgba(15, 126, 206, 0.07);
+  border: 1px solid $border-light;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  animation: slideUp 0.4s ease;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Header */
@@ -30,193 +64,243 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e6f2fa;
-  background: linear-gradient(180deg, #fbfdff, #f3fbff);
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, $primary-color, $secondary-color);
+  color: #fff;
+
+  h2 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: #fff;
+    transition: transform 0.2s ease;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
 }
 
-.popup-header h2 {
-  margin: 0;
-  color: #1b5870;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.close-btn {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #234b5f;
-}
-
-/* Body with two main columns */
+/* Body layout */
 .popup-body {
   display: flex;
-  gap: 18px;
-  padding: 20px;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background-color: $background-light;
+  flex-wrap: wrap;
+
+  .left-col {
+    width: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .right-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
 }
 
-/* Left column: upload items */
-.left-col {
-  width: 220px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  align-items: center;
-}
-
-/* Upload card style */
+/* Upload Cards */
 .upload-card {
   width: 100%;
-  border-radius: 8px;
-  border: 1px solid #dfeff9;
-  padding: 12px;
-  background: linear-gradient(#fff, #fbfdff);
+  border-radius: 0.75rem;
+  border: 1px solid $border-light;
+  padding: 1rem;
+  background: linear-gradient(#fff, lighten($background-light, 2%));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   text-align: center;
+  box-shadow: $card-shadow;
+
+  .upload-illustration {
+    width: 80px;
+    height: auto;
+  }
+
+  .upload-label {
+    font-weight: 600;
+    color: $text-primary;
+
+    &.required {
+      color: $primary-color;
+    }
+  }
+
+  input[type="file"] {
+    width: 100%;
+    opacity: 0;
+    height: 38px;
+    cursor: pointer;
+  }
+
+  .filename {
+    font-size: 0.85rem;
+    color: $text-muted;
+    width: 100%;
+    word-break: break-all;
+
+    &.required {
+      color: $danger-color;
+    }
+  }
 }
 
-.upload-illustration {
-  width: 86px;
-  height: auto;
-}
-
-.upload-label {
-  font-weight: 700;
-  color: #1f6f96;
-}
-
-/* mark required visually */
-.upload-label.required {
-  color: #0b5c84;
-}
-
-/* file input as invisible but clickable area */
-.upload-card input[type="file"] {
-  width: 100%;
-  opacity: 0;
-  position: relative;
-  height: 38px;
-  cursor: pointer;
-}
-
-/* show file name */
-.filename {
-  font-size: 13px;
-  color: #3b6f85;
-  width: 100%;
-  text-align: center;
-  word-break: break-all;
-}
-
-.filename.required { color: #c44747; }
-
-/* Right column: fields */
-.right-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* grid of smaller fields (two-column) */
+/* Field Grid */
 .fields-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+
+    label {
+      font-weight: 500;
+      color: $text-secondary;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+
+      .req {
+        color: $danger-color;
+        margin-left: 0.25rem;
+      }
+    }
+
+    input,
+    select,
+    textarea {
+      border: 1px solid $border-light;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      background: linear-gradient(lighten($background-light, 4%), #fff);
+      font-size: 0.9rem;
+      color: $text-primary;
+      transition: all 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+      }
+    }
+
+    .error {
+      color: $danger-color;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
+  }
 }
 
-/* Each small field block */
-.field {
-  display: flex;
-  flex-direction: column;
-}
-
-.field label {
-  font-weight: 600;
-  color: #164b60;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-
-.req {
-  color: #c43b3b;
-  margin-left: 6px;
-  font-weight: 700;
-}
-
-/* inputs & selects */
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select,
-textarea {
-  border: 1px solid #cfe6f5;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: linear-gradient(#e9f8ff, #dff4ff);
-  outline: none;
-  font-size: 13px;
-  color: #0e3b4b;
-}
-
-/* textarea bigger blocks */
+/* Large Textareas */
 .big-field {
   display: flex;
   flex-direction: column;
+
+  label {
+    font-weight: 500;
+    color: $text-secondary;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+  }
+
+  textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .error {
+    color: $danger-color;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+  }
 }
 
-.big-field label {
-  font-weight: 600;
-  color: #164b60;
-  font-size: 13px;
-  margin-bottom: 6px;
-}
-
-/* error messages */
-.error {
-  color: #b13b3b;
-  font-size: 12px;
-  margin-top: 6px;
-}
-
-/* buttons area */
+/* Buttons */
 .actions {
   display: flex;
   justify-content: center;
-  gap: 18px;
-  margin-top: 6px;
+  gap: 1rem;
+  margin-top: 0.5rem;
+
+  .btn {
+    border-radius: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+
+  .cancel {
+    background: #fff;
+    border: 1px solid $border-light;
+    color: $text-secondary;
+
+    &:hover {
+      background: $background-light;
+    }
+  }
+
+  .save {
+    @include gradient-bg($primary-color, $accent-color);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba($primary-color, 0.2);
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      @include hover-shimmer;
+    }
+  }
 }
 
-.btn {
-  border-radius: 6px;
-  padding: 10px 20px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
-}
-
-.btn.cancel {
-  background: linear-gradient(#ffffff, #f4fbff);
-  color: #2d6f88;
-  border: 1px solid #cfe6f6;
-}
-
-.btn.save {
-  background: linear-gradient(#5fb9ea, #3b98d4);
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(33, 118, 175, 0.18);
-}
-
-/* responsive behaviour */
+/* Responsive */
 @media (max-width: 1000px) {
-  .popup-card { max-width: 960px; }
-  .popup-body { flex-direction: column; }
-  .left-col { width: 100%; flex-direction: row; justify-content: space-around; }
-  .fields-grid { grid-template-columns: 1fr; }
-  .actions { justify-content: space-between; padding: 0 20px 12px; }
+  .popup-body {
+    flex-direction: column;
+  }
+
+  .left-col {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+  }
+
+  .fields-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    justify-content: space-between;
+    padding: 0 1rem 0.75rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }

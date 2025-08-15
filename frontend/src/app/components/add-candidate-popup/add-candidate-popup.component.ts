@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 
@@ -9,16 +9,40 @@ import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angula
   templateUrl: './add-candidate-popup.component.html',
   styleUrls: ['./add-candidate-popup.component.scss']
 })
-export class AddCandidatePopupComponent implements OnChanges {
+export class AddCandidatePopupComponent implements OnInit, OnChanges {
   @Input() visible = false;               
   @Input() mode: 'add' | 'edit' = 'add';  
   @Input() candidateData: any = null;     
   @Output() close = new EventEmitter<void>();
+  @Output() save = new EventEmitter<any>();  // New output for save event
 
   form: FormGroup;
 
   pictureName = '';
   resumeName = '';
+
+  
+  ngOnInit() {
+    this.form = this.fb.group({
+      requisitionId: ['', Validators.required],
+      candidateName: ['', Validators.required],
+      candidateEmail: ['', [Validators.required, Validators.email]],
+      candidatePhone: ['', Validators.required],
+      appliedRole: ['', Validators.required],
+      applicationDate: ['', Validators.required],
+      totalExperience: ['', Validators.required],
+      relevantExperience: ['', Validators.required],
+      interviewRound: ['', Validators.required],
+      status: [''],
+      jobDescription: ['', Validators.required],
+      keyResponsibilities: [''],
+      uploadResume: ['', Validators.required]
+    });
+
+    if (!this.mode) {
+      this.mode = 'add';
+    }
+  }
 
   interviewRounds = [
     'Technical - T1',
@@ -137,23 +161,32 @@ export class AddCandidatePopupComponent implements OnChanges {
       this.form.markAllAsTouched();
       return;
     }
-
-    const payload: any = {
-      ...this.form.getRawValue(),
-      uploadPicture: this.pictureName || null,
-      uploadResume: this.resumeName || null
+  
+    const raw = this.form.getRawValue();
+  
+    const payload = {
+      requisitionId: raw.requisitionId,
+      name: raw.candidateName,       // map to DTO name
+      email: raw.candidateEmail,
+      phone: raw.candidatePhone,
+      appliedRole: raw.appliedRole,
+      applicationDate: raw.applicationDate,
+      totalExperience: raw.totalExperience,
+      relevantExperience: raw.relevantExperience,
+      interviewRound: raw.interviewRound,
+      status: raw.status,
+      jobDescription: raw.jobDescription,
+      keyResponsibilities: raw.keyResponsibilities,
+      skills: [],                    // optional, add from another control
+      source: '',
+      notes: '',
+      tags: '',
+      recruiterId: ''
     };
-
-    if (this.mode === 'edit') {
-      console.log('Update Candidate payload:', payload);
-    } else {
-      console.log('Save Candidate payload:', payload);
-    }
-
-    this.form.reset({ status: 'Yet to schedule T1 interview' });
-    this.resetFiles();
-    this.close.emit();
+  
+    this.save.emit(payload);
   }
+  
 
   cancel() {
     this.form.markAsPristine();

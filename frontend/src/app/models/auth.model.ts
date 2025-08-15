@@ -28,6 +28,6 @@ export interface VerifyOtpRequest {
 }
 
 export interface OtpResponse {
-  message: string;
   success: boolean;
+  message: string;
 }

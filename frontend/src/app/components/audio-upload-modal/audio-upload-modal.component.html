@@ -1,0 +1,149 @@
+<!-- Audio Upload Modal Overlay -->
+<div *ngIf="visible" class="modal-overlay" (click)="onCancel()">
+  <div class="audio-upload-modal" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <div class="header-content">
+        <i class="fas fa-microphone header-icon"></i>
+        <div class="header-text">
+          <h3>Upload Phone Screening Audio</h3>
+          <p *ngIf="candidateName" class="candidate-name">{{ candidateName }}</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="onCancel()" type="button">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()">
+        
+        <!-- File Upload Area -->
+        <div class="upload-section">
+          <div 
+            class="file-drop-zone"
+            [class.drag-over]="dragOver"
+            [class.has-file]="selectedFile"
+            (drop)="onFileDrop($event)"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+          >
+            <!-- No File Selected State -->
+            <div *ngIf="!selectedFile" class="drop-zone-content">
+              <i class="fas fa-cloud-upload-alt upload-icon"></i>
+              <h4>Choose Audio File or Drag & Drop</h4>
+              <p class="upload-instructions">
+                Select a phone screening audio clip (MP3 or WAV format)
+              </p>
+              <p class="upload-constraints">
+                Duration: 5-10 seconds • Max size: 10MB
+              </p>
+              <button type="button" class="browse-btn" (click)="fileInput.click()">
+                <i class="fas fa-folder-open"></i>
+                Browse Files
+              </button>
+            </div>
+
+            <!-- File Selected State -->
+            <div *ngIf="selectedFile" class="selected-file-info">
+              <div class="file-preview">
+                <i class="fas fa-file-audio file-icon"></i>
+                <div class="file-details">
+                  <h4 class="file-name">{{ fileName }}</h4>
+                  <p class="file-size">{{ fileSize }}</p>
+                  <div class="file-actions">
+                    <button type="button" class="remove-file-btn" (click)="removeFile()">
+                      <i class="fas fa-trash"></i>
+                      Remove
+                    </button>
+                    <button type="button" class="replace-file-btn" (click)="fileInput.click()">
+                      <i class="fas fa-exchange-alt"></i>
+                      Replace
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden File Input -->
+          <input 
+            #fileInput
+            type="file" 
+            accept=".mp3,.wav,audio/mpeg,audio/wav"
+            (change)="onFileSelected($event)"
+            style="display: none"
+          >
+        </div>
+
+        <!-- Validation Errors -->
+        <div *ngIf="validationErrors.length > 0" class="validation-errors">
+          <div class="error-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Please fix the following issues:</span>
+          </div>
+          <ul class="error-list">
+            <li *ngFor="let error of validationErrors" class="error-item">
+              {{ error }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Description Field -->
+        <div class="form-group">
+          <label for="description">Description (Optional)</label>
+          <textarea
+            id="description"
+            formControlName="description"
+            rows="2"
+            placeholder="Add a description for this audio clip..."
+            maxlength="200"
+          ></textarea>
+          <div class="char-counter">
+            {{ uploadForm.get('description')?.value?.length || 0 }}/200
+          </div>
+        </div>
+
+        <!-- Audio Format Info -->
+        <div class="format-info">
+          <div class="info-item">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>Supported formats:</strong> MP3, WAV</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-clock"></i>
+            <span><strong>Duration:</strong> 5-10 seconds recommended</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-weight-hanging"></i>
+            <span><strong>Max file size:</strong> 10MB</span>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      <button 
+        type="button" 
+        class="btn-cancel" 
+        (click)="onCancel()"
+        [disabled]="uploading"
+      >
+        Cancel
+      </button>
+      <button 
+        type="button" 
+        class="btn-upload" 
+        (click)="onSubmit()"
+        [disabled]="!selectedFile || validationErrors.length > 0 || uploading"
+      >
+        <i *ngIf="uploading" class="fas fa-spinner fa-spin"></i>
+        <i *ngIf="!uploading" class="fas fa-upload"></i>
+        {{ uploading ? 'Uploading...' : 'Upload Audio' }}
+      </button>
+    </div>
+  </div>
+</div>
+

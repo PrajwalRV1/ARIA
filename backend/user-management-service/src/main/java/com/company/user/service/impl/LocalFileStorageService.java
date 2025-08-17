@@ -16,10 +16,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LocalFileStorageService implements FileStorageService {
 
-    @Value("${files.storage.root:uploads}")
+    @Value("${file.storage.base-dir:uploads}") // filesystem base dir
+    private String baseDir;
+
+    @Value("${files.storage.root:uploads}") // root dir for URL exposure
     private String storageRoot;
 
-    @Value("${app.base-url:http://localhost:8080}")
+    @Value("${app.base-url:http://localhost:8080}") // base app URL
     private String baseUrl;
 
     private Path ensureDir(String sub) {
@@ -47,7 +50,7 @@ public class LocalFileStorageService implements FileStorageService {
         } catch (IOException e) {
             throw new FileStorageException("Failed to store file", e);
         }
-        // Expose via /uploads/** or return direct filesystem path. Here we return public URL.
+        // Return full public URL (consistent with resume/profilePic behavior)
         return baseUrl + "/" + storageRoot + "/" + sub + "/" + name;
     }
 
@@ -61,8 +64,29 @@ public class LocalFileStorageService implements FileStorageService {
         return save(file, "profile-pics");
     }
 
+    // ✅ New audio support
+    @Override
+    public String storeAudio(MultipartFile file) {
+        return save(file, "audio");
+    }
+
     @Override
     public void delete(String urlOrPath) {
-        // implement deleting filesystem file if desired
+        // implement deleting filesystem file if needed
+    }
+
+    // Legacy utility method (still available for compatibility)
+    public String storeFile(MultipartFile file, String subDir) throws IOException {
+        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String uniqueName = UUID.randomUUID().toString() + extension;
+
+        Path targetLocation = Paths.get(baseDir, subDir).toAbsolutePath().normalize();
+        Files.createDirectories(targetLocation);
+
+        Path targetFile = targetLocation.resolve(uniqueName);
+        Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
+
+        return uniqueName; // only filename (not URL)
     }
 }

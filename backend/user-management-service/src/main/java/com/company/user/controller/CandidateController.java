@@ -5,6 +5,7 @@ import com.company.user.model.CandidateStatus;
 import com.company.user.service.inter.CandidateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -104,4 +105,20 @@ public class CandidateController {
     public List<CandidateResponse> getCandidatesByRequisitionId(@PathVariable String reqId) {
         return candidateService.getCandidatesByRequisitionId(reqId);
     }
+
+    @PostMapping("/{id}/upload-audio")
+    public ResponseEntity<?> uploadAudio(
+            @PathVariable Long id,
+            @RequestParam("audio") MultipartFile audioFile) {
+        try {
+            AudioUploadResponse response = candidateService.uploadAudioFile(id, audioFile);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to upload audio: " + e.getMessage());
+        }
+    }
+
 }

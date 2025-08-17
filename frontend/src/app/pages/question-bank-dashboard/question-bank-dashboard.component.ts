@@ -342,7 +342,10 @@ export class QuestionBankDashboardComponent implements OnInit {
     
     // Load candidate info - only run this in browser
     if (isPlatformBrowser(this.platformId)) {
-      this.loadCandidateInfo();
+      // Use timeout to ensure navigation has completed
+      setTimeout(() => {
+        this.loadCandidateInfo();
+      }, 0);
     }
 
     this.initMockData();
@@ -360,26 +363,17 @@ export class QuestionBankDashboardComponent implements OnInit {
   }
 
   private loadCandidateInfo(): void {
-    // First try to get candidate from router navigation state
-    const nav = this.router.getCurrentNavigation();
-    if (nav?.extras?.state?.['candidate']) {
-      console.log('Loading candidate from navigation state:', nav.extras.state['candidate']);
-      this.candidate = nav.extras.state['candidate'];
-      // Store in sessionStorage for persistence
-      sessionStorage.setItem('selectedCandidate', JSON.stringify(this.candidate));
-      return;
-    }
-
-    // If not in navigation state, try sessionStorage
+    // Try to get candidate from sessionStorage
     try {
       const storedCandidate = sessionStorage.getItem('selectedCandidate');
       if (storedCandidate) {
         console.log('Loading candidate from sessionStorage:', storedCandidate);
         this.candidate = JSON.parse(storedCandidate);
+        console.log('Candidate loaded successfully:', this.candidate);
       } else {
-        console.warn('No candidate found in navigation state or sessionStorage');
+        console.warn('No candidate found in sessionStorage');
         // Optionally redirect back to recruiter dashboard
-        // this.router.navigate(['/recruiter-dashboard']);
+        // this.router.navigate(['/dashboard']);
       }
     } catch (error) {
       console.error('Error parsing candidate from sessionStorage:', error);

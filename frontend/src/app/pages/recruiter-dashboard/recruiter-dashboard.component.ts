@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AddCandidatePopupComponent } from '../../components/add-candidate-popup/add-candidate-popup.component';
+import { AudioUploadModalComponent } from '../../components/audio-upload-modal/audio-upload-modal.component';
 import { Router } from '@angular/router';
 import { CandidateService } from '../../services/candidate.service';
 import { INTERVIEW_ROUNDS, CANDIDATE_STATUS, STATUS_LABELS, STATUS_CLASSES } from '../../constants/candidate.constants';
@@ -16,6 +17,8 @@ interface CandidateCard {
   interviewRound?: string;
   avatar?: string;
   active?: boolean;
+  // Index signature to allow string indexing for dynamic field access
+  [key: string]: any;
 }
 
 interface Activity {
@@ -35,7 +38,7 @@ export interface CandidateNavInfo {
 @Component({
   selector: 'app-recruiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, AddCandidatePopupComponent],
+  imports: [CommonModule, FormsModule, AddCandidatePopupComponent, AudioUploadModalComponent],
   templateUrl: './recruiter-dashboard.component.html',
   styleUrls: ['./recruiter-dashboard.component.scss'],
 })
@@ -61,24 +64,53 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.candidateService.getAllCandidates().subscribe({
       next: (candidates) => {
+        console.log('Loading dashboard data:', candidates);
+        
+        // Map backend candidates to card format with proper field mapping
         this.candidates = candidates.map(c => ({
-          id: c.id,
-          name: c.name,
-          jobTitle: c.appliedRole,
-          experience: `${c.totalExperience} yrs`,
-          email: c.email,
-          phone: c.phone, // Fixed: Change from phoneNumber to phone
-          status: c.status,
-          interviewRound: c.interviewRound, // Add interview round mapping
-          requisitionId: c.requisitionId, // Fixed: Add missing mapping
-          profilePictureUrl: c.profilePicUrl || '/assets/images/default-avatar.png', // Fixed: Match backend field name
-          resumeUrl: c.resumeUrl || ''
+          id: c.id || 0,
+          name: c.name || 'Unknown',
+          jobTitle: c.appliedRole || 'N/A',
+          experience: `${c.totalExperience || 0} yrs`,
+          email: c.email || '',
+          phone: c.phone || '', // Properly mapped from backend
+          status: c.status || 'PENDING', // Ensure valid status
+          interviewRound: c.interviewRound || '', // Properly mapped interview round
+          requisitionId: c.requisitionId || '',
+          profilePictureUrl: c.profilePicUrl || '/assets/images/default-avatar.png',
+          resumeUrl: c.resumeUrl || '',
+          active: false // Default to inactive
         })) as CandidateCard[];
+        
+        console.log('Mapped candidates to cards:', this.candidates);
         this.isLoading = false;
+        
+        // Force UI update to ensure dropdowns reflect latest values
+        setTimeout(() => {
+          this.updateDropdownValues();
+        }, 100);
       },
       error: (err) => {
-        console.error('Error loading candidates', err);
+        console.error('Error loading candidates:', err);
+        this.showErrorNotification('Failed to load candidates. Please refresh the page.');
         this.isLoading = false;
+      }
+    });
+  }
+
+  // Helper method to ensure dropdown values are synchronized with data
+  private updateDropdownValues() {
+    this.candidates.forEach(candidate => {
+      // Find and update status dropdowns
+      const statusSelect = document.querySelector(`select.status-select[data-candidate-id="${candidate.id}"]`) as HTMLSelectElement;
+      if (statusSelect && statusSelect.value !== candidate.status) {
+        statusSelect.value = candidate.status;
+      }
+      
+      // Find and update interview round dropdowns
+      const roundSelect = document.querySelector(`select.round-select[data-candidate-id="${candidate.id}"]`) as HTMLSelectElement;
+      if (roundSelect && roundSelect.value !== (candidate.interviewRound || '')) {
+        roundSelect.value = candidate.interviewRound || '';
       }
     });
   }
@@ -87,6 +119,13 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   showAddCandidatePopup = false;
   popupMode: 'add' | 'edit' = 'add';
   selectedCandidate: any = null;
+  
+  // ---------- Candidate Selection for Interview Scheduling ----------
+  selectedCandidateForInterview: CandidateCard | null = null;
+  
+  // ---------- Audio Upload Modal ----------
+  showAudioUploadModal = false;
+  audioUploadCandidate: CandidateCard | null = null;
 
   openAddCandidate() {
     this.popupMode = 'add';
@@ -325,11 +364,11 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   // Method to add new candidate (useful for popup callbacks)
   addNewCandidate(newCandidate: Omit<CandidateCard, 'id'>) {
     const id = Math.max(...this.candidates.map(c => c.id), 0) + 1;
-    const candidate: CandidateCard = {
-      ...newCandidate,
+    const candidate = {
       id,
-      active: false
-    };
+      active: false,
+      ...newCandidate // Spread newCandidate after id to ensure all required properties are included
+    } as CandidateCard; // Type assertion to resolve TypeScript strict checking
 
     this.candidates.push(candidate);
     this.addActivity(`Added new candidate ${candidate.name}`, 'fas fa-user-plus');
@@ -407,18 +446,53 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     return this.candidates.filter(c => hiringStatuses.includes(c.status)).length;
   }
 
-  goToQuestionBank(candidate: any) {  // Stub for template
-    console.log('Navigating to question bank for:', candidate);
-    // Implement navigation logic (e.g., this.router.navigate([...]))
+  // Method to navigate to question bank with selected candidate details
+  goToQuestionBank() {
+    if (!this.selectedCandidateForInterview) {
+      this.showErrorNotification('Please select a candidate first before scheduling an interview.');
+      return;
+    }
+
+    const candidateNavInfo: CandidateNavInfo = {
+      fullName: this.selectedCandidateForInterview.name,
+      appliedRole: this.selectedCandidateForInterview.jobTitle,
+      requisitionId: this.selectedCandidateForInterview.requisitionId || 'N/A'
+    };
+
+    console.log('Navigating to question bank with candidate:', candidateNavInfo);
+
+    // Store candidate data in sessionStorage before navigation
+    sessionStorage.setItem('selectedCandidate', JSON.stringify(candidateNavInfo));
+    
+    // Navigate to question bank dashboard with candidate details
+    this.router.navigate(['/question-bank'], {
+      queryParams: {
+        candidateId: this.selectedCandidateForInterview.id,
+        candidateName: candidateNavInfo.fullName
+      }
+    });
+
+    // Add activity log
+    this.addActivity(`Started interview preparation for ${candidateNavInfo.fullName}`, 'fas fa-question-circle');
   }
 
   getActiveCandidate(): any {  // Stub for template
     return this.candidates.find(c => c.active) || null;
   }
 
-  selectCard(card: CandidateCard) {  // Stub for template
-    console.log('Selected card:', card);
-    // Implement card selection logic
+  // Method to select a candidate card for interview scheduling
+  selectCard(card: CandidateCard) {
+    // Deselect all cards first
+    this.candidates.forEach(c => c.active = false);
+    
+    // Select the clicked card
+    card.active = true;
+    this.selectedCandidateForInterview = card;
+    
+    console.log('Selected candidate for interview:', card.name);
+    
+    // Show a brief success notification to confirm selection
+    this.showSuccessNotification(`${card.name} selected for interview scheduling`);
   }
 
   getInitials(name: string): string {  // Stub for template
@@ -435,10 +509,15 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     return this.statusLabels[status] || status;
   }
 
-  // Enhanced status change with inline update and error handling
+  // Enhanced status change with optimistic UI updates and proper error handling
   onStatusChange(card: CandidateCard, event: Event) {
     const newStatus = (event.target as HTMLSelectElement).value;
     const oldStatus = card.status;
+    
+    // Validate that the new status is different
+    if (newStatus === oldStatus) {
+      return; // No change needed
+    }
     
     // Prevent multiple simultaneous updates for the same candidate
     if (this.pendingUpdates.has(card.id)) {
@@ -448,20 +527,25 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Immediately update UI for better UX
+    // Optimistically update UI immediately for better UX
     card.status = newStatus;
     this.pendingUpdates.add(card.id);
     
-    console.log('Status changed for', card.name, 'from', oldStatus, 'to', newStatus);
+    console.log(`Status change initiated for ${card.name}: ${oldStatus} → ${newStatus}`);
     
-    // Create minimal update payload
-    this.updateCandidateField(card, 'status', newStatus, oldStatus);
+    // Update backend with proper error handling
+    this.updateCandidateFieldOptimistically(card, 'status', newStatus, oldStatus);
   }
   
-  // Enhanced interview round change with inline update and error handling
+  // Enhanced interview round change with optimistic UI updates and proper error handling
   onInterviewRoundChange(card: CandidateCard, event: Event) {
     const newRound = (event.target as HTMLSelectElement).value;
     const oldRound = card.interviewRound || '';
+    
+    // Validate that the new round is different
+    if (newRound === oldRound) {
+      return; // No change needed
+    }
     
     // Prevent multiple simultaneous updates for the same candidate
     if (this.pendingUpdates.has(card.id)) {
@@ -471,19 +555,19 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Immediately update UI for better UX
-    (card as any).interviewRound = newRound;
+    // Optimistically update UI immediately for better UX
+    card.interviewRound = newRound;
     this.pendingUpdates.add(card.id);
     
-    console.log('Interview round changed for', card.name, 'from', oldRound, 'to', newRound);
+    console.log(`Interview round change initiated for ${card.name}: ${oldRound} → ${newRound}`);
     
-    // Create minimal update payload
-    this.updateCandidateField(card, 'interviewRound', newRound, oldRound);
+    // Update backend with proper error handling
+    this.updateCandidateFieldOptimistically(card, 'interviewRound', newRound, oldRound);
   }
   
-  // Generic method to update a single field with error handling
-  private updateCandidateField(card: CandidateCard, field: string, newValue: any, oldValue: any) {
-    // First, get complete candidate data from backend to ensure we have all required fields
+  // Optimistic update method with better error handling and user feedback
+  private updateCandidateFieldOptimistically(card: CandidateCard, field: string, newValue: any, oldValue: any) {
+    // Get complete candidate data from backend to ensure we have all required fields
     this.candidateService.getCandidateById(card.id).subscribe({
       next: (fullCandidate) => {
         // Create update payload with the changed field
@@ -492,50 +576,149 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           [field]: newValue
         };
         
+        console.log(`Sending update request for ${field}:`, updatePayload);
+        
         // Send update request
         this.candidateService.updateCandidate(card.id, updatePayload).subscribe({
           next: (response) => {
-            console.log(`Successfully updated ${field} for candidate`, card.name);
-            this.addActivity(`Updated ${card.name}'s ${field} to ${newValue}`, 'fas fa-edit');
-            this.pendingUpdates.delete(card.id);
-          },
-          error: (err) => {
-            console.error(`Error updating ${field} for candidate`, card.name, err);
+            console.log(`✅ Successfully updated ${field} for ${card.name}: ${oldValue} → ${newValue}`);
             
-            // Revert UI change on error
-            if (field === 'status') {
-              card.status = oldValue;
-            } else if (field === 'interviewRound') {
-              (card as any).interviewRound = oldValue;
+            // Ensure the card reflects the latest backend state
+            if (response && response[field] !== undefined) {
+              if (field === 'status') {
+                card.status = response[field];
+              } else if (field === 'interviewRound') {
+                card.interviewRound = response[field];
+              }
             }
             
-            // Show error message to user
-            this.showErrorNotification(`Failed to update ${field}. Please try again.`);
+            // Add activity and cleanup
+            this.addActivity(`Updated ${card.name}'s ${field} to ${this.getDisplayValue(field, newValue)}`, 'fas fa-edit');
+            this.pendingUpdates.delete(card.id);
+            
+            // Show success feedback
+            this.showSuccessNotification(`${this.getFieldDisplayName(field)} updated successfully!`);
+          },
+          error: (err) => {
+            console.error(`❌ Error updating ${field} for ${card.name}:`, err);
+            
+            // Revert optimistic UI change on error
+            this.revertFieldChange(card, field, oldValue);
+            
+            // Show user-friendly error message
+            const errorMessage = this.getErrorMessage(err, field);
+            this.showErrorNotification(errorMessage);
+            
+            // Cleanup pending state
             this.pendingUpdates.delete(card.id);
           }
         });
       },
       error: (err) => {
-        console.error('Error fetching candidate details for update:', err);
+        console.error('❌ Error fetching candidate details for update:', err);
         
-        // Revert UI change on error
-        if (field === 'status') {
-          card.status = oldValue;
-        } else if (field === 'interviewRound') {
-          (card as any).interviewRound = oldValue;
-        }
+        // Revert optimistic UI change on fetch error
+        this.revertFieldChange(card, field, oldValue);
         
-        this.showErrorNotification('Failed to fetch candidate details. Please try again.');
+        this.showErrorNotification('Failed to fetch latest candidate data. Please refresh and try again.');
         this.pendingUpdates.delete(card.id);
       }
     });
+  }
+
+  // Helper method to revert field changes
+  private revertFieldChange(card: CandidateCard, field: string, oldValue: any) {
+    if (field === 'status') {
+      card.status = oldValue;
+    } else if (field === 'interviewRound') {
+      card.interviewRound = oldValue;
+    }
+    
+    // Force UI update by finding and updating the select element
+    setTimeout(() => {
+      const selectElement = document.querySelector(`select[value="${card[field]}"]`) as HTMLSelectElement;
+      if (selectElement) {
+        selectElement.value = oldValue;
+      }
+    }, 0);
+  }
+
+  // Helper method to get user-friendly field display names
+  private getFieldDisplayName(field: string): string {
+    const fieldNames: { [key: string]: string } = {
+      'status': 'Status',
+      'interviewRound': 'Interview Round'
+    };
+    return fieldNames[field] || field;
+  }
+
+  // Helper method to get display values for fields
+  private getDisplayValue(field: string, value: any): string {
+    if (field === 'status') {
+      return this.getStatusLabel(value);
+    }
+    return value || 'Not Set';
+  }
+
+  // Helper method to extract user-friendly error messages
+  private getErrorMessage(error: any, field: string): string {
+    // If error has user-friendly message from service, use it
+    if (error.user) {
+      return error.user;
+    }
+    
+    // Fallback to status-based messages
+    if (error.status === 404) {
+      return 'Candidate not found. The record may have been deleted.';
+    } else if (error.status === 400) {
+      return `Invalid ${this.getFieldDisplayName(field).toLowerCase()} value. Please try again.`;
+    } else if (error.status === 500) {
+      return 'Server error occurred. Please try again later.';
+    } else if (error.status === 0) {
+      return 'Network error. Please check your connection.';
+    }
+    return `Failed to update ${this.getFieldDisplayName(field).toLowerCase()}. Please try again.`;
+  }
+
+  // Helper method to check if a candidate is currently being updated
+  isUpdatingCandidate(candidateId: number): boolean {
+    return this.pendingUpdates.has(candidateId);
   }
   
   // Simple error notification method (could be replaced with a proper toast/notification service)
   private showErrorNotification(message: string) {
     // For now, show in console and could be enhanced with a proper notification system
     console.error('Error notification:', message);
-    alert(message); // Temporary solution - replace with proper toast notification
+    alert(`❌ ${message}`); // Temporary solution - replace with proper toast notification
+  }
+
+  // Simple success notification method (could be replaced with a proper toast/notification service)
+  private showSuccessNotification(message: string) {
+    console.log('Success notification:', message);
+    // Show a brief success message - in a real app, this would be a toast notification
+    // For now, using a temporary approach
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      z-index: 10000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      font-family: Arial, sans-serif;
+    `;
+    notification.innerHTML = `✅ ${message}`;
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 3000);
   }
 
   editDetails(card: CandidateCard) {  // Stub for template
@@ -557,5 +740,55 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
 
   getHiredCandidates(): number {  // Added for template
     return this.getCompletedInterviews(); // Assuming hired = selected candidates
+  }
+
+  // ---------- Audio Upload Methods ----------
+  
+  // Method to open the audio upload modal for a specific candidate
+  openAudioUpload(card: CandidateCard) {
+    console.log('Opening audio upload modal for:', card.name);
+    this.audioUploadCandidate = card;
+    this.showAudioUploadModal = true;
+  }
+
+  // Method to close the audio upload modal
+  closeAudioUpload() {
+    this.showAudioUploadModal = false;
+    this.audioUploadCandidate = null;
+  }
+
+  // Method to handle audio file upload
+  onAudioUpload(payload: {candidateId: number, audioFile: File}) {
+    console.log('Audio upload initiated for candidate:', payload.candidateId);
+    console.log('Audio file:', payload.audioFile);
+    
+    // Upload the audio file using the candidate service
+    this.candidateService.uploadAudio(payload.candidateId, payload.audioFile).subscribe({
+      next: (response) => {
+        console.log('✅ Audio uploaded successfully:', response);
+        
+        // Update the candidate card if needed
+        const candidate = this.getCandidateById(payload.candidateId);
+        if (candidate) {
+          // Add activity log
+          this.addActivity(`Uploaded phone screening audio for ${candidate.name}`, 'fas fa-microphone');
+        }
+        
+        // Show success notification
+        this.showSuccessNotification('Phone screening audio uploaded successfully!');
+        
+        // Close the modal
+        this.closeAudioUpload();
+      },
+      error: (err) => {
+        console.error('❌ Error uploading audio:', err);
+        
+        // Show error notification
+        this.showErrorNotification('Failed to upload audio. Please try again.');
+        
+        // Reset upload state in the modal component (if it has this method)
+        // Note: We'll need to add a reference to the modal component for this
+      }
+    });
   }
 }

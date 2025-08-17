@@ -17,13 +17,14 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
   @Output() close = new EventEmitter<void>();
   @Output() save = new EventEmitter<any>();  // New output for save event
 
-  form: FormGroup;
+  form!: FormGroup; // Definite assignment assertion - initialized in ngOnInit
 
   pictureName = '';
   resumeName = '';
 
   
   ngOnInit() {
+    // Initialize form with proper validation and default values
     this.form = this.fb.group({
       requisitionId: ['', Validators.required],
       candidateName: ['', Validators.required],
@@ -31,18 +32,22 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
       candidatePhone: ['', Validators.required],
       appliedRole: ['', Validators.required],
       applicationDate: ['', Validators.required],
-      totalExperience: ['', Validators.required],
-      relevantExperience: ['', Validators.required],
+      totalExperience: [null, [Validators.required, Validators.min(0)]],
+      relevantExperience: [null, [Validators.required, Validators.min(0)]],
       interviewRound: ['', Validators.required],
-      status: [''],
+      status: ['PENDING'], // Default status for new candidates
       jobDescription: ['', Validators.required],
-      keyResponsibilities: [''],
-      uploadResume: ['', Validators.required]
+      keyResponsibilities: [''], // Optional field
+      uploadPicture: [null], // Optional file
+      uploadResume: [null, Validators.required] // Required file
     });
 
+    // Ensure mode is set
     if (!this.mode) {
       this.mode = 'add';
     }
+    
+    console.log('AddCandidatePopup initialized in mode:', this.mode);
   }
 
   // Use shared constants for consistency across the application
@@ -50,22 +55,7 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
   statusOptions = CANDIDATE_STATUS;
 
   constructor(private fb: FormBuilder) {
-    this.form = this.fb.group({
-      requisitionId: ['', Validators.required],
-      candidateName: ['', Validators.required],
-      candidateEmail: ['', [Validators.required, Validators.email]], // Fixed: Add missing email control
-      candidatePhone: ['', Validators.required], // Fixed: Add missing phone control
-      appliedRole: ['', Validators.required],
-      totalExperience: [null, [Validators.required, Validators.min(0)]],
-      relevantExperience: [null, [Validators.required, Validators.min(0)]],
-      interviewRound: ['', Validators.required],
-      applicationDate: ['', Validators.required],
-      status: [{ value: 'PENDING', disabled: false }], // Fixed: Use database enum value
-      uploadPicture: [null],
-      uploadResume: [null, Validators.required],
-      jobDescription: ['', Validators.required],
-      keyResponsibilities: ['']
-    });
+    // Form will be initialized in ngOnInit to avoid duplication
   }
 
   ngOnChanges(changes: SimpleChanges) {

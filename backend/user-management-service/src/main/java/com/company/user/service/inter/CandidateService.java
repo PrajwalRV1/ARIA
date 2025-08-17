@@ -4,6 +4,7 @@ import com.company.user.dto.*;
 import com.company.user.model.CandidateStatus;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,4 +28,6 @@ public interface CandidateService {
     List<CandidateResponse> getCandidatesByStatus(CandidateStatus status);
 
     List<CandidateResponse> getCandidatesByRequisitionId(String reqId);
+
+    AudioUploadResponse uploadAudioFile(Long candidateId, MultipartFile audioFile) throws IOException;
 }

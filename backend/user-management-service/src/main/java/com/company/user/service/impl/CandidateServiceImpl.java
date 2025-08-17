@@ -1,5 +1,7 @@
 package com.company.user.service.impl;
 
+import java.io.IOException;
+
 import com.company.user.dto.*;
 import com.company.user.model.Candidate;
 import com.company.user.model.CandidateStatus;
@@ -20,9 +22,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CandidateServiceImpl implements CandidateService {
 
+    private final Optional<ResumeParsingService> resumeParsingService;
     private final CandidateRepository repo;
     private final FileStorageService fileStorageService;
-    private final Optional<ResumeParsingService> resumeParsingService;
 
     @Override
     @Transactional
@@ -203,5 +205,34 @@ public class CandidateServiceImpl implements CandidateService {
                 .tags(c.getTags())
                 .recruiterId(c.getRecruiterId())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public AudioUploadResponse uploadAudioFile(Long candidateId, MultipartFile audioFile) throws IOException {
+        Candidate candidate = repo.findById(candidateId)
+                .orElseThrow(() -> new IllegalArgumentException("Candidate not found"));
+
+        // validate type
+        String contentType = audioFile.getContentType();
+        if (contentType == null ||
+                !(contentType.equals("audio/mpeg") || contentType.equals("audio/wav"))) {
+            throw new IllegalArgumentException("Invalid file type. Only MP3 and WAV allowed.");
+        }
+        // validate size (<= 10 MB)
+        if (audioFile.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("File size exceeds 10 MB limit.");
+        }
+
+        // store audio
+        String storedFilename = fileStorageService.storeAudio(audioFile);
+        String url = "/files/audio/" + storedFilename;
+
+        candidate.setAudioFilename(audioFile.getOriginalFilename());
+        candidate.setAudioUrl(url);
+        candidate.setAudioSize(audioFile.getSize());
+        repo.save(candidate);
+
+        return new AudioUploadResponse(audioFile.getOriginalFilename(), url, audioFile.getSize());
     }
 }

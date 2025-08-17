@@ -18,7 +18,7 @@
           t.key === 'upload' 
             ? openAddCandidate() 
             : t.key === 'schedule' 
-              ? goToQuestionBank(getActiveCandidate()) 
+              ? goToQuestionBank() 
               : setActiveTab(t.key)
         "
       >
@@ -101,10 +101,21 @@
                       class="round-select"
                       [value]="card.interviewRound || ''"
                       (change)="onInterviewRoundChange(card, $event)"
+                      [disabled]="isUpdatingCandidate(card.id)"
+                      [title]="isUpdatingCandidate(card.id) ? 'Updating...' : 'Select interview round'"
                     >
-                      <option value="">Select Round</option>
-                      <option *ngFor="let round of interviewRounds" [value]="round">{{ round }}</option>
+                      <option value="" [selected]="!card.interviewRound">Select Round</option>
+                      <option 
+                        *ngFor="let round of interviewRounds" 
+                        [value]="round"
+                        [selected]="card.interviewRound === round"
+                      >
+                        {{ round }}
+                      </option>
                     </select>
+                    <span *ngIf="isUpdatingCandidate(card.id)" class="updating-indicator">
+                      <i class="fas fa-spinner fa-spin"></i>
+                    </span>
                   </div>
                   
                   <!-- Status Dropdown -->
@@ -114,18 +125,27 @@
                       class="status-select"
                       [value]="card.status"
                       (change)="onStatusChange(card, $event)"
+                      [disabled]="isUpdatingCandidate(card.id)"
+                      [title]="isUpdatingCandidate(card.id) ? 'Updating...' : 'Select status'"
                     >
-                      <option *ngFor="let status of statusOptions" [value]="status">
+                      <option 
+                        *ngFor="let status of statusOptions" 
+                        [value]="status"
+                        [selected]="card.status === status"
+                      >
                         {{ getStatusLabel(status) }}
                       </option>
                     </select>
+                    <span *ngIf="isUpdatingCandidate(card.id)" class="updating-indicator">
+                      <i class="fas fa-spinner fa-spin"></i>
+                    </span>
                   </div>
                   
                   <button class="tiny-icon" 
-                          (click)="editDetails(card); $event.stopPropagation();" 
-                          title="Edit Details">
-                    <i class="fas fa-edit"></i>
-                  </button>                
+                          (click)="openAudioUpload(card); $event.stopPropagation();" 
+                          title="Upload Phone Screening Audio">
+                    <i class="fas fa-microphone"></i>
+                  </button>
                 </div>
               </div>
 
@@ -168,9 +188,14 @@
           <i class="fas fa-upload"></i>
           <span>Bulk Upload</span>
         </button>
-        <button class="full schedule-interview" (click)="scheduleInterview()">
-          <i class="fas fa-calendar-check"></i>
-          <span>Schedule Interviews</span>
+        <button 
+          class="full schedule-interview" 
+          (click)="goToQuestionBank()"
+          [disabled]="!selectedCandidateForInterview"
+          [title]="selectedCandidateForInterview ? 'Go to Question Bank for ' + selectedCandidateForInterview.name : 'Select a candidate first'"
+        >
+          <i class="fas fa-question-circle"></i>
+          <span>Schedule Interview</span>
         </button>
       </div>
 
@@ -253,6 +278,14 @@
   (save)="onCandidateSaved($event)"
 ></app-add-candidate-popup>
 
+<!-- Audio Upload Modal -->
+<app-audio-upload-modal
+  [visible]="showAudioUploadModal"
+  [candidate]="audioUploadCandidate"
+  (close)="closeAudioUpload()"
+  (upload)="onAudioUpload($event)"
+></app-audio-upload-modal>
+
 <!-- Enhanced Confirmation Modal -->
 <div *ngIf="showConfirmation" class="modal-overlay" (click)="closeConfirmation()">
   <div class="confirmation-modal" (click)="$event.stopPropagation()">
@@ -279,3 +312,12 @@
     <p>Processing...</p>
   </div>
 </div>
+
+<app-audio-upload-modal
+  [visible]="showAudioUploadModal"
+  [candidate]="audioUploadCandidate"
+  [candidateName]="audioUploadCandidate?.name || ''"
+  [candidateId]="audioUploadCandidate?.id ?? null"
+  (close)="closeAudioUpload()"
+  (upload)="onAudioUpload($event)">
+</app-audio-upload-modal>

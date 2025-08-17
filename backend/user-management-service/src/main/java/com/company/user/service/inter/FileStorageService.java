@@ -7,4 +7,5 @@ public interface FileStorageService {
     String storeResume(MultipartFile file);
     String storeProfilePic(MultipartFile file);
     void delete(String urlOrPath);
+    String storeAudio(MultipartFile audio);
 }

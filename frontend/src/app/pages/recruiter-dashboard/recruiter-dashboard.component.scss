@@ -199,6 +199,24 @@
 //   gap: 20px;
 // }
 
+// Additional styles for disabled buttons
+.full.schedule-interview {
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #ccc !important;
+    color: #666 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    
+    &:hover {
+      transform: none !important;
+      box-shadow: none !important;
+      background: #ccc !important;
+    }
+  }
+}
+
 // // Loading States
 // .loading-spinner {
 //   display: flex;

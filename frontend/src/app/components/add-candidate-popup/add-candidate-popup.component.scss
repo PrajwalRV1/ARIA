@@ -200,6 +200,133 @@ $card-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
       }
     }
 
+    // Enhanced Select Dropdown Styling
+    select {
+      appearance: none;
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232c3e50"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 16px;
+      padding-right: 2.5rem;
+      cursor: pointer;
+      
+      &:hover {
+        border-color: rgba($primary-color, 0.4);
+      }
+      
+      // Interview Round specific styling
+      &.interview-round-select {
+        border-color: rgba($info-color, 0.3);
+        
+        &:focus {
+          border-color: $info-color;
+          box-shadow: 0 0 0 3px rgba($info-color, 0.15);
+        }
+        
+        &:hover {
+          border-color: rgba($info-color, 0.5);
+        }
+        
+        // Round-specific coloring based on selected value
+        &.screening-round {
+          color: $warning-color;
+          border-color: rgba($warning-color, 0.3);
+          background: linear-gradient(135deg, rgba($warning-color, 0.02) 0%, rgba($warning-color, 0.05) 100%);
+        }
+        
+        &.technical-t1-round {
+          color: $accent-color;
+          border-color: rgba($accent-color, 0.3);
+          background: linear-gradient(135deg, rgba($accent-color, 0.02) 0%, rgba($accent-color, 0.05) 100%);
+        }
+        
+        &.technical-t2-round {
+          color: $info-color;
+          border-color: rgba($info-color, 0.3);
+          background: linear-gradient(135deg, rgba($info-color, 0.02) 0%, rgba($info-color, 0.05) 100%);
+        }
+        
+        &.hr-round {
+          color: $success-color;
+          border-color: rgba($success-color, 0.3);
+          background: linear-gradient(135deg, rgba($success-color, 0.02) 0%, rgba($success-color, 0.05) 100%);
+        }
+        
+        &.managerial-round {
+          color: #764ba2;
+          border-color: rgba(#764ba2, 0.3);
+          background: linear-gradient(135deg, rgba(#764ba2, 0.02) 0%, rgba(#764ba2, 0.05) 100%);
+        }
+      }
+      
+      // Status-specific styling for status dropdown (when applicable)
+      &.status-dropdown-select {
+        border-color: rgba($primary-color, 0.3);
+        
+        &:focus {
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+        }
+        
+        &:hover {
+          border-color: rgba($primary-color, 0.5);
+        }
+        
+        // Status-specific coloring based on selected value
+        &.status-pending {
+          color: $text-muted;
+          border-color: rgba($text-muted, 0.3);
+          background: linear-gradient(135deg, rgba($text-muted, 0.02) 0%, rgba($text-muted, 0.05) 100%);
+        }
+        
+        &.status-scheduled {
+          color: $info-color;
+          border-color: rgba($info-color, 0.3);
+          background: linear-gradient(135deg, rgba($info-color, 0.02) 0%, rgba($info-color, 0.05) 100%);
+        }
+        
+        &.status-completed {
+          color: $accent-color;
+          border-color: rgba($accent-color, 0.3);
+          background: linear-gradient(135deg, rgba($accent-color, 0.02) 0%, rgba($accent-color, 0.05) 100%);
+        }
+        
+        &.status-selected {
+          color: $success-color;
+          border-color: rgba($success-color, 0.3);
+          background: linear-gradient(135deg, rgba($success-color, 0.02) 0%, rgba($success-color, 0.05) 100%);
+        }
+        
+        &.status-rejected {
+          color: $danger-color;
+          border-color: rgba($danger-color, 0.3);
+          background: linear-gradient(135deg, rgba($danger-color, 0.02) 0%, rgba($danger-color, 0.05) 100%);
+        }
+        
+        &.status-on-hold {
+          color: $warning-color;
+          border-color: rgba($warning-color, 0.3);
+          background: linear-gradient(135deg, rgba($warning-color, 0.02) 0%, rgba($warning-color, 0.05) 100%);
+        }
+      }
+      
+      // Options styling
+      option {
+        padding: 0.5rem 0.75rem;
+        background: white;
+        color: $text-primary;
+        
+        &:first-child {
+          color: $text-muted;
+          font-style: italic;
+        }
+        
+        &:hover {
+          background: rgba($primary-color, 0.1);
+        }
+      }
+    }
+
     .error {
       color: $danger-color;
       font-size: 0.8rem;
@@ -291,6 +418,78 @@ $card-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   .actions {
     justify-content: space-between;
     padding: 0 1rem 0.75rem;
+  }
+}
+
+/* Enhanced Mobile Responsiveness for Dropdowns */
+@media (max-width: 768px) {
+  .fields-grid {
+    .field {
+      select {
+        min-height: 44px; // Better touch targets for mobile
+        font-size: 1rem; // Prevent zoom on iOS
+        padding: 0.75rem 1rem;
+        
+        &.interview-round-select {
+          // Larger touch targets for mobile
+          min-height: 48px;
+          font-size: 1rem;
+          
+          // Enhanced visual feedback on mobile
+          &:focus {
+            box-shadow: 0 0 0 4px rgba($info-color, 0.2);
+            transform: scale(1.02);
+          }
+          
+          &:active {
+            transform: scale(0.98);
+          }
+        }
+      }
+      
+      // Better spacing for mobile
+      label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+      }
+    }
+  }
+  
+  // Improve button accessibility on mobile
+  .actions {
+    .btn {
+      min-height: 44px;
+      font-size: 1rem;
+      padding: 0.75rem 1.5rem;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .popup-card {
+    margin: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
+  
+  .fields-grid {
+    gap: 0.75rem;
+    
+    .field {
+      select {
+        &.interview-round-select {
+          // Maximum accessibility for small screens
+          min-height: 52px;
+          font-size: 1.1rem;
+          padding: 1rem 1.25rem;
+          
+          // Stronger visual feedback
+          &:focus {
+            box-shadow: 0 0 0 5px rgba($info-color, 0.25);
+            border-width: 2px;
+          }
+        }
+      }
+    }
   }
 }
 

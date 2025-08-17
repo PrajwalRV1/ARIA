@@ -28,8 +28,7 @@ public class Candidate {
     @Column(nullable = false)
     private String phone;
 
-    @Column(nullable = false)
-    private String appliedRole;
+    private String appliedRole;  // Made nullable to match DB schema
 
     private LocalDate applicationDate;
 

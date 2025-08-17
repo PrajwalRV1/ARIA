@@ -47,11 +47,19 @@ public class CandidateController {
     /**
      * Update candidate (multipart)
      */
-    @PutMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CandidateResponse updateCandidate(
+            @PathVariable Long id,
             @RequestPart("data") @Valid CandidateUpdateRequest data,
             @RequestPart(value = "resume", required = false) MultipartFile resume,
             @RequestPart(value = "profilePic", required = false) MultipartFile profilePic) {
+        // Validate ID from path
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("Invalid candidate ID: " + id);
+        }
+        
+        // Set the ID from path variable (overrides any ID in the request body)
+        data.setId(id);
         return candidateService.updateCandidate(data, resume, profilePic);
     }
 

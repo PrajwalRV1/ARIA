@@ -94,17 +94,37 @@
                 </div>
                 <div class="spacer"></div>
                 <div class="status-block" (click)="$event.stopPropagation()">
-                  <select
-                    class="status-select"
-                    [value]="card.status"
-                    (change)="onStatusChange(card, $event)"
-                  >
-                    <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
-                  </select>
+                  <!-- Interview Round Dropdown -->
+                  <div class="dropdown-group">
+                    <label class="dropdown-label">Round:</label>
+                    <select
+                      class="round-select"
+                      [value]="card.interviewRound || ''"
+                      (change)="onInterviewRoundChange(card, $event)"
+                    >
+                      <option value="">Select Round</option>
+                      <option *ngFor="let round of interviewRounds" [value]="round">{{ round }}</option>
+                    </select>
+                  </div>
+                  
+                  <!-- Status Dropdown -->
+                  <div class="dropdown-group">
+                    <label class="dropdown-label">Status:</label>
+                    <select
+                      class="status-select"
+                      [value]="card.status"
+                      (change)="onStatusChange(card, $event)"
+                    >
+                      <option *ngFor="let status of statusOptions" [value]="status">
+                        {{ getStatusLabel(status) }}
+                      </option>
+                    </select>
+                  </div>
+                  
                   <button class="tiny-icon" 
                           (click)="editDetails(card); $event.stopPropagation();" 
-                          title="Schedule Interview">
-                    <i class="fas fa-calendar-plus"></i>
+                          title="Edit Details">
+                    <i class="fas fa-edit"></i>
                   </button>                
                 </div>
               </div>

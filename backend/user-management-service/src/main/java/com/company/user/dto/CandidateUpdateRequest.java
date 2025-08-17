@@ -8,12 +8,12 @@ import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class CandidateUpdateRequest {
-    @NotNull private Long id;
+    private Long id; // ID is set from path variable in controller, so not validated here
     @NotBlank private String requisitionId;
     @NotBlank private String name;
     @Email @NotBlank private String email;
     @NotBlank private String phone;
-    @NotBlank private String appliedRole;
+    private String appliedRole; // Made optional to match DB schema
     private LocalDate applicationDate;
     @PositiveOrZero private Double totalExperience;
     @PositiveOrZero private Double relevantExperience;

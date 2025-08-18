@@ -1,0 +1,350 @@
+# ARIA Platform - .gitignore
+
+# Environment and configuration files
+.env
+.env.local
+.env.development
+.env.staging
+.env.production
+.env.test
+
+# Secrets and API keys
+secrets/
+api-keys/
+certificates/
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+
+# Docker and container data
+.docker/
+docker-data/
+volumes/
+data/mysql/
+data/redis/
+logs/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js and npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm
+.eslintcache
+.node_repl_history
+*.tgz
+.yarn-integrity
+.pnp.*
+.pnp.js
+
+# Angular
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+frontend/e2e/reports/
+frontend/tmp/
+frontend/.sass-cache/
+
+# Java and Maven
+backend/*/target/
+backend/*/.mvn/wrapper/maven-wrapper.jar
+backend/*/.mvn/wrapper/maven-wrapper.properties
+backend/*/mvnw
+backend/*/mvnw.cmd
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Python
+ai-services/*/venv/
+ai-services/*/__pycache__/
+ai-services/*/*.pyc
+ai-services/*/*.pyo
+ai-services/*/*.pyd
+ai-services/*/.Python
+ai-services/*/build/
+ai-services/*/develop-eggs/
+ai-services/*/dist/
+ai-services/*/downloads/
+ai-services/*/eggs/
+ai-services/*/.eggs/
+ai-services/*/lib/
+ai-services/*/lib64/
+ai-services/*/parts/
+ai-services/*/sdist/
+ai-services/*/var/
+ai-services/*/wheels/
+ai-services/*/share/python-wheels/
+ai-services/*/*.egg-info/
+ai-services/*/.installed.cfg
+ai-services/*/MANIFEST
+ai-services/*/.pytest_cache/
+ai-services/*/cover/
+ai-services/*/htmlcov/
+ai-services/*/.tox/
+ai-services/*/.nox/
+ai-services/*/.coverage
+ai-services/*/.coverage.*
+ai-services/*/.cache
+ai-services/*/nosetests.xml
+ai-services/*/coverage.xml
+ai-services/*/*.cover
+ai-services/*/*.py,cover
+ai-services/*/.hypothesis/
+
+# Machine Learning models and data
+models/
+datasets/
+*.h5
+*.pkl
+*.model
+*.weights
+checkpoints/
+tensorboard_logs/
+
+# Audio and video files (except samples)
+recordings/
+audio-cache/
+video-cache/
+uploads/
+*.wav
+*.mp3
+*.mp4
+*.avi
+*.mov
+*.webm
+!samples/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*~
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Test output
+test-results/
+test-reports/
+coverage/
+junit.xml
+*.lcov
+
+# Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Redis dump files
+dump.rdb
+
+# Monitoring and metrics data
+prometheus_data/
+grafana_data/
+loki_data/
+
+# WebRTC TURN server
+coturn.log
+turn_*.log
+
+# Infrastructure generated files
+infrastructure/nginx/ssl/generated/
+infrastructure/certificates/generated/
+
+# Documentation build output
+docs/_build/
+docs/.doctrees/
+
+# Application logs
+application.log
+application-*.log
+*.log
+
+# Spring Boot specific
+backend/*/HELP.md
+backend/*/spring-boot-starter-*.jar
+
+# FastAPI specific
+ai-services/*/alembic/versions/*.py
+!ai-services/*/alembic/versions/README.md
+
+# Frontend build artifacts
+frontend/www/
+frontend/platforms/
+frontend/plugins/
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# Temporary files created by editors
+*~
+.#*
+#*#
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Ignore all logfiles
+*.log
+
+# Dependency directories
+jspm_packages/
+
+# Snowpack dependency directory (https://snowpack.dev/)
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Rollup.js default build output
+dist/
+
+# Uncomment if you have tasks that create the project's static files in wwwroot
+#wwwroot/
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# JetBrains IDEs
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# User-specific stuff
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
+
+# AWS User-specific
+.idea/**/aws.xml
+
+# Generated files
+.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
+
+# Project-specific patterns
+test-data/audio/
+test-data/video/
+sample-interviews/
+candidate-uploads/

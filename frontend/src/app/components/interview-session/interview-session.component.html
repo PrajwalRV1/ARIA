@@ -1,0 +1,298 @@
+<div class="interview-session-container" *ngIf="!isLoading">
+  <!-- Header Bar -->
+  <div class="header-bar">
+    <div class="session-info">
+      <h2>AI Interview Session</h2>
+      <span class="session-id">ID: {{sessionId}}</span>
+    </div>
+    
+    <div class="status-indicators">
+      <div class="connection-status" [ngClass]="connectionQuality">
+        <i class="icon-connection"></i>
+        {{connectionStatus}}
+      </div>
+      
+      <div class="timer">
+        <i class="icon-clock"></i>
+        {{formattedTimeElapsed}}
+      </div>
+      
+      <div class="progress">
+        <span>Progress: {{questionsAnswered}}/{{session?.maxQuestions || '?'}}</span>
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="progressPercentage"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <button *ngIf="!isInterviewStarted" 
+              class="btn btn-primary" 
+              (click)="startInterview()">
+        Start Interview
+      </button>
+      
+      <button *ngIf="isInterviewStarted && !isInterviewEnded" 
+              class="btn btn-danger" 
+              (click)="endInterview()">
+        End Interview
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Left Panel - Video and Controls -->
+    <div class="left-panel">
+      <!-- Video Container -->
+      <div class="video-container">
+        <!-- Remote Video (AI Interviewer) -->
+        <div class="remote-video-wrapper">
+          <video #remoteVideo 
+                 class="remote-video" 
+                 autoplay 
+                 playsinline>
+          </video>
+          <div class="video-overlay">
+            <span class="ai-label">AI Interviewer</span>
+          </div>
+        </div>
+        
+        <!-- Local Video (Candidate) -->
+        <div class="local-video-wrapper">
+          <video #localVideo 
+                 class="local-video" 
+                 autoplay 
+                 muted 
+                 playsinline>
+          </video>
+          <div class="video-controls">
+            <button class="control-btn" 
+                    [class.disabled]="!isVideoEnabled"
+                    (click)="toggleVideo()"
+                    title="Toggle Camera">
+              <i class="icon-camera" [class.off]="!isVideoEnabled"></i>
+            </button>
+            
+            <button class="control-btn" 
+                    [class.disabled]="!isAudioEnabled"
+                    (click)="toggleAudio()"
+                    title="Toggle Microphone">
+              <i class="icon-microphone" [class.off]="!isAudioEnabled"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Current Question Display -->
+      <div class="question-display" *ngIf="currentQuestion">
+        <div class="question-header">
+          <h3>Question {{currentQuestionIndex + 1}}</h3>
+          <span class="question-type badge">{{currentQuestion.question_type}}</span>
+          <span *ngIf="currentQuestion.difficulty" 
+                class="difficulty badge">
+            Difficulty: {{currentQuestion.difficulty | number:'1.1-1'}}
+          </span>
+        </div>
+        
+        <div class="question-content">
+          <p [innerHTML]="currentQuestion.question_text"></p>
+          
+          <div *ngIf="currentQuestion.coding_required" class="coding-info">
+            <div class="language-selector">
+              <label>Programming Language:</label>
+              <select [(ngModel)]="currentLanguage" 
+                      (change)="updateEditorLanguage(currentLanguage)">
+                <option value="typescript">TypeScript</option>
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="csharp">C#</option>
+                <option value="cpp">C++</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="question-metadata">
+            <span class="duration-estimate">
+              Expected Duration: {{currentQuestion.expected_duration_minutes}} min
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Spacebar Instruction -->
+      <div class="spacebar-instruction" *ngIf="isInterviewStarted && !spacebarPressed">
+        <div class="instruction-card">
+          <i class="icon-spacebar"></i>
+          <p><strong>Press SPACEBAR</strong> when you finish your response</p>
+          <small>This will signal the end of your answer and sync your code/chat to the transcript</small>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Center Panel - Code Editor and Chat -->
+    <div class="center-panel">
+      <!-- Panel Toggle Controls -->
+      <div class="panel-controls">
+        <button class="panel-toggle" 
+                [class.active]="showCodeEditor"
+                (click)="toggleCodeEditor()"
+                title="Toggle Code Editor">
+          <i class="icon-code"></i>
+          Code
+        </button>
+        
+        <button class="panel-toggle" 
+                [class.active]="showChat"
+                (click)="toggleChat()"
+                title="Toggle Chat">
+          <i class="icon-chat"></i>
+          Chat
+        </button>
+        
+        <button class="panel-toggle" 
+                [class.active]="showTranscript"
+                (click)="toggleTranscript()"
+                title="Toggle Transcript">
+          <i class="icon-transcript"></i>
+          Transcript
+        </button>
+      </div>
+      
+      <!-- Code Editor -->
+      <div class="code-editor-container" 
+           *ngIf="showCodeEditor" 
+           [style.height]="showChat ? '60%' : '100%'">
+        <div class="editor-header">
+          <span class="editor-title">Code Editor</span>
+          <span class="language-indicator">{{currentLanguage}}</span>
+          <small class="shortcut-hint">Ctrl+Enter to submit</small>
+        </div>
+        <div #monacoEditor class="monaco-editor"></div>
+      </div>
+      
+      <!-- Chat Interface -->
+      <div class="chat-container" 
+           *ngIf="showChat"
+           [style.height]="showCodeEditor ? '40%' : '100%'">
+        <div class="chat-header">
+          <span class="chat-title">Chat</span>
+          <small class="chat-hint">Type additional thoughts or questions</small>
+        </div>
+        
+        <div class="chat-messages">
+          <div *ngFor="let message of chatMessages" 
+               class="chat-message"
+               [ngClass]="message.sender">
+            <span class="timestamp">{{message.timestamp | date:'HH:mm:ss'}}</span>
+            <span class="message-text">{{message.text}}</span>
+          </div>
+        </div>
+        
+        <div class="chat-input">
+          <input type="text" 
+                 [(ngModel)]="currentChatMessage"
+                 (keyup.enter)="onChatMessageSend()"
+                 placeholder="Type your message..."
+                 class="chat-text-input">
+          <button (click)="onChatMessageSend()" 
+                  class="send-btn"
+                  [disabled]="!currentChatMessage.trim()">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right Panel - Transcript -->
+    <div class="right-panel" *ngIf="showTranscript">
+      <div class="transcript-container">
+        <div class="transcript-header">
+          <h3>Live Transcript</h3>
+          <small>Real-time speech, code, and chat sync</small>
+        </div>
+        
+        <div #transcriptContainer class="transcript-content">
+          <div *ngIf="!transcriptText" class="no-transcript">
+            <i class="icon-microphone"></i>
+            <p>Transcript will appear here as you speak...</p>
+          </div>
+          
+          <pre *ngIf="transcriptText" class="transcript-text">{{transcriptText}}</pre>
+        </div>
+        
+        <div class="transcript-stats">
+          <small>{{fullTranscript.length}} segments captured</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Response Status Indicator -->
+  <div class="response-status" 
+       *ngIf="responseStartTime && !responseEndTime"
+       class="recording-indicator">
+    <div class="recording-pulse"></div>
+    <span>Recording response...</span>
+  </div>
+  
+  <!-- Spacebar Pressed Feedback -->
+  <div class="spacebar-feedback" 
+       *ngIf="spacebarPressed"
+       [@fadeInOut]>
+    <div class="feedback-card">
+      <i class="icon-check"></i>
+      <span>Response submitted successfully!</span>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Screen -->
+<div class="loading-container" *ngIf="isLoading">
+  <div class="loading-content">
+    <div class="loading-spinner"></div>
+    <h3>Initializing Interview Session...</h3>
+    <p>Setting up video connection and AI systems</p>
+  </div>
+</div>
+
+<!-- Interview Ended Screen -->
+<div class="interview-ended" *ngIf="isInterviewEnded">
+  <div class="ended-content">
+    <i class="icon-check-circle"></i>
+    <h2>Interview Completed</h2>
+    <p>Thank you for participating in the AI interview!</p>
+    <button class="btn btn-primary" (click)="router.navigate(['/dashboard'])">
+      Return to Dashboard
+    </button>
+  </div>
+</div>
+
+<!-- Keyboard Shortcuts Help -->
+<div class="shortcuts-help" 
+     *ngIf="!isLoading"
+     title="Keyboard Shortcuts">
+  <div class="shortcut-list">
+    <div class="shortcut-item">
+      <kbd>Space</kbd>
+      <span>End response</span>
+    </div>
+    <div class="shortcut-item">
+      <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+      <span>Submit code</span>
+    </div>
+    <div class="shortcut-item">
+      <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>T</kbd>
+      <span>Toggle transcript</span>
+    </div>
+    <div class="shortcut-item">
+      <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>
+      <span>Toggle video</span>
+    </div>
+    <div class="shortcut-item">
+      <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>A</kbd>
+      <span>Toggle audio</span>
+    </div>
+  </div>
+</div>

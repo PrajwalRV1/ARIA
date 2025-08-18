@@ -221,7 +221,7 @@ public class CandidateServiceImpl implements CandidateService {
         }
         // validate size (<= 10 MB)
         if (audioFile.getSize() > 10 * 1024 * 1024) {
-            throw new IllegalArgumentException("File size exceeds 10 MB limit.");
+            throw new IllegalArgumentException("Audio file exceeds 10MB limit");
         }
 
         // store audio

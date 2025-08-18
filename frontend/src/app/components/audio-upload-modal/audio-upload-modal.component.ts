@@ -26,7 +26,7 @@ export class AudioUploadModalComponent {
   // Audio validation constraints
   readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   readonly MIN_DURATION = 5; // seconds
-  readonly MAX_DURATION = 10; // seconds
+  readonly MAX_DURATION = 500; // seconds
   readonly ALLOWED_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav'];
   readonly ALLOWED_EXTENSIONS = ['.mp3', '.wav'];
 

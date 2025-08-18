@@ -12,6 +12,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -106,19 +107,16 @@ public class CandidateController {
         return candidateService.getCandidatesByRequisitionId(reqId);
     }
 
+    /**
+     * Upload audio file for a candidate
+     */
     @PostMapping("/{id}/upload-audio")
-    public ResponseEntity<?> uploadAudio(
+    public ResponseEntity<AudioUploadResponse> uploadAudio(
             @PathVariable Long id,
-            @RequestParam("audio") MultipartFile audioFile) {
-        try {
-            AudioUploadResponse response = candidateService.uploadAudioFile(id, audioFile);
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to upload audio: " + e.getMessage());
-        }
+            @RequestParam("audio") MultipartFile audioFile) throws IOException {
+        
+        AudioUploadResponse response = candidateService.uploadAudioFile(id, audioFile);
+        return ResponseEntity.ok(response);
     }
 
 }

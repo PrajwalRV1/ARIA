@@ -5,6 +5,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -37,6 +38,25 @@ public class GlobalExceptionHandler {
                 .path(req.getDescription(false))
                 .build();
         return ResponseEntity.badRequest().body(err);
+    }
+
+    /**
+     * Handle MaxUploadSizeExceededException for file uploads that exceed Spring's configured limits
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex, 
+            WebRequest req) {
+        
+        ApiError err = ApiError.builder()
+                .timestamp(Instant.now())
+                .status(HttpStatus.PAYLOAD_TOO_LARGE.value())
+                .error("Payload Too Large")
+                .message("Audio file exceeds 10MB limit")
+                .path(req.getDescription(false))
+                .build();
+        
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(err);
     }
 
     @ExceptionHandler(Exception.class)

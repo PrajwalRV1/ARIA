@@ -8,7 +8,7 @@ import * as monaco from 'monaco-editor';
 
 // Services
 import { InterviewService } from '../../services/interview.service';
-import { WebRTCService } from '../../services/webrtc.service';
+import { WebrtcService } from '../../services/webrtc.service';
 import { TranscriptService } from '../../services/transcript.service';
 
 // Models

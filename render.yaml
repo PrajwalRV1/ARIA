@@ -4,8 +4,8 @@ services:
     name: aria-frontend
     runtime: node
     plan: free
-    buildCommand: cd frontend && npm ci && npm run build
-    startCommand: cd frontend && npm run serve:ssr:frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm run serve:ssr:frontend
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
@@ -20,8 +20,8 @@ services:
     name: aria-speech-service
     runtime: python
     plan: free
-    buildCommand: cd speech-service && pip install -r requirements.txt
-    startCommand: cd speech-service && python main.py
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: PORT
@@ -36,8 +36,8 @@ services:
     name: aria-adaptive-engine
     runtime: python
     plan: free
-    buildCommand: cd adaptive-engine && pip install -r requirements.txt
-    startCommand: cd adaptive-engine && python main.py
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: PORT
@@ -52,8 +52,8 @@ services:
     name: aria-analytics-service
     runtime: python
     plan: free
-    buildCommand: cd ai-services/analytics-service && pip install -r requirements.txt
-    startCommand: cd ai-services/analytics-service && python main.py
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: PORT
@@ -62,38 +62,6 @@ services:
         value: .
     autoDeploy: true
     rootDir: ai-services/analytics-service
-
-  # Test Orchestrator (Python)
-  - type: web
-    name: aria-test-orchestrator
-    runtime: python
-    plan: free
-    buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && python test-orchestrator.py
-    healthCheckPath: /health
-    envVars:
-      - key: PORT
-        value: 8004
-      - key: PYTHONPATH
-        value: .
-    autoDeploy: true
-    rootDir: backend
-
-  # Test Service (Python)
-  - type: web
-    name: aria-test-service
-    runtime: python
-    plan: free
-    buildCommand: cd backend && pip install -r requirements.txt
-    startCommand: cd backend && python test-service.py
-    healthCheckPath: /health
-    envVars:
-      - key: PORT
-        value: 8005
-      - key: PYTHONPATH
-        value: .
-    autoDeploy: true
-    rootDir: backend
 
 databases:
   # Optional: PostgreSQL database (can use Supabase instead)

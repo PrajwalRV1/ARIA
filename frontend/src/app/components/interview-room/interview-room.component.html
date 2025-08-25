@@ -1,0 +1,158 @@
+<!-- Interview Room Container -->
+<div class="interview-container" (keydown)="onKeyboardEvent($event)">
+  <!-- Header -->
+  <header class="interview-header">
+    <div class="header-left">
+      <h1 class="company-logo">51</h1>
+    </div>
+    <div class="header-center">
+      <span class="status-indicator" [class.recording]="isRecording">
+        {{ isRecording ? 'LIVE' : 'STOPPED' }}
+      </span>
+    </div>
+    <div class="header-right">
+      <span class="session-id">Session: {{ sessionId }}</span>
+    </div>
+  </header>
+
+  <!-- Main Interview Area -->
+  <div class="interview-main">
+    <!-- Left Panel - Video and Controls -->
+    <div class="left-panel">
+      <!-- Video Area -->
+      <div class="video-container">
+        <!-- Jitsi Meet Video Call Container -->
+        <div #jitsiContainer 
+             id="jitsi-meet-container" 
+             class="jitsi-video-container"
+             *ngIf="isConnected">
+          <!-- Jitsi Meet iframe will be inserted here -->
+        </div>
+        
+        <!-- Fallback/Local Video (shown when not connected to meeting) -->
+        <div class="local-video-fallback" *ngIf="!isConnected">
+          <video #localVideo 
+                 class="candidate-video" 
+                 autoplay 
+                 muted 
+                 playsinline>
+          </video>
+          <div class="connection-status">
+            <div class="status-message">{{ meetingLink ? 'Connecting to video call...' : 'Waiting for meeting link...' }}</div>
+            <div class="connection-spinner" *ngIf="meetingLink"></div>
+          </div>
+        </div>
+        
+        <div class="video-overlay">
+          <div class="candidate-info">
+            <span class="candidate-name">{{ candidateName }}</span>
+            <span class="candidate-role">{{ session?.jobRole || 'Candidate' }}</span>
+          </div>
+          <!-- Meeting Status Indicator -->
+          <div class="meeting-status" [class.connected]="isConnected">
+            <i class="fas fa-video" *ngIf="isConnected"></i>
+            <i class="fas fa-video-slash" *ngIf="!isConnected"></i>
+            <span>{{ isConnected ? 'Connected' : 'Disconnected' }}</span>
+          </div>
+        </div>
+        
+        <!-- AI Avatar Circle -->
+        <div class="ai-avatar">
+          <span class="avatar-initials">AI</span>
+        </div>
+      </div>
+
+      <!-- Control Panel -->
+      <div class="control-panel">
+        <div class="timer-display">{{ timer }}</div>
+        <div class="control-buttons">
+          <button class="control-btn" 
+                  (click)="toggleMicrophone()"
+                  [attr.aria-label]="isMicrophoneEnabled ? 'Mute microphone' : 'Unmute microphone'">
+            <i class="fas" [class.fa-microphone]="isMicrophoneEnabled" [class.fa-microphone-slash]="!isMicrophoneEnabled"></i>
+          </button>
+          <button class="control-btn" 
+                  (click)="toggleCamera()"
+                  [attr.aria-label]="isCameraEnabled ? 'Turn off camera' : 'Turn on camera'">
+            <i class="fas" [class.fa-video]="isCameraEnabled" [class.fa-video-slash]="!isCameraEnabled"></i>
+          </button>
+          
+          <!-- Candidate Controls -->
+          <div *ngIf="isCandidate()" class="candidate-controls">
+            <button class="control-btn end-response" 
+                    (click)="endResponse()"
+                    [disabled]="!canSubmitResponse()"
+                    [class.processing]="isSubmittingResponse || isProcessingAction"
+                    [attr.aria-label]="'Submit current response'">
+              {{ getResponseButtonText() }}
+            </button>
+          </div>
+          
+          <!-- Recruiter Controls removed: Recruiter is a proctor only; AI drives the interview flow automatically -->
+        </div>
+        
+        <!-- Cheat Detection Alerts (Recruiter Only) -->
+        <div *ngIf="isRecruiter()" class="cheat-detection-section">
+          <app-cheat-detection-alerts></app-cheat-detection-alerts>
+        </div>
+        
+        <div class="control-icons">
+          <button class="icon-btn">
+            <i class="fas fa-info-circle"></i>
+          </button>
+          <button class="icon-btn">
+            <i class="fas fa-users"></i>
+          </button>
+          <button class="icon-btn">
+            <i class="fas fa-envelope"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Enhanced Transcript (Alex AI Style) -->
+    <div class="right-panel">
+      <!-- Current Task/Question (Above transcript) -->
+      <div class="current-question-box" *ngIf="currentTask">
+        <div class="question-header">
+          <i class="fas fa-question-circle"></i>
+          <span>Current Question</span>
+        </div>
+        <div class="question-text">{{ currentTask }}</div>
+      </div>
+      
+      <!-- Enhanced Transcript Component -->
+      <app-enhanced-transcript 
+        [sessionId]="sessionId"
+        [isRecruiterView]="isRecruiter()"
+        [enableErrorCorrection]="isRecruiter()"
+        [realTimeUpdates]="true"
+        (errorReported)="onTranscriptError($event)"
+        (correctionSubmitted)="onTranscriptCorrectionSubmitted($event)"
+        (transcriptExported)="onTranscriptExported($event)"
+        class="chat-style-transcript">
+      </app-enhanced-transcript>
+      
+      <!-- Code Editor Area (Below transcript) -->
+      <div class="code-editor-container" *ngIf="currentQuestion?.coding_required || currentTask.includes('code')">
+        <div class="code-editor-header">
+          <span class="editor-title">{{ getCodeEditorTitle() }}</span>
+          <span class="editor-status">Ready</span>
+        </div>
+        <textarea #codeEditor 
+                  class="code-editor" 
+                  [(ngModel)]="codeContent" 
+                  (input)="onCodeChange()"
+                  [placeholder]="getCodePlaceholder()"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-overlay" *ngIf="!isInterviewStarted">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <p>Connecting to interview session...</p>
+  </div>
+</div>

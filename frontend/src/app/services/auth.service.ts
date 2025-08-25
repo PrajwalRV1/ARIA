@@ -1,7 +1,7 @@
-// src/app/services/auth.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subscription, timer, Subject } from 'rxjs';
+import { Observable, Subscription, timer, Subject, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import {
@@ -24,7 +24,11 @@ export class AuthService {
   sessionExpiring$ = new Subject<number>(); // emits seconds left
   sessionExtended$ = new Subject<void>(); // emits after refresh success
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   login(payload: LoginRequest): Observable<AuthResponse> {
     return this.http
@@ -46,50 +50,60 @@ export class AuthService {
   }
 
   refreshSession(): Observable<AuthResponse> {
+    if (isPlatformBrowser(this.platformId)) {
     const refreshToken = localStorage.getItem('refresh_token');
-    if (!refreshToken) {
-      this.forceLogout();
-      throw new Error('No refresh token available');
+      if (!refreshToken) {
+        this.forceLogout();
+        throw new Error('No refresh token available');
+      }
+  
+      return this.http
+        .post<AuthResponse>(`${this.baseUrl}/refresh-token`, { refreshToken })
+        .pipe(
+          tap((res) => {
+            this.storeTokens(res);
+            this.sessionExtended$.next(); // notify popup/UI
+          })
+        );
     }
-
-    return this.http
-      .post<AuthResponse>(`${this.baseUrl}/refresh-token`, { refreshToken })
-      .pipe(
-        tap((res) => {
-          this.storeTokens(res);
-          this.sessionExtended$.next(); // notify popup/UI
-        })
-      );
+    return of({} as AuthResponse);
   }
 
   isAuthenticated(): boolean {
+    if (isPlatformBrowser(this.platformId)) {
     const token = localStorage.getItem('auth_token');
-    if (!token) return false;
-
-    const payload = this.decodeToken(token);
-    if (!payload?.exp) {
-      this.forceLogout();
-      return false;
+      if (!token) return false;
+  
+      const payload = this.decodeToken(token);
+      if (!payload?.exp) {
+        this.forceLogout();
+        return false;
+      }
+  
+      if (Date.now() >= payload.exp * 1000) {
+        return false;
+      }
+      return true;
     }
-
-    if (Date.now() >= payload.exp * 1000) {
-      return false;
-    }
-    return true;
+    return false;
   }
 
   logout(): void {
+    if (isPlatformBrowser(this.platformId)) {
     localStorage.removeItem('auth_token');
-    localStorage.removeItem('refresh_token');
-    this.clearTimers();
+      localStorage.removeItem('refresh_token');
+      this.clearTimers();
+    }
   }
 
   private storeTokens(res: AuthResponse): void {
+    if (isPlatformBrowser(this.platformId)) {
     localStorage.setItem('auth_token', res.token);
-    if (res.refreshToken) {
-      localStorage.setItem('refresh_token', res.refreshToken);
+      if (res.refreshToken) {
+        localStorage.setItem('refresh_token', res.refreshToken);
+      }
+      this.startTokenTimer(res.token);
     }
-    this.startTokenTimer(res.token);
   }
 
   private forceLogout(): void {
@@ -147,26 +161,27 @@ export class AuthService {
   }
 
   initAuthTimer(): void {
+    if (isPlatformBrowser(this.platformId)) {
     const token = localStorage.getItem('auth_token');
-    if (token) {
-      this.startTokenTimer(token);
+      if (token) {
+        this.startTokenTimer(token);
+      }
     }
   }
 
   // Add these methods inside AuthService
   sendOtp(payload: SendOtpRequest): Observable<OtpResponse> {
-    // TODO: Replace with actual backend endpoint from environment
     return this.http.post<OtpResponse>(
-      `${environment.apiBaseUrl}/auth/send-otp`, // <-- replace when backend ready
+      `${this.baseUrl}/send-otp`,
       payload
     );
   }
 
   verifyOtp(payload: VerifyOtpRequest): Observable<OtpResponse> {
-    // TODO: Replace with actual backend endpoint from environment
     return this.http.post<OtpResponse>(
-      `${environment.apiBaseUrl}/auth/verify-otp`, // <-- replace when backend ready
+      `${this.baseUrl}/verify-otp`,
       payload
     );
   }
 }
+

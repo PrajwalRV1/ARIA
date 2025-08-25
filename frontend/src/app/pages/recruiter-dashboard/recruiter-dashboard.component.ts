@@ -5,6 +5,8 @@ import { AddCandidatePopupComponent } from '../../components/add-candidate-popup
 import { AudioUploadModalComponent } from '../../components/audio-upload-modal/audio-upload-modal.component';
 import { Router } from '@angular/router';
 import { CandidateService } from '../../services/candidate.service';
+import { InterviewService, InterviewScheduleRequest } from '../../services/interview.service';
+import { SessionService } from '../../services/session.service';
 import { INTERVIEW_ROUNDS, CANDIDATE_STATUS, STATUS_LABELS, STATUS_CLASSES } from '../../constants/candidate.constants';
 
 interface CandidateCard {
@@ -43,7 +45,12 @@ export interface CandidateNavInfo {
   styleUrls: ['./recruiter-dashboard.component.scss'],
 })
 export class RecruiterDashboardComponent implements OnInit, OnDestroy {
-  constructor(private router: Router, private candidateService: CandidateService) { }
+  constructor(
+    private router: Router, 
+    private candidateService: CandidateService,
+    private interviewService: InterviewService,
+    private sessionService: SessionService
+  ) { }
 
   ngOnInit() {
     // Simulate loading data
@@ -417,13 +424,401 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     this.addActivity('Exported candidates data', 'fas fa-download');
   }
 
-  // ---------- Schedule Interview Simulation ----------
-  public scheduleInterview() {  // Changed from private to public
+  // ---------- Schedule Interview Implementation ----------
+  public scheduleInterview() {
+    if (!this.selectedCandidateForInterview) {
+      this.showErrorNotification('Please select a candidate first before scheduling an interview.');
+      return;
+    }
+
+    // Show scheduling options modal
+    this.showSchedulingOptionsModal();
+  }
+
+  // ---------- Interview Scheduling Modal Implementation ----------
+  showSchedulingModal = false;
+  showDateTimeModal = false;
+  selectedScheduleTime: string = '';
+  isSchedulingNow = false;
+
+  private showSchedulingOptionsModal() {
+    this.showSchedulingModal = true;
+  }
+
+  closeSchedulingModal() {
+    this.showSchedulingModal = false;
+    this.showDateTimeModal = false;
+    this.selectedScheduleTime = '';
+  }
+
+  scheduleNow() {
+    this.isSchedulingNow = true;
+    this.closeSchedulingModal();
+    
+    // Schedule interview 5 minutes from now to ensure it's in the future
+    // This provides enough buffer for backend validation while keeping it immediate
+    const futureTime = new Date();
+    futureTime.setMinutes(futureTime.getMinutes() + 5);
+    
+    console.log('🕐 Schedule Now - Current time (local):', new Date().toLocaleString());
+    console.log('🕐 Schedule Now - Current time (UTC):', new Date().toISOString());
+    console.log('🕐 Schedule Now - Future time (local):', futureTime.toLocaleString());
+    console.log('🕐 Schedule Now - Future time (UTC):', futureTime.toISOString());
+    console.log('🌍 Browser timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+    
+    this.processInterviewScheduling(futureTime);
+  }
+
+  scheduleForLater() {
+    this.showDateTimeModal = true;
+  }
+
+  confirmScheduleForLater() {
+    if (!this.selectedScheduleTime) {
+      this.showErrorNotification('Please select a date and time for the interview.');
+      return;
+    }
+
+    // Parse datetime-local input as local time, not UTC
+    const scheduleDate = new Date(this.selectedScheduleTime);
+    const now = new Date();
+    
+    // Check if selected time is at least 5 minutes in the future
+    const minimumFutureTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes from now
+    if (scheduleDate <= minimumFutureTime) {
+      this.showErrorNotification('Please select a time at least 5 minutes in the future.');
+      return;
+    }
+
+    // Remove excessive timezone buffer - send the selected time as-is
+    // The backend should handle timezone conversion properly
+    console.log('Selected time (local):', scheduleDate.toLocaleString());
+    console.log('Selected time (ISO):', scheduleDate.toISOString());
+    
+    this.closeSchedulingModal();
+    this.processInterviewScheduling(scheduleDate);
+  }
+
+  /**
+   * Converts scheduled time to local datetime string format for backend
+   * Backend expects LocalDateTime which should be in server timezone
+   */
+  private adjustScheduledTime(selectedTime: Date): string {
+    // Format as YYYY-MM-DDTHH:mm:ss without timezone info
+    // This matches LocalDateTime format expected by backend
+    const year = selectedTime.getFullYear();
+    const month = String(selectedTime.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedTime.getDate()).padStart(2, '0');
+    const hours = String(selectedTime.getHours()).padStart(2, '0');
+    const minutes = String(selectedTime.getMinutes()).padStart(2, '0');
+    const seconds = String(selectedTime.getSeconds()).padStart(2, '0');
+    
+    const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    
+    console.log('🕐 Converting scheduled time:');
+    console.log('  - Original Date object:', selectedTime);
+    console.log('  - Local string representation:', selectedTime.toLocaleString());
+    console.log('  - ISO string (UTC):', selectedTime.toISOString());
+    console.log('  - LocalDateTime format (for backend):', localDateTimeString);
+    console.log('  - Browser timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+    
+    return localDateTimeString;
+  }
+
+  private processInterviewScheduling(scheduledTime: Date) {
     this.isProcessing = true;
-    setTimeout(() => {
+    
+    // Validate that we have a selected candidate
+    if (!this.selectedCandidateForInterview) {
+      this.showErrorNotification('No candidate selected for interview scheduling.');
       this.isProcessing = false;
-      this.addActivity('Interview scheduled', 'fas fa-calendar-check');
-    }, 1500);
+      return;
+    }
+    
+    // Get recruiter info from session service or set defaults
+    const currentUser = this.sessionService.getCurrentUser();
+    const recruiterId = currentUser?.id ? parseInt(currentUser.id) : 1;
+    const recruiterName = currentUser?.name || 'Hiring Manager';
+    const recruiterEmail = currentUser?.email || 'recruiter@company.com';
+    
+    // Ensure candidate has required fields with fallbacks
+    const candidateName = this.selectedCandidateForInterview.name || 'Unknown Candidate';
+    const candidateEmail = this.selectedCandidateForInterview['email'] || 
+                          this.selectedCandidateForInterview['candidateEmail'] || 
+                          `candidate${this.selectedCandidateForInterview.id}@example.com`;
+    
+    // Log for debugging
+    console.log('Candidate data:', {
+      id: this.selectedCandidateForInterview.id,
+      name: candidateName,
+      email: candidateEmail,
+      originalCandidate: this.selectedCandidateForInterview
+    });
+    
+    // Create interview schedule request with adjusted scheduled time
+    const scheduleRequest: InterviewScheduleRequest = {
+      candidateId: parseInt(this.selectedCandidateForInterview.id?.toString() || '0'),
+      candidateName: candidateName,
+      candidateEmail: candidateEmail,
+      recruiterId: recruiterId,
+      recruiterName: recruiterName,
+      recruiterEmail: recruiterEmail,
+      scheduledStartTime: this.adjustScheduledTime(scheduledTime),
+      jobRole: this.selectedCandidateForInterview.jobTitle || 'Software Engineer',
+      experienceLevel: this.selectedCandidateForInterview.experience || '0 years',
+      requiredTechnologies: ['JavaScript', 'TypeScript', 'Angular'], // TODO: Get from candidate profile
+      minQuestions: 5,
+      maxQuestions: 15,
+      interviewType: 'ADAPTIVE_AI',
+      languagePreference: 'en',
+      enableBiasDetection: true,
+      enableCodeChallenges: true,
+      enableVideoAnalytics: true
+    };
+
+    console.log('Scheduling interview with request:', scheduleRequest);
+
+    this.interviewService.scheduleInterview(scheduleRequest).subscribe({
+      next: (response) => {
+        console.log('✅ Interview scheduled successfully:', response);
+        
+        this.isProcessing = false;
+        
+        // Update candidate status to SCHEDULED
+        this.selectedCandidateForInterview!.status = 'SCHEDULED';
+        
+        // Add activity log
+        this.addActivity(
+          `Interview scheduled for ${this.selectedCandidateForInterview!.name}`, 
+          'fas fa-calendar-check'
+        );
+        
+        // Show success notification with meeting link
+        this.showMeetingLinkNotification(
+          this.selectedCandidateForInterview!.name,
+          response.meetingLink,
+          response.sessionId
+        );
+        
+        // Share meeting link with participants
+        this.shareMeetingLink(response.sessionId, response.meetingLink);
+        
+      },
+      error: (err) => {
+        console.error('❌ Error scheduling interview:', err);
+        this.isProcessing = false;
+        this.showErrorNotification('Failed to schedule interview. Please try again.');
+      }
+    });
+  }
+
+  /**
+   * Show meeting link notification to recruiter
+   */
+  private showMeetingLinkNotification(candidateName: string, meetingLink: string, sessionId: string) {
+    const message = `
+      🎉 Interview scheduled successfully for ${candidateName}!
+      
+      📅 Meeting Link: ${meetingLink}
+      📋 Session ID: ${sessionId}
+      
+      The meeting link has been shared with all participants.
+      Click 'Join Interview' when ready to start.
+    `;
+    
+    // Create a more sophisticated notification
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #ffffff;
+      color: #333;
+      padding: 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      border: 2px solid #4CAF50;
+    `;
+    
+    notification.innerHTML = `
+      <div style="text-align: center;">
+        <h3 style="color: #4CAF50; margin-bottom: 16px;">✅ Interview Scheduled!</h3>
+        <p style="margin-bottom: 16px;"><strong>Candidate:</strong> ${candidateName}</p>
+        <p style="margin-bottom: 16px;"><strong>Meeting Link:</strong></p>
+        <input type="text" value="${meetingLink}" readonly 
+               style="width: 100%; padding: 8px; margin-bottom: 16px; border: 1px solid #ddd; border-radius: 4px;" 
+               onclick="this.select()">
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button onclick="navigator.clipboard.writeText('${meetingLink}'); alert('Link copied!')" 
+                  style="background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+            📋 Copy Link
+          </button>
+          <button onclick="window.joinInterviewFromNotification('${sessionId}')" 
+                  style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+            🚀 Join Interview
+          </button>
+          <button onclick="this.parentNode.parentNode.parentNode.remove()" 
+                  style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+            ✕ Close
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 30 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 30000);
+  }
+
+  /**
+   * Share meeting link with all participants via enhanced email system
+   */
+  private shareMeetingLink(sessionId: string, meetingLink: string) {
+    if (!this.selectedCandidateForInterview) {
+      console.error('No candidate selected for meeting link sharing');
+      return;
+    }
+
+    console.log('🚀 Generating interview tokens and sending invitations...');
+
+    // Step 1: Generate session tokens for all participants
+    this.generateSessionTokens(sessionId).then((tokens) => {
+      // Step 2: Send personalized emails with tokens
+      this.sendInterviewInvitations(sessionId, meetingLink, tokens);
+    }).catch((error) => {
+      console.error('❌ Failed to generate session tokens:', error);
+      this.showErrorNotification('Failed to send interview invitations. Please try again.');
+    });
+  }
+
+  /**
+   * Generate session tokens for all interview participants
+   */
+  private async generateSessionTokens(sessionId: string): Promise<any> {
+    try {
+      const tokenRequests = [
+        {
+          userId: '1', // TODO: Get actual recruiter ID from session
+          userType: 'recruiter' as const,
+          sessionId: sessionId,
+          recruiterName: 'Hiring Manager', // TODO: Get from session
+          position: this.selectedCandidateForInterview!.jobTitle
+        },
+        {
+          userId: this.selectedCandidateForInterview!.id.toString(),
+          userType: 'candidate' as const,
+          sessionId: sessionId,
+          candidateName: this.selectedCandidateForInterview!.name,
+          position: this.selectedCandidateForInterview!.jobTitle
+        },
+        {
+          userId: 'aria_ai',
+          userType: 'ai_avatar' as const,
+          sessionId: sessionId
+        }
+      ];
+
+      // Generate tokens for all participants
+      const tokenPromises = tokenRequests.map(request => 
+        this.sessionService.login(request).toPromise()
+      );
+
+      const tokens = await Promise.all(tokenPromises);
+      
+      return {
+        recruiterToken: tokens[0]?.token || '',
+        candidateToken: tokens[1]?.token || '',
+        aiToken: tokens[2]?.token || ''
+      };
+    } catch (error) {
+      console.error('Token generation failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send personalized interview invitations with embedded tokens
+   */
+  private sendInterviewInvitations(sessionId: string, meetingLink: string, tokens: any) {
+    const candidate = this.selectedCandidateForInterview!;
+    const scheduledDateTime = this.isSchedulingNow ? 
+      new Date().toLocaleString() : 
+      new Date(this.selectedScheduleTime).toLocaleString();
+    
+    // Prepare participant data with enhanced email templates
+    const emailData = {
+      sessionId: sessionId,
+      meetingLink: meetingLink,
+      scheduledDateTime: scheduledDateTime,
+      candidateInfo: {
+        email: candidate['email'] || 'candidate@example.com',
+        name: candidate.name,
+        token: tokens.candidateToken,
+        interviewUrl: `${window.location.origin}/interview/${sessionId}?token=${tokens.candidateToken}`
+      },
+      recruiterInfo: {
+        email: 'recruiter@company.com', // TODO: Get from session
+        name: 'Hiring Manager',
+        token: tokens.recruiterToken,
+        monitorUrl: `${window.location.origin}/interview/${sessionId}?token=${tokens.recruiterToken}&role=recruiter`
+      },
+      position: candidate.jobTitle,
+      companyName: 'TechCorp' // TODO: Get from company settings
+    };
+
+    console.log('📧 Sending interview invitations with tokens:', {
+      candidateEmail: emailData.candidateInfo.email,
+      recruiterEmail: emailData.recruiterInfo.email,
+      sessionId: sessionId
+    });
+
+    // Send via enhanced email service
+    this.interviewService.shareMeetingLink(sessionId, meetingLink, [
+      {
+        email: emailData.candidateInfo.email,
+        role: 'candidate',
+        name: emailData.candidateInfo.name,
+        token: emailData.candidateInfo.token,
+        interviewUrl: emailData.candidateInfo.interviewUrl
+      },
+      {
+        email: emailData.recruiterInfo.email,
+        role: 'recruiter', 
+        name: emailData.recruiterInfo.name,
+        token: emailData.recruiterInfo.token,
+        monitorUrl: emailData.recruiterInfo.monitorUrl
+      }
+    ]).subscribe({
+      next: (response) => {
+        console.log('✅ Interview invitations sent successfully:', response);
+        this.addActivity(
+          `🎯 Interview invitations sent to ${candidate.name} and recruiter with secure access tokens`, 
+          'fas fa-envelope-open-text'
+        );
+        this.showSuccessNotification(
+          `Interview invitations sent! ${candidate.name} will receive an email with secure access link.`
+        );
+      },
+      error: (err) => {
+        console.error('❌ Error sending interview invitations:', err);
+        this.addActivity(
+          'Failed to send interview invitations - manual sharing required', 
+          'fas fa-exclamation-triangle'
+        );
+        this.showErrorNotification(
+          'Failed to send email invitations. Please share the meeting links manually.'
+        );
+      }
+    });
   }
 
   // ---------- New Methods to Fix Template Errors ----------
@@ -741,6 +1136,30 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   getHiredCandidates(): number {  // Added for template
     return this.getCompletedInterviews(); // Assuming hired = selected candidates
   }
+
+  // ---------- DateTime Helper Methods for Modal ----------
+  getCurrentDateTime(): string {
+    const now = new Date();
+    // Add 10 minutes to current time as minimum for datetime picker
+    // This gives users flexibility while ensuring backend timezone validation passes
+    now.setMinutes(now.getMinutes() + 10);
+    
+    // Format as YYYY-MM-DDTHH:mm for datetime-local input
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    console.log('🕐 Default datetime for picker (10min buffer):', `${year}-${month}-${day}T${hours}:${minutes}`);
+    console.log('🌍 Browser timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  getCurrentTimezone(): string {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+
 
   // ---------- Audio Upload Methods ----------
   

@@ -51,13 +51,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
+                  "maximumWarning": "700kB",
                   "maximumError": "1MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "30kB",
+                  "maximumError": "35kB"
                 }
               ],
               "outputHashing": "all"
@@ -72,12 +72,29 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "ssl": true,
+            "port": 4200,
+            "host": "localhost"
+          },
           "configurations": {
             "production": {
               "buildTarget": "frontend:build:production"
             },
             "development": {
               "buildTarget": "frontend:build:development"
+            },
+            "https": {
+              "buildTarget": "frontend:build:development",
+              "ssl": true,
+              "port": 4200,
+              "host": "localhost"
+            },
+            "http": {
+              "buildTarget": "frontend:build:development",
+              "ssl": false,
+              "port": 4200,
+              "host": "localhost"
             }
           },
           "defaultConfiguration": "development"

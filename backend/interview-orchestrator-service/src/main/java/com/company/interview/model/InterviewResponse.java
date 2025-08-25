@@ -76,22 +76,22 @@ public class InterviewResponse {
     private Boolean autoTerminated = false; // Was response auto-ended due to silence?
     
     // IRT and Scoring Data
-    @Column(name = "question_difficulty", precision = 10, scale = 4)
+    @Column(name = "question_difficulty")
     private Double questionDifficulty; // Question difficulty parameter (b)
     
-    @Column(name = "discrimination", precision = 10, scale = 4)
+    @Column(name = "discrimination")
     private Double discrimination; // Question discrimination parameter (a)
     
     @Column(name = "correct_answer")
     private Boolean correctAnswer; // For objective questions
     
-    @Column(name = "partial_credit", precision = 5, scale = 4)
+    @Column(name = "partial_credit")
     private Double partialCredit; // 0.0 to 1.0 for subjective scoring
     
-    @Column(name = "ai_score", precision = 5, scale = 4)
+    @Column(name = "ai_score")
     private Double aiScore; // Overall AI-generated score
     
-    @Column(name = "human_score", precision = 5, scale = 4)
+    @Column(name = "human_score")
     private Double humanScore; // Human reviewer override score
     
     // AI Analysis Results
@@ -101,26 +101,26 @@ public class InterviewResponse {
     @Column(name = "analysis_score")
     private Map<String, Double> aiAnalysisScores;
     
-    @Column(name = "sentiment_score", precision = 5, scale = 4)
+    @Column(name = "sentiment_score")
     private Double sentimentScore; // Sentiment analysis of response
     
-    @Column(name = "confidence_score", precision = 5, scale = 4)
+    @Column(name = "confidence_score")
     private Double confidenceScore; // AI confidence in candidate's answer
     
-    @Column(name = "clarity_score", precision = 5, scale = 4)
+    @Column(name = "clarity_score")
     private Double clarityScore; // Speech clarity and articulation
     
-    @Column(name = "relevance_score", precision = 5, scale = 4)
+    @Column(name = "relevance_score")
     private Double relevanceScore; // Answer relevance to question
     
     // Technical Analysis (for coding responses)
-    @Column(name = "code_quality_score", precision = 5, scale = 4)
+    @Column(name = "code_quality_score")
     private Double codeQualityScore;
     
-    @Column(name = "algorithm_correctness", precision = 5, scale = 4)
+    @Column(name = "algorithm_correctness")
     private Double algorithmCorrectness;
     
-    @Column(name = "code_efficiency_score", precision = 5, scale = 4)
+    @Column(name = "code_efficiency_score")
     private Double codeEfficiencyScore;
     
     @Column(name = "syntax_errors_count")
@@ -142,7 +142,7 @@ public class InterviewResponse {
     @Column(name = "followup_reason", columnDefinition = "TEXT")
     private String followupReason;
     
-    @Column(name = "adapted_next_difficulty", precision = 5, scale = 4)
+    @Column(name = "adapted_next_difficulty")
     private Double adaptedNextDifficulty; // Suggested difficulty for next question
     
     // Metadata

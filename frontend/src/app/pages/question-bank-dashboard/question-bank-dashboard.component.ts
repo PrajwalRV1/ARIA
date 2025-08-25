@@ -268,6 +268,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { InterviewService, InterviewScheduleRequest } from '../../services/interview.service';
 
 /* Data interfaces */
 export interface Category {
@@ -334,6 +335,7 @@ export class QuestionBankDashboardComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private interviewService: InterviewService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -531,14 +533,198 @@ export class QuestionBankDashboardComponent implements OnInit {
       return;
     }
     
-    const payload = {
-      bookletQuestions: this.booklet.map((b) => b.question.id),
-      durationSeconds: this.interviewDurationSeconds,
-      candidate: this.candidate
-    };
+    if (!this.candidate) {
+      alert('No candidate information available. Please go back and select a candidate.');
+      return;
+    }
     
-    console.log('Schedule Interview payload:', payload);
-    alert(`Interview scheduled for ${this.candidate?.fullName || 'Selected Candidate'} with ${this.booklet.length} questions (${this.formatDuration(this.interviewDurationSeconds).hrs}:${this.formatDuration(this.interviewDurationSeconds).mins}:${this.formatDuration(this.interviewDurationSeconds).secs})`);
+    console.log('Scheduling interview with selected questions:', this.booklet);
+    
+    // Extract technologies from questions for better targeting
+    const technologies = this.extractTechnologiesFromQuestions();
+    
+    // Create interview schedule request
+    const scheduleRequest: InterviewScheduleRequest = {
+      candidateId: 1, // TODO: Get actual candidate ID from candidate service
+      candidateName: this.candidate.fullName,
+      candidateEmail: 'candidate@example.com', // TODO: Get from candidate service
+      recruiterId: 1, // TODO: Get from auth service
+      recruiterName: 'Hiring Manager', // TODO: Get from auth service
+      recruiterEmail: 'recruiter@company.com', // TODO: Get from auth service
+      scheduledStartTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
+      jobRole: this.candidate.appliedRole,
+      experienceLevel: 'Mid-level', // TODO: Get from candidate profile
+      requiredTechnologies: technologies,
+      customQuestionPool: this.booklet.map(b => parseInt(b.question.id.replace('q-', ''))), // Convert question IDs
+      minQuestions: Math.min(this.booklet.length, 5),
+      maxQuestions: Math.max(this.booklet.length, 10),
+      interviewType: 'ADAPTIVE_AI',
+      languagePreference: 'en',
+      enableBiasDetection: true,
+      enableCodeChallenges: this.hasCodeChallenges(),
+      enableVideoAnalytics: true
+    };
+
+    console.log('Scheduling interview with request:', scheduleRequest);
+
+    this.interviewService.scheduleInterview(scheduleRequest).subscribe({
+      next: (response) => {
+        console.log('✅ Interview scheduled successfully from question bank:', response);
+        
+        // Show success notification with meeting link
+        this.showScheduleSuccessNotification(response.meetingLink, response.sessionId);
+        
+        // Share meeting link with participants
+        this.shareMeetingLink(response.sessionId, response.meetingLink);
+        
+        // Optionally navigate to interview session or back to dashboard
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 5000);
+        
+      },
+      error: (err) => {
+        console.error('❌ Error scheduling interview:', err);
+        alert('Failed to schedule interview. Please try again.');
+      }
+    });
+  }
+
+  /**
+   * Extract technologies from selected questions
+   */
+  private extractTechnologiesFromQuestions(): string[] {
+    const technologies = new Set<string>();
+    
+    this.booklet.forEach(item => {
+      // Extract technology keywords from question headings
+      const heading = item.question.heading.toLowerCase();
+      
+      if (heading.includes('.net') || heading.includes('dotnet')) {
+        technologies.add('.NET');
+      }
+      if (heading.includes('java')) {
+        technologies.add('Java');
+      }
+      if (heading.includes('javascript') || heading.includes('js')) {
+        technologies.add('JavaScript');
+      }
+      if (heading.includes('typescript') || heading.includes('ts')) {
+        technologies.add('TypeScript');
+      }
+      if (heading.includes('angular')) {
+        technologies.add('Angular');
+      }
+      if (heading.includes('react')) {
+        technologies.add('React');
+      }
+      if (heading.includes('spring')) {
+        technologies.add('Spring Framework');
+      }
+      if (heading.includes('dependency injection')) {
+        technologies.add('Dependency Injection');
+      }
+      if (heading.includes('garbage collection')) {
+        technologies.add('Memory Management');
+      }
+    });
+    
+    // Default technologies if none detected
+    if (technologies.size === 0) {
+      return ['General Programming', 'Communication Skills'];
+    }
+    
+    return Array.from(technologies);
+  }
+
+  /**
+   * Check if booklet contains coding challenges
+   */
+  private hasCodeChallenges(): boolean {
+    return this.booklet.some(item => 
+      item.question.categoryId === 'c-technical' && 
+      item.question.difficulty === 'Hard'
+    );
+  }
+
+  /**
+   * Show success notification for scheduled interview
+   */
+  private showScheduleSuccessNotification(meetingLink: string, sessionId: string) {
+    // Create a notification modal
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #ffffff;
+      color: #333;
+      padding: 24px;
+      border-radius: 8px;
+      z-index: 10000;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      border: 2px solid #4CAF50;
+    `;
+    
+    notification.innerHTML = `
+      <div style="text-align: center;">
+        <h3 style="color: #4CAF50; margin-bottom: 16px;">✅ Interview Scheduled Successfully!</h3>
+        <p style="margin-bottom: 16px;"><strong>Candidate:</strong> ${this.candidate?.fullName}</p>
+        <p style="margin-bottom: 16px;"><strong>Questions Selected:</strong> ${this.booklet.length}</p>
+        <p style="margin-bottom: 16px;"><strong>Estimated Duration:</strong> ${this.formatDuration(this.interviewDurationSeconds).hrs}:${this.formatDuration(this.interviewDurationSeconds).mins}:${this.formatDuration(this.interviewDurationSeconds).secs}</p>
+        <p style="margin-bottom: 16px;"><strong>Meeting Link:</strong></p>
+        <input type="text" value="${meetingLink}" readonly 
+               style="width: 100%; padding: 8px; margin-bottom: 16px; border: 1px solid #ddd; border-radius: 4px;" 
+               onclick="this.select()">
+        <div style="display: flex; gap: 12px; justify-content: center;">
+          <button onclick="navigator.clipboard.writeText('${meetingLink}'); alert('Link copied!')" 
+                  style="background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+            📋 Copy Link
+          </button>
+          <button onclick="window.joinInterviewFromNotification('${sessionId}')" 
+                  style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+            🚀 Join Interview
+          </button>
+          <button onclick="this.parentNode.parentNode.parentNode.remove()" 
+                  style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+            ✕ Close
+          </button>
+        </div>
+        <p style="margin-top: 16px; font-size: 12px; color: #666;">Returning to dashboard in 5 seconds...</p>
+      </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 5000);
+  }
+
+  /**
+   * Share meeting link with all participants
+   */
+  private shareMeetingLink(sessionId: string, meetingLink: string) {
+    const participants = [
+      { email: 'recruiter@company.com', role: 'recruiter' },
+      { email: this.candidate?.fullName.toLowerCase().replace(' ', '.') + '@example.com' || 'candidate@example.com', role: 'candidate' },
+      { email: 'ai-avatar@aria.ai', role: 'ai_interviewer' }
+    ];
+
+    this.interviewService.shareMeetingLink(sessionId, meetingLink, participants).subscribe({
+      next: () => {
+        console.log('✅ Meeting link shared with all participants from question bank');
+      },
+      error: (err) => {
+        console.error('❌ Error sharing meeting link:', err);
+      }
+    });
   }
 
   difficultyClass(d: Question['difficulty']) {

@@ -20,13 +20,24 @@ from contextlib import asynccontextmanager
 import os
 from concurrent.futures import ThreadPoolExecutor
 
-# Speech recognition imports
+# Import dual-channel transcription engine
+from dual_channel_transcription import DualChannelTranscriptionEngine, ParticipantInfo, AudioFrame, TranscriptSegment
+
+# Open-source speech recognition imports
 try:
-    from google.cloud import speech
-    GOOGLE_STT_AVAILABLE = True
+    import vosk
+    import json as json_module
+    VOSK_AVAILABLE = True
 except ImportError:
-    GOOGLE_STT_AVAILABLE = False
-    logging.warning("Google Cloud Speech-to-Text not available, using Vosk only")
+    VOSK_AVAILABLE = False
+    logging.warning("Vosk not available, install with: pip install vosk")
+
+try:
+    import deepspeech
+    DEEPSPEECH_AVAILABLE = True
+except ImportError:
+    DEEPSPEECH_AVAILABLE = False
+    logging.warning("DeepSpeech not available")
 
 try:
     import vosk
@@ -62,10 +73,47 @@ async def lifespan(app: FastAPI):
     """Initialize services on startup"""
     logger.info("Starting Speech & Transcript Service...")
     
-    # Initialize Google STT if available
-    if GOOGLE_STT_AVAILABLE and os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
-        speech_engines['google'] = speech.SpeechClient()
-        logger.info("Google Speech-to-Text initialized")
+    # Initialize Vosk models if available
+    if VOSK_AVAILABLE:
+        model_configs = [
+            {
+                "name": "vosk_small_en",
+                "path": os.getenv('VOSK_SMALL_MODEL_PATH', '/models/vosk-model-small-en-us-0.15'),
+                "description": "Small English model (fast, less accurate)"
+            },
+            {
+                "name": "vosk_large_en", 
+                "path": os.getenv('VOSK_LARGE_MODEL_PATH', '/models/vosk-model-en-us-0.22'),
+                "description": "Large English model (slower, more accurate)"
+            }
+        ]
+        
+        for config in model_configs:
+            model_path = config["path"]
+            if os.path.exists(model_path):
+                try:
+                    model = vosk.Model(model_path)
+                    speech_engines[config["name"]] = model
+                    logger.info(f"Vosk model loaded: {config['name']} from {model_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to load Vosk model {config['name']}: {e}")
+            else:
+                logger.warning(f"Vosk model not found at {model_path}")
+    
+    # Initialize DeepSpeech if available
+    if DEEPSPEECH_AVAILABLE:
+        deepspeech_model_path = os.getenv('DEEPSPEECH_MODEL_PATH', '/models/deepspeech-0.9.3-models.pbmm')
+        deepspeech_scorer_path = os.getenv('DEEPSPEECH_SCORER_PATH', '/models/deepspeech-0.9.3-models.scorer')
+        
+        if os.path.exists(deepspeech_model_path):
+            try:
+                ds_model = deepspeech.Model(deepspeech_model_path)
+                if os.path.exists(deepspeech_scorer_path):
+                    ds_model.enableExternalScorer(deepspeech_scorer_path)
+                speech_engines['deepspeech'] = ds_model
+                logger.info(f"DeepSpeech model loaded from {deepspeech_model_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load DeepSpeech model: {e}")
     
     # Initialize Vosk models if available
     if VOSK_AVAILABLE:
@@ -79,6 +127,13 @@ async def lifespan(app: FastAPI):
     # Initialize WebSocket connection manager
     app.state.connection_manager = ConnectionManager()
     app.state.transcription_manager = TranscriptionManager()
+    
+    # Initialize dual-channel transcription engine
+    app.state.dual_channel_engine = DualChannelTranscriptionEngine(
+        speech_engines=speech_engines,
+        connection_manager=app.state.connection_manager
+    )
+    logger.info("Dual-channel transcription engine initialized")
     
     yield
     
@@ -702,6 +757,287 @@ async def get_transcript(session_id: str):
         logger.error(f"Error retrieving transcript: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to retrieve transcript: {str(e)}")
 
+# =============================================================================
+# DUAL-CHANNEL TRANSCRIPTION ENDPOINTS
+# =============================================================================
+
+class SessionInitRequest(BaseModel):
+    """Request to initialize a dual-channel transcription session"""
+    session_id: str
+    participants: List[Dict[str, Any]]  # List of participant info
+    audio_config: Dict[str, Any] = {
+        'sample_rate': 16000,
+        'channels': 1,
+        'format': 'pcm'
+    }
+
+class AudioStreamRequest(BaseModel):
+    """Request to stream audio for a participant"""
+    session_id: str
+    participant_id: str
+    audio_data: str  # Base64 encoded
+    timestamp: Optional[float] = None
+
+@app.post("/dual-channel/session/start")
+async def start_dual_channel_session(request: SessionInitRequest):
+    """Start a dual-channel transcription session with multiple participants"""
+    try:
+        # Convert participants dict to ParticipantInfo objects
+        participants = []
+        for p_dict in request.participants:
+            participant = ParticipantInfo(
+                id=p_dict['id'],
+                name=p_dict['name'],
+                role=p_dict['role'],
+                voice_profile=p_dict.get('voice_profile')
+            )
+            participants.append(participant)
+        
+        # Initialize the session
+        await app.state.dual_channel_engine.initialize_session(
+            session_id=request.session_id,
+            participants=participants,
+            audio_config=request.audio_config
+        )
+        
+        logger.info(f"Started dual-channel session {request.session_id} with {len(participants)} participants")
+        
+        return {
+            'status': 'success',
+            'session_id': request.session_id,
+            'participants': [p.dict() for p in participants],
+            'message': 'Dual-channel transcription session initialized'
+        }
+    
+    except Exception as e:
+        logger.error(f"Error starting dual-channel session: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to start session: {str(e)}")
+
+@app.post("/dual-channel/session/{session_id}/stop")
+async def stop_dual_channel_session(session_id: str):
+    """Stop a dual-channel transcription session"""
+    try:
+        await app.state.dual_channel_engine.terminate_session(session_id)
+        
+        logger.info(f"Stopped dual-channel session {session_id}")
+        
+        return {
+            'status': 'success',
+            'session_id': session_id,
+            'message': 'Dual-channel transcription session terminated'
+        }
+    
+    except Exception as e:
+        logger.error(f"Error stopping dual-channel session: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to stop session: {str(e)}")
+
+@app.post("/dual-channel/audio/stream")
+async def stream_audio_to_session(request: AudioStreamRequest):
+    """Stream audio data from a participant to the dual-channel engine"""
+    try:
+        # Decode base64 audio data
+        audio_data = base64.b64decode(request.audio_data)
+        
+        # Process the audio frame
+        await app.state.dual_channel_engine.process_audio_frame(
+            session_id=request.session_id,
+            participant_id=request.participant_id,
+            audio_data=audio_data,
+            timestamp=request.timestamp
+        )
+        
+        return {
+            'status': 'success',
+            'message': 'Audio frame processed'
+        }
+    
+    except Exception as e:
+        logger.error(f"Error processing audio stream: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process audio: {str(e)}")
+
+@app.websocket("/ws/dual-channel/{session_id}/{participant_id}")
+async def dual_channel_websocket(websocket: WebSocket, session_id: str, participant_id: str):
+    """WebSocket endpoint for dual-channel audio streaming and transcript delivery"""
+    await app.state.connection_manager.connect(websocket, session_id)
+    
+    try:
+        # Send welcome message
+        await websocket.send_json({
+            'type': 'dual_channel_connected',
+            'session_id': session_id,
+            'participant_id': participant_id,
+            'message': 'Dual-channel WebSocket connected'
+        })
+        
+        # Listen for incoming audio data and control messages
+        while True:
+            data = await websocket.receive()
+            
+            if 'bytes' in data:
+                # Audio data received
+                audio_bytes = data['bytes']
+                await app.state.dual_channel_engine.process_audio_frame(
+                    session_id=session_id,
+                    participant_id=participant_id,
+                    audio_data=audio_bytes
+                )
+            
+            elif 'text' in data:
+                # Control message received
+                try:
+                    message = json.loads(data['text'])
+                    await handle_dual_channel_message(session_id, participant_id, message)
+                except json.JSONDecodeError:
+                    logger.warning(f"Invalid JSON received: {data['text']}")
+    
+    except WebSocketDisconnect:
+        logger.info(f"Dual-channel WebSocket disconnected for session {session_id}, participant {participant_id}")
+    except Exception as e:
+        logger.error(f"Dual-channel WebSocket error: {e}")
+    finally:
+        app.state.connection_manager.disconnect(websocket, session_id)
+
+async def handle_dual_channel_message(session_id: str, participant_id: str, message: Dict):
+    """Handle control messages for dual-channel sessions"""
+    message_type = message.get('type')
+    
+    if message_type == 'audio_config_update':
+        # Update audio configuration for the session
+        logger.info(f"Audio config update for session {session_id}: {message.get('config')}")
+    
+    elif message_type == 'participant_mute':
+        # Handle participant mute/unmute
+        is_muted = message.get('muted', False)
+        logger.info(f"Participant {participant_id} {'muted' if is_muted else 'unmuted'} in session {session_id}")
+    
+    elif message_type == 'quality_report':
+        # Handle audio quality reports
+        quality_data = message.get('quality', {})
+        logger.debug(f"Audio quality report for {participant_id}: {quality_data}")
+
+@app.get("/dual-channel/session/{session_id}/stats")
+async def get_session_stats(session_id: str):
+    """Get statistics for a dual-channel transcription session"""
+    try:
+        stats = await app.state.dual_channel_engine.get_session_stats(session_id)
+        
+        if not stats:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        return {
+            'session_id': session_id,
+            'stats': stats,
+            'retrieved_at': datetime.now().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting session stats: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get session stats: {str(e)}")
+
+@app.get("/dual-channel/session/{session_id}/participant/{participant_id}/transcript")
+async def get_participant_transcript(session_id: str, participant_id: str, format: str = "text"):
+    """Get transcript for a specific participant in a dual-channel session"""
+    try:
+        transcript = await app.state.dual_channel_engine.get_participant_transcript(
+            session_id=session_id,
+            participant_id=participant_id,
+            format=format
+        )
+        
+        if transcript is None:
+            raise HTTPException(status_code=404, detail="Transcript not found")
+        
+        return {
+            'session_id': session_id,
+            'participant_id': participant_id,
+            'transcript': transcript,
+            'format': format,
+            'retrieved_at': datetime.now().isoformat()
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting participant transcript: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get participant transcript: {str(e)}")
+
+@app.get("/dual-channel/session/{session_id}/timeline")
+async def get_speaking_timeline(session_id: str):
+    """Get the speaking timeline (diarization) for a dual-channel session"""
+    try:
+        timeline = await app.state.dual_channel_engine.get_speaking_timeline(session_id)
+        
+        return {
+            'session_id': session_id,
+            'speaking_timeline': timeline,
+            'retrieved_at': datetime.now().isoformat()
+        }
+    
+    except Exception as e:
+        logger.error(f"Error getting speaking timeline: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get speaking timeline: {str(e)}")
+
+@app.get("/dual-channel/session/{session_id}/transcript/full")
+async def get_full_session_transcript(session_id: str, format: str = "text"):
+    """Get the complete transcript for a dual-channel session with all participants"""
+    try:
+        # Get final transcript from Redis
+        final_key = f"transcript:{session_id}:final"
+        transcript = redis_client.get(final_key)
+        
+        if not transcript:
+            # Generate on-the-fly from segments
+            key = f"transcript:{session_id}:segments"
+            segment_data = redis_client.lrange(key, 0, -1)
+            
+            if not segment_data:
+                return {
+                    'session_id': session_id,
+                    'transcript': '',
+                    'format': format,
+                    'retrieved_at': datetime.now().isoformat()
+                }
+            
+            # Parse segments
+            segments = []
+            for json_data in segment_data:
+                try:
+                    segment = TranscriptSegment.parse_raw(json_data)
+                    segments.append(segment)
+                except Exception:
+                    continue
+            
+            # Sort by start time
+            segments.sort(key=lambda s: s.start_time)
+            
+            if format == "text":
+                # Generate text transcript
+                lines = []
+                for segment in segments:
+                    timestamp = datetime.fromtimestamp(segment.start_time).strftime('%H:%M:%S')
+                    lines.append(f"[{timestamp}] {segment.participant_id}: {segment.text}")
+                
+                transcript = "\n".join(lines)
+            
+            elif format == "json":
+                # Return structured JSON
+                transcript = json.dumps([s.dict() for s in segments])
+        
+        return {
+            'session_id': session_id,
+            'transcript': transcript,
+            'format': format,
+            'retrieved_at': datetime.now().isoformat()
+        }
+    
+    except Exception as e:
+        logger.error(f"Error getting full session transcript: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get session transcript: {str(e)}")
+
+# =============================================================================
+
 @app.get("/health")
 async def health_check():
     """Detailed health check"""
@@ -713,7 +1049,8 @@ async def health_check():
             "google_stt": "available" if 'google' in speech_engines else "unavailable",
             "vosk": "available" if 'vosk' in speech_engines else "unavailable",
             "websocket_manager": "healthy",
-            "transcription_manager": "healthy"
+            "transcription_manager": "healthy",
+            "dual_channel_engine": "available"
         }
         
         overall_status = "healthy" if redis_status == "healthy" else "degraded"
@@ -722,6 +1059,7 @@ async def health_check():
             "status": overall_status,
             "components": components,
             "active_sessions": len(app.state.connection_manager.active_connections),
+            "dual_channel_sessions": len(getattr(app.state.dual_channel_engine, 'active_sessions', {})),
             "timestamp": datetime.now().isoformat()
         }
     
@@ -734,4 +1072,23 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8002, log_level="info")
+    import os
+    
+    # Check if SSL certificates exist
+    ssl_cert_path = "../ssl-certs/aria-cert.pem"
+    ssl_key_path = "../ssl-certs/aria-key.pem"
+    
+    if os.path.exists(ssl_cert_path) and os.path.exists(ssl_key_path):
+        # Run with SSL
+        uvicorn.run(
+            app, 
+            host="0.0.0.0", 
+            port=8002, 
+            log_level="info",
+            ssl_keyfile=ssl_key_path,
+            ssl_certfile=ssl_cert_path
+        )
+    else:
+        # Fallback to HTTP
+        print("Warning: SSL certificates not found, running with HTTP")
+        uvicorn.run(app, host="0.0.0.0", port=8002, log_level="info")

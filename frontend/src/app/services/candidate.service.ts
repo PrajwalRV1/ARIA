@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { VALIDATION_MESSAGES } from '../constants/candidate.constants';
@@ -28,9 +29,9 @@ export interface Candidate {
   providedIn: 'root'
 })
 export class CandidateService {
-  private baseUrl = `${environment.apiBaseUrl}/candidates`;
+  private baseUrl = `${environment.apiBaseUrl}/candidates`; // Fixed: Removed duplicate /api
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object) {}
 
   // Comprehensive error handling method
   private handleError = (error: HttpErrorResponse) => {
@@ -85,7 +86,7 @@ export class CandidateService {
           userMessage = 'Service is temporarily unavailable. Please try again later.';
           break;
         default:
-          errorMessage = `Server Error Code: ${error.status}\nMessage: ${error.error?.message || error.message}`;
+          errorMessage = `Server Error Code: ${error.status}\\nMessage: ${error.error?.message || error.message}`;
           userMessage = 'An unexpected error occurred. Please try again.';
       }
     }
@@ -101,6 +102,19 @@ export class CandidateService {
     }));
   };
 
+  // Helper method to get authentication headers
+  private getAuthHeaders(): any {
+    if (isPlatformBrowser(this.platformId)) {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        return {
+          Authorization: `Bearer ${token}`
+        };
+      }
+    }
+    return {};
+  }
+
   addCandidate(candidate: Candidate, resumeFile: File, profilePicture?: File): Observable<any> {
     try {
       const formData = new FormData();
@@ -112,7 +126,9 @@ export class CandidateService {
       
       console.log('Adding candidate:', candidate.name);
       
-      return this.http.post(`${this.baseUrl}`, formData).pipe(
+      return this.http.post(`${this.baseUrl}`, formData, {
+        headers: this.getAuthHeaders()
+      }).pipe(
         retry(1), // Retry once on failure
         catchError(this.handleError)
       );
@@ -132,7 +148,9 @@ export class CandidateService {
     
     console.log('Uploading resume file:', resumeFile.name);
     
-    return this.http.post(`${this.baseUrl}/upload-resume`, formData).pipe(
+    return this.http.post(`${this.baseUrl}/upload-resume`, formData, {
+      headers: this.getAuthHeaders()
+    }).pipe(
       retry(1),
       catchError(this.handleError)
     );
@@ -161,7 +179,9 @@ export class CandidateService {
       
       console.log('Uploading audio file for candidate:', candidateId, 'File:', audioFile.name);
       
-      return this.http.post(`${this.baseUrl}/${candidateId}/upload-audio`, formData).pipe(
+      return this.http.post(`${this.baseUrl}/${candidateId}/upload-audio`, formData, {
+        headers: this.getAuthHeaders()
+      }).pipe(
         retry(1),
         catchError(this.handleError)
       );
@@ -176,18 +196,18 @@ export class CandidateService {
   }
 
   getAllCandidates(): Observable<Candidate[]> {
-    const token = localStorage.getItem('token');
-    
-    console.log('Fetching all candidates');
-    
-    return this.http.get<Candidate[]>(`${this.baseUrl}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }).pipe(
-      retry(2), // Retry twice for GET requests
-      catchError(this.handleError)
-    );
+    if (isPlatformBrowser(this.platformId)) {
+      console.log('Fetching all candidates');
+      
+      return this.http.get<Candidate[]>(`${this.baseUrl}`, {
+        headers: this.getAuthHeaders()
+      }).pipe(
+        retry(2), // Retry twice for GET requests
+        catchError(this.handleError)
+      );
+    } else {
+      return of([]);
+    }
   }
 
   getCandidateById(id: number): Observable<Candidate> {
@@ -201,7 +221,9 @@ export class CandidateService {
     
     console.log('Fetching candidate by ID:', id);
     
-    return this.http.get<Candidate>(`${this.baseUrl}/${id}`).pipe(
+    return this.http.get<Candidate>(`${this.baseUrl}/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
       retry(1),
       catchError(this.handleError)
     );
@@ -233,7 +255,9 @@ export class CandidateService {
         console.log('Profile picture included:', profilePicture.name);
       }
       
-      return this.http.put(`${this.baseUrl}/${id}`, formData).pipe(
+      return this.http.put(`${this.baseUrl}/${id}`, formData, {
+        headers: this.getAuthHeaders()
+      }).pipe(
         retry(1),
         catchError(this.handleError)
       );
@@ -258,7 +282,9 @@ export class CandidateService {
     
     console.log('Deleting candidate with ID:', id);
     
-    return this.http.delete(`${this.baseUrl}/${id}`).pipe(
+    return this.http.delete(`${this.baseUrl}/${id}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
       retry(1),
       catchError(this.handleError)
     );

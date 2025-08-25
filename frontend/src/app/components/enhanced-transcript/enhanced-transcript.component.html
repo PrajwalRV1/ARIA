@@ -1,0 +1,403 @@
+<!-- Enhanced Transcript Component -->
+<div class="enhanced-transcript" [attr.data-theme]="settings.theme">
+  
+  <!-- Transcript Header & Controls -->
+  <div class="transcript-header">
+    <div class="header-left">
+      <h3 class="transcript-title">
+        <span class="title-icon">📝</span>
+        Live Interview Transcript
+        <span class="session-id" *ngIf="sessionId">({{ sessionId }})</span>
+      </h3>
+      
+      <div class="transcript-stats">
+        <span class="stat-item">
+          <span class="stat-icon">💬</span>
+          {{ totalEntries }} entries
+        </span>
+        <span class="stat-item" *ngIf="totalErrors > 0">
+          <span class="stat-icon">⚠️</span>
+          {{ totalErrors }} issues
+        </span>
+        <span class="stat-item connection-status" 
+              [class.connected]="(transcriptWS?.readyState === 1)"
+              [class.disconnected]="(transcriptWS?.readyState !== 1)">
+          <span class="connection-dot"></span>
+          {{ (transcriptWS?.readyState === 1) ? 'Connected' : 'Disconnected' }}
+        </span>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <!-- Search Box -->
+      <div class="search-box">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery"
+          (input)="onSearchQueryChange(searchQuery)"
+          placeholder="Search transcript..."
+          class="search-input">
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <!-- Settings Toggle -->
+      <button class="settings-btn" (click)="showSettings = !showSettings">
+        <span class="settings-icon">⚙️</span>
+      </button>
+      
+      <!-- Export Menu -->
+      <div class="export-menu" [class.open]="showExportMenu">
+        <button class="export-btn" (click)="showExportMenu = !showExportMenu">
+          <span class="export-icon">📤</span>
+          Export
+        </button>
+        <div class="export-dropdown" *ngIf="showExportMenu">
+          <button (click)="exportTranscript('txt'); showExportMenu = false">Text (.txt)</button>
+          <button (click)="exportTranscript('json'); showExportMenu = false">JSON (.json)</button>
+          <button (click)="exportTranscript('csv'); showExportMenu = false">CSV (.csv)</button>
+          <button (click)="exportTranscript('srt'); showExportMenu = false">Subtitles (.srt)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Settings Panel -->
+  <div class="settings-panel" *ngIf="showSettings" [@slideDown]>
+    <div class="settings-grid">
+      <label class="setting-item">
+        <input type="checkbox" 
+               [checked]="settings.showTimestamps"
+               (change)="onCheckboxChange($event, 'showTimestamps')">
+        <span class="setting-label">Show timestamps</span>
+      </label>
+      
+      <label class="setting-item">
+        <input type="checkbox" 
+               [checked]="settings.showConfidence"
+               (change)="onCheckboxChange($event, 'showConfidence')">
+        <span class="setting-label">Show confidence scores</span>
+      </label>
+      
+      <label class="setting-item">
+        <input type="checkbox" 
+               [checked]="settings.showSpeakerAvatars"
+               (change)="onCheckboxChange($event, 'showSpeakerAvatars')">
+        <span class="setting-label">Show speaker avatars</span>
+      </label>
+      
+      <label class="setting-item">
+        <input type="checkbox" 
+               [checked]="settings.enableErrorFlagging"
+               (change)="onCheckboxChange($event, 'enableErrorFlagging')">
+        <span class="setting-label">Enable error detection</span>
+      </label>
+      
+      <label class="setting-item">
+        <input type="checkbox" 
+               [checked]="settings.colorCoding"
+               (change)="onCheckboxChange($event, 'colorCoding')">
+        <span class="setting-label">Color-coded speakers</span>
+      </label>
+      
+      <label class="setting-item">
+        <input type="checkbox" 
+               [checked]="settings.autoScroll"
+               (change)="onCheckboxChange($event, 'autoScroll')">
+        <span class="setting-label">Auto-scroll to bottom</span>
+      </label>
+      
+      <div class="setting-item">
+        <label class="setting-label">Font size:</label>
+        <select [value]="settings.fontSize" 
+                (change)="onSelectChange($event, 'fontSize')">
+          <option value="small">Small</option>
+          <option value="medium">Medium</option>
+          <option value="large">Large</option>
+        </select>
+      </div>
+      
+      <div class="setting-item">
+        <label class="setting-label">Theme:</label>
+        <select [value]="settings.theme" 
+                (change)="onSelectChange($event, 'theme')">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="high-contrast">High Contrast</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Current Speaker Indicator -->
+  <div class="current-speaker-indicator" *ngIf="currentSpeaker">
+    <div class="speaker-info">
+      <span class="speaker-avatar" *ngIf="settings.showSpeakerAvatars">{{ currentSpeaker.avatar }}</span>
+      <span class="speaker-name" [style.color]="currentSpeaker.color">{{ currentSpeaker.name }}</span>
+      <span class="speaking-indicator">is speaking...</span>
+    </div>
+  </div>
+  
+  <!-- Transcript Container -->
+  <div #transcriptContainer 
+       class="transcript-container"
+       [class.auto-scroll]="settings.autoScroll"
+       (scroll)="onScroll()">
+    
+    <!-- No entries message -->
+    <div class="no-entries-message" *ngIf="filteredEntries.length === 0 && !searchQuery">
+      <div class="message-content">
+        <span class="message-icon">💭</span>
+        <h4>Waiting for transcript...</h4>
+        <p>The conversation transcript will appear here in real-time.</p>
+      </div>
+    </div>
+    
+    <!-- Search no results -->
+    <div class="no-results-message" *ngIf="filteredEntries.length === 0 && searchQuery">
+      <div class="message-content">
+        <span class="message-icon">🔍</span>
+        <h4>No results found</h4>
+        <p>No transcript entries match "{{ searchQuery }}"</p>
+        <button class="clear-search-btn" (click)="searchQuery = ''; onSearchQueryChange('')">
+          Clear search
+        </button>
+      </div>
+    </div>
+    
+    <!-- Transcript Entries -->
+    <div class="transcript-entries" *ngIf="filteredEntries.length > 0">
+      <div 
+        *ngFor="let entry of filteredEntries; trackBy: trackByEntryId"
+        [id]="'transcript-entry-' + entry.id"
+        class="transcript-entry"
+        [class.selected]="selectedEntry?.id === entry.id"
+        [class.has-errors]="entry.hasErrors"
+        [class.interim]="entry.isInterim"
+        [class.ai-speaker]="entry.speaker === 'ai'"
+        [class.candidate-speaker]="entry.speaker === 'candidate'"
+        [class.system-speaker]="entry.speaker === 'system'"
+        (click)="onEntryClick(entry)">
+        
+        <!-- Entry Header -->
+        <div class="entry-header">
+          <!-- Speaker Info -->
+          <div class="speaker-info">
+            <span class="speaker-avatar" 
+                  *ngIf="settings.showSpeakerAvatars">
+              {{ getSpeakerAvatar(entry.speaker) }}
+            </span>
+            <span class="speaker-name" 
+                  [style.color]="settings.colorCoding ? getSpeakerColor(entry.speaker) : ''">
+              {{ getSpeakerName(entry.speaker) }}
+            </span>
+            <span class="speaker-role">{{ entry.speakerInfo?.role }}</span>
+          </div>
+          
+          <!-- Timestamp -->
+          <div class="entry-timestamp" *ngIf="settings.showTimestamps">
+            <span class="timestamp">{{ formatTimestamp(entry.timestamp) }}</span>
+            <span class="duration" *ngIf="entry.duration">({{ entry.duration / 1000 }}s)</span>
+          </div>
+        </div>
+        
+        <!-- Entry Content -->
+        <div class="entry-content">
+          <!-- Original Text (if corrected) -->
+          <div class="original-text" *ngIf="entry.correctedText && entry.originalText !== entry.correctedText">
+            <span class="original-label">Original:</span>
+            <span class="original-content">{{ entry.originalText }}</span>
+          </div>
+          
+          <!-- Main Text -->
+          <div class="main-text" 
+               [class.corrected]="entry.correctedText"
+               [class.interim]="entry.isInterim">
+            {{ entry.correctedText || entry.text }}
+            <span class="interim-indicator" *ngIf="entry.isInterim">...</span>
+          </div>
+          
+          <!-- Confidence Score -->
+          <div class="confidence-score" *ngIf="settings.showConfidence && entry.confidence !== undefined">
+            <span class="confidence-label">Confidence:</span>
+            <span class="confidence-value" [class]="getConfidenceClass(entry.confidence)">
+              {{ (entry.confidence * 100).toFixed(1) }}%
+            </span>
+            <div class="confidence-bar">
+              <div class="confidence-fill" 
+                   [style.width.%]="entry.confidence * 100"
+                   [class]="getConfidenceClass(entry.confidence)"></div>
+            </div>
+          </div>
+          
+          <!-- Error Flags -->
+          <div class="error-flags" *ngIf="entry.hasErrors && settings.enableErrorFlagging">
+            <div class="error-header">
+              <span class="error-icon">⚠️</span>
+              <span class="error-count">{{ entry.errorFlags?.length || 0 }} issue(s) detected</span>
+            </div>
+            
+            <div class="error-list">
+              <div *ngFor="let error of entry.errorFlags" 
+                   class="error-item"
+                   [class.error-high]="error.severity === 'high'"
+                   [class.error-medium]="error.severity === 'medium'"
+                   [class.error-low]="error.severity === 'low'">
+                <span class="error-severity-icon">{{ getErrorSeverityIcon(error.severity) }}</span>
+                <span class="error-type">{{ error.type | titlecase }}</span>
+                <span class="error-description">{{ error.description }}</span>
+                <span class="error-confidence">({{ (error.confidence * 100).toFixed(0) }}% confidence)</span>
+              </div>
+            </div>
+            
+            <!-- Error Actions -->
+            <div class="error-actions" *ngIf="enableErrorCorrection">
+              <button class="report-error-btn" (click)="reportError(entry); $event.stopPropagation()">
+                <span class="btn-icon">🔧</span>
+                Correct Error
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Entry Actions -->
+        <div class="entry-actions" *ngIf="selectedEntry?.id === entry.id">
+          <button class="action-btn jump-btn" (click)="scrollToEntry(entry.id); $event.stopPropagation()">
+            <span class="btn-icon">📍</span>
+            Jump to
+          </button>
+          <button class="action-btn copy-btn" (click)="copyEntryText(entry); $event.stopPropagation()">
+            <span class="btn-icon">📋</span>
+            Copy
+          </button>
+          <button class="action-btn flag-btn" 
+                  *ngIf="enableErrorCorrection"
+                  (click)="reportError(entry); $event.stopPropagation()">
+            <span class="btn-icon">🏁</span>
+            Flag
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Auto-scroll anchor -->
+    <div #scrollAnchor class="scroll-anchor"></div>
+  </div>
+  
+  <!-- Transcript Footer -->
+  <div class="transcript-footer">
+    <div class="footer-left">
+      <span class="total-entries">{{ totalEntries }} total entries</span>
+      <span class="filtered-count" *ngIf="searchQuery">
+        ({{ filteredEntries.length }} shown)
+      </span>
+    </div>
+    
+    <div class="footer-right">
+      <!-- Scroll to Bottom Button -->
+      <button class="scroll-bottom-btn" 
+              *ngIf="!isScrolledToBottom && totalEntries > 0"
+              (click)="scrollToBottom()">
+        <span class="btn-icon">⬇️</span>
+        Scroll to bottom
+      </button>
+      
+      <!-- Clear Transcript Button -->
+      <button class="clear-transcript-btn" 
+              *ngIf="totalEntries > 0 && isRecruiterView"
+              (click)="clearTranscript()">
+        <span class="btn-icon">🗑️</span>
+        Clear
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Correction Modal -->
+<div class="modal-overlay" 
+     *ngIf="showErrorModal" 
+     (click)="closeErrorModal()"
+     [@fadeIn]>
+  
+  <div class="error-correction-modal" 
+       #errorModal
+       (click)="$event.stopPropagation()"
+       [@slideIn]>
+    
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <span class="modal-icon">🔧</span>
+        Correct Transcript Error
+      </h3>
+      <button class="close-btn" (click)="closeErrorModal()">
+        <span class="close-icon">✕</span>
+      </button>
+    </div>
+    
+    <div class="modal-content">
+      <!-- Original Text -->
+      <div class="form-group">
+        <label class="form-label">Original Text:</label>
+        <div class="original-text-display">
+          {{ currentErrorCorrection.originalText }}
+        </div>
+      </div>
+      
+      <!-- Corrected Text -->
+      <div class="form-group">
+        <label class="form-label">Corrected Text:</label>
+        <textarea 
+          class="correction-textarea"
+          [(ngModel)]="currentErrorCorrection.correctedText"
+          placeholder="Enter the correct text..."
+          rows="3">
+        </textarea>
+      </div>
+      
+      <!-- Correction Reason -->
+      <div class="form-group">
+        <label class="form-label">Reason for correction:</label>
+        <input 
+          type="text"
+          class="correction-reason"
+          [(ngModel)]="currentErrorCorrection.reason"
+          placeholder="Brief explanation of the issue...">
+      </div>
+      
+      <!-- Priority -->
+      <div class="form-group">
+        <label class="form-label">Priority:</label>
+        <select class="priority-select" [(ngModel)]="currentErrorCorrection.priority">
+          <option value="low">Low - Minor issue</option>
+          <option value="medium">Medium - Noticeable issue</option>
+          <option value="high">High - Critical error</option>
+        </select>
+      </div>
+      
+      <!-- Error Types -->
+      <div class="form-group">
+        <label class="form-label">Error type (optional):</label>
+        <div class="error-type-grid">
+          <button 
+            *ngFor="let errorType of errorTypes"
+            class="error-type-btn"
+            [class.selected]="currentErrorCorrection.errorType === errorType.value"
+            (click)="setErrorType(errorType.value)">
+            {{ errorType.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button class="cancel-btn" (click)="closeErrorModal()">
+        Cancel
+      </button>
+      <button class="submit-btn" 
+              [disabled]="!currentErrorCorrection.correctedText"
+              (click)="submitErrorCorrection()">
+        <span class="btn-icon">✅</span>
+        Submit Correction
+      </button>
+    </div>
+  </div>
+</div>

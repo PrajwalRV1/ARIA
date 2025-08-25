@@ -1,0 +1,29 @@
+fastapi==0.115.0
+uvicorn==0.32.1
+websockets==13.1
+redis==5.2.0
+python-multipart==0.0.15
+pydantic==2.10.3
+httpx==0.28.1
+numpy>=1.26.4
+aiofiles==23.2.1
+
+# Open-source speech recognition
+vosk==0.3.44
+SpeechRecognition==3.11.0
+
+# DeepSpeech (optional)
+deepspeech==0.9.3
+
+# Audio processing
+webrtcvad==2.0.10
+librosa>=0.10.0
+soundfile>=0.12.0
+pydub>=0.25.0
+
+# Additional audio tools
+scipy>=1.11.0
+pyaudio>=0.2.11
+
+# For audio format conversion
+ffmpeg-python>=0.2.0

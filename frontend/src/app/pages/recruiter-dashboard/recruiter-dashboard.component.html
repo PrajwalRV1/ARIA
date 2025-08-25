@@ -190,12 +190,12 @@
         </button>
         <button 
           class="full schedule-interview" 
-          (click)="goToQuestionBank()"
-          [disabled]="!selectedCandidateForInterview"
-          [title]="selectedCandidateForInterview ? 'Go to Question Bank for ' + selectedCandidateForInterview.name : 'Select a candidate first'"
+          (click)="scheduleInterview()"
+          [disabled]="!selectedCandidateForInterview || isProcessing"
+          [title]="selectedCandidateForInterview ? 'Schedule Interview for ' + selectedCandidateForInterview.name : 'Select a candidate first'"
         >
-          <i class="fas fa-question-circle"></i>
-          <span>Schedule Interview</span>
+          <i class="fas fa-calendar-alt" [class.fa-spin]="isProcessing"></i>
+          <span>{{ isProcessing ? 'Scheduling...' : 'Schedule Interview' }}</span>
         </button>
       </div>
 
@@ -321,3 +321,123 @@
   (close)="closeAudioUpload()"
   (upload)="onAudioUpload($event)">
 </app-audio-upload-modal>
+
+<!-- Schedule Interview Modal -->
+<!-- Main Scheduling Options Modal -->
+<div *ngIf="showSchedulingModal" class="modal-overlay" (click)="closeSchedulingModal()">
+  <div class="scheduling-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-calendar-alt"></i>
+        Schedule Interview
+      </h3>
+      <button class="close-btn" (click)="closeSchedulingModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="candidate-info" *ngIf="selectedCandidateForInterview">
+        <div class="candidate-details">
+          <div class="candidate-avatar">
+            {{ getInitials(selectedCandidateForInterview.name) }}
+          </div>
+          <div class="candidate-text">
+            <h4>{{ selectedCandidateForInterview.name }}</h4>
+            <p>{{ selectedCandidateForInterview.jobTitle }}</p>
+            <span class="requisition-id">Req ID: {{ selectedCandidateForInterview.requisitionId }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="scheduling-options">
+        <h4>When would you like to schedule the interview?</h4>
+        
+        <div class="option-buttons">
+          <button class="schedule-option immediate" (click)="scheduleNow()" [disabled]="isProcessing">
+            <div class="option-icon">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="option-content">
+              <h5>Schedule Immediately</h5>
+              <p>Start the interview right now. The meeting link will be created instantly and shared with all participants.</p>
+            </div>
+          </button>
+          
+          <button class="schedule-option later" (click)="scheduleForLater()" [disabled]="isProcessing">
+            <div class="option-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="option-content">
+              <h5>Schedule For Later</h5>
+              <p>Pick a specific date and time. Meeting invitations will be sent to all participants.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Date/Time Picker Modal (shown when "Schedule For Later" is selected) -->
+<div *ngIf="showDateTimeModal" class="modal-overlay" (click)="closeSchedulingModal()">
+  <div class="datetime-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-calendar-check"></i>
+        Select Interview Time
+      </h3>
+      <button class="close-btn" (click)="closeSchedulingModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="datetime-picker">
+        <div class="datetime-info">
+          <p>Please select when you'd like to schedule the interview for <strong>{{ selectedCandidateForInterview?.name }}</strong>.</p>
+          <p class="timezone-info">
+            <i class="fas fa-globe"></i>
+            Current timezone: <strong>{{ getCurrentTimezone() }}</strong>
+          </p>
+        </div>
+        
+        <div class="datetime-input-group">
+          <label for="scheduleDateTime">Interview Date & Time:</label>
+          <input 
+            type="datetime-local" 
+            id="scheduleDateTime"
+            class="datetime-input"
+            [(ngModel)]="selectedScheduleTime"
+            [min]="getCurrentDateTime()"
+            required
+          >
+          <small class="help-text">
+            <i class="fas fa-info-circle"></i>
+            Minimum time is 1 hour from now
+          </small>
+        </div>
+        
+        <div class="datetime-preview" *ngIf="selectedScheduleTime">
+          <h5>Selected Time:</h5>
+          <p>{{ selectedScheduleTime | date:'fullDate' }} at {{ selectedScheduleTime | date:'shortTime' }}</p>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="closeSchedulingModal()">
+          <i class="fas fa-times"></i>
+          Cancel
+        </button>
+        <button 
+          class="btn-confirm" 
+          (click)="confirmScheduleForLater()" 
+          [disabled]="!selectedScheduleTime || isProcessing"
+        >
+          <i class="fas fa-check" [class.fa-spin]="isProcessing"></i>
+          {{ isProcessing ? 'Scheduling...' : 'Schedule Interview' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

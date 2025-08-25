@@ -1,0 +1,24 @@
+fastapi==0.115.0
+uvicorn==0.32.1
+numpy>=1.26.0
+redis==5.2.0
+python-multipart==0.0.15
+pydantic==2.10.3
+httpx==0.28.1
+# Lightweight ML alternatives (Python 3.13 compatible)
+scikit-learn>=1.5.0
+scipy>=1.13.0
+pillow>=10.0.0
+nltk>=3.9.0
+joblib>=1.5.0
+# Audio processing (lightweight)
+librosa>=0.10.0
+soundfile>=0.12.0
+# Computer vision (lightweight alternatives)
+imageio>=2.30.0
+scikit-image>=0.24.0
+# Text processing
+textblob>=0.18.0
+vaderSentiment>=3.3.0
+# Statistical analysis
+statsmodels>=0.14.0

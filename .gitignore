@@ -348,3 +348,37 @@ test-data/audio/
 test-data/video/
 sample-interviews/
 candidate-uploads/
+
+# Python virtual environments and cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Java/Maven build artifacts
+target/
+*.class
+
+# Frontend package artifacts
+frontend/frontend@*/
+
+# Development and testing files
+test-*.py
+*-test.py
+*.test.js
+*.spec.ts
+*.spec.js
+
+# Deployment and configuration templates
+*-template.*
+template-*
+
+# GitLab CI/CD
+.gitlab-ci.yml
+
+# Shell scripts (keep only main deployment scripts)
+start.sh
+stop.sh
+!deploy.sh

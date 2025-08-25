@@ -52,15 +52,18 @@ export class RecruiterRegisterLoginComponent implements OnInit {
     if (routeMode) this.mode = routeMode;
     this.applyModeValidators();
 
-    // Watch password & confirmPassword match
+    // Watch password & confirmPassword match - original logic
     this.form.valueChanges.subscribe(() => {
       if (
         this.mode === 'register' &&
+        this.form.get('fullName')?.valid &&
+        this.form.get('email')?.valid &&
         this.form.get('password')?.valid &&
         this.form.get('confirmPassword')?.valid &&
         !this.form.errors?.['passwordsMismatch'] &&
         !this.otpSent
       ) {
+        console.log('[DEBUG] All fields valid, auto-triggering OTP send...');
         this.triggerSendOtp();
       }
     });

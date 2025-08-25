@@ -3,10 +3,9 @@ package com.company.user.service;
 import com.company.user.dto.*;
 import com.company.user.model.Recruiter;
 import com.company.user.model.PasswordResetToken;
-import com.company.user.model.RefreshToken;
 import com.company.user.repository.RecruiterRepository;
 import com.company.user.repository.PasswordResetTokenRepository;
-import com.company.user.security.JwtUtil;
+import com.company.user.security.EnhancedJwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,18 +20,16 @@ public class AuthService {
 
     private final RecruiterRepository recruiterRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+private final EnhancedJwtUtil jwtUtil;
     private final OtpService otpService;
-    private final RefreshTokenService refreshTokenService;
     private final PasswordResetTokenRepository resetTokenRepo;
     private final EmailService emailService;
     private final long resetTokenExpirySeconds;
 
     public AuthService(RecruiterRepository recruiterRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil,
+EnhancedJwtUtil jwtUtil,
                        OtpService otpService,
-                       RefreshTokenService refreshTokenService,
                        PasswordResetTokenRepository resetTokenRepo,
                        EmailService emailService,
                        @Value("${app.reset-token.expiry-seconds:3600}") long resetTokenExpirySeconds) {
@@ -40,7 +37,6 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.otpService = otpService;
-        this.refreshTokenService = refreshTokenService;
         this.resetTokenRepo = resetTokenRepo;
         this.emailService = emailService;
         this.resetTokenExpirySeconds = resetTokenExpirySeconds;
@@ -60,11 +56,10 @@ public class AuthService {
         recruiterRepository.save(r);
 
         String access = jwtUtil.generateAccessToken(r.getId(), Map.of("email", r.getEmail(), "fullName", r.getFullName()));
-        RefreshToken refresh = refreshTokenService.createTokenForUser(r.getId());
 
         AuthResponse resp = new AuthResponse();
         resp.token = access;
-        resp.refreshToken = refresh.getToken();
+        resp.refreshToken = null; // Simplified - no refresh tokens for now
         resp.userId = r.getId();
         resp.fullName = r.getFullName();
         resp.email = r.getEmail();
@@ -80,11 +75,10 @@ public class AuthService {
         }
 
         var access = jwtUtil.generateAccessToken(recruiter.getId(), Map.of("email", recruiter.getEmail(), "fullName", recruiter.getFullName()));
-        var refresh = refreshTokenService.createTokenForUser(recruiter.getId());
 
         AuthResponse resp = new AuthResponse();
         resp.token = access;
-        resp.refreshToken = refresh.getToken();
+        resp.refreshToken = null; // Simplified - no refresh tokens for now
         resp.userId = recruiter.getId();
         resp.fullName = recruiter.getFullName();
         resp.email = recruiter.getEmail();
@@ -92,32 +86,12 @@ public class AuthService {
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest req) {
-        var existing = refreshTokenService.findValidToken(req.refreshToken);
-        if (existing == null) {
-            throw new IllegalArgumentException("Invalid or expired refresh token");
-        }
-        // rotate: revoke old, create new
-        refreshTokenService.revokeToken(existing);
-        var recruiter = recruiterRepository.findById(existing.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
-
-        var access = jwtUtil.generateAccessToken(recruiter.getId(), Map.of("email", recruiter.getEmail(), "fullName", recruiter.getFullName()));
-        var newRefresh = refreshTokenService.createTokenForUser(recruiter.getId());
-
-        AuthResponse resp = new AuthResponse();
-        resp.token = access;
-        resp.refreshToken = newRefresh.getToken();
-        resp.userId = recruiter.getId();
-        resp.fullName = recruiter.getFullName();
-        resp.email = recruiter.getEmail();
-        return resp;
+        // Simplified - not implemented for now
+        throw new UnsupportedOperationException("Refresh token not implemented in simplified setup");
     }
 
     public void logout(String refreshToken) {
-        var existing = refreshTokenService.findValidToken(refreshToken);
-        if (existing != null) {
-            refreshTokenService.revokeToken(existing);
-        }
+        // Simplified - no refresh tokens to revoke
     }
 
     // Password reset flow
@@ -154,7 +128,6 @@ public class AuthService {
         recruiterRepository.save(user);
         t.setUsed(true);
         resetTokenRepo.save(t);
-        // revoke all refresh tokens for the user (optional security measure)
-        refreshTokenService.revokeAllForUser(user.getId());
+        // Simplified - no refresh tokens to revoke
     }
 }

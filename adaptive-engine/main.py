@@ -26,6 +26,7 @@ from irt_engine import IRTEngine
 from continuous_learning import ContinuousLearningModule
 from bias_detector import BiasDetector
 from question_selector import QuestionSelector
+from job_analyzer_client import JobAnalyzerClient
 
 # Redis connection for caching and session management
 redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
     app.state.learning_module = ContinuousLearningModule()
     app.state.bias_detector = BiasDetector()
     app.state.question_selector = QuestionSelector()
+    app.state.job_analyzer_client = JobAnalyzerClient()
     
     # Start background learning task
     learning_task = asyncio.create_task(
@@ -123,6 +125,24 @@ class LearningUpdateRequest(BaseModel):
     question_effectiveness: List[Dict[str, Any]]
     bias_incidents: List[Dict[str, Any]] = []
     conversation_patterns: List[Dict[str, Any]] = []
+
+class JobAnalysisRequest(BaseModel):
+    job_description: str
+    key_responsibilities: Optional[str] = ""
+    job_role: Optional[str] = ""
+    company_context: Optional[str] = ""
+
+class JobBasedQuestionRequest(BaseModel):
+    session_id: str
+    candidate_id: int
+    current_theta: float = 0.0
+    standard_error: float = 1.0
+    answered_questions: List[int] = []
+    job_description: str
+    key_responsibilities: Optional[str] = ""
+    job_role: str
+    experience_level: str
+    question_type: Optional[str] = None
 
 @app.get("/")
 async def root():
@@ -306,6 +326,180 @@ async def update_learning(request: LearningUpdateRequest, background_tasks: Back
         logger.error(f"Error queuing learning update for session {request.session_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Learning update failed: {str(e)}")
 
+@app.post("/analyze-job")
+async def analyze_job_for_interview(request: JobAnalysisRequest):
+    """
+    Analyze job description to get question category weights and difficulty adjustments
+    """
+    try:
+        logger.info(f"Analyzing job description for interview setup")
+        
+        # Get job analysis from job analyzer service
+        analysis_result = await app.state.job_analyzer_client.analyze_job_description(
+            job_description=request.job_description,
+            key_responsibilities=request.key_responsibilities,
+            job_role=request.job_role,
+            company_context=request.company_context
+        )
+        
+        if not analysis_result:
+            raise HTTPException(status_code=503, detail="Job analyzer service unavailable")
+        
+        # Get question category weights
+        category_weights = await app.state.job_analyzer_client.get_question_category_weights(
+            request.job_description,
+            request.key_responsibilities
+        )
+        
+        # Get difficulty adjustment
+        difficulty_adjustment = await app.state.job_analyzer_client.get_interview_difficulty_adjustment(
+            request.job_description,
+            request.key_responsibilities
+        )
+        
+        # Get technical skills for filtering
+        technical_skills = await app.state.job_analyzer_client.get_technical_skills_for_filtering(
+            request.job_description,
+            request.key_responsibilities
+        )
+        
+        return {
+            "job_analysis": analysis_result,
+            "question_category_weights": category_weights,
+            "difficulty_adjustment": difficulty_adjustment,
+            "priority_technical_skills": technical_skills,
+            "recommendation": {
+                "suggested_initial_theta": difficulty_adjustment.get('initial_theta', 0.0),
+                "suggested_difficulty_range": {
+                    "min": difficulty_adjustment.get('min_difficulty', -1.5),
+                    "max": difficulty_adjustment.get('max_difficulty', 2.0)
+                },
+                "estimated_interview_duration": f"{30 + difficulty_adjustment.get('experience_years', 3) * 5} minutes",
+                "key_focus_areas": analysis_result.get('key_competencies', [])[:5]
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing job description: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Job analysis failed: {str(e)}")
+
+@app.post("/next-question-job-aware", response_model=QuestionResponse)
+async def get_next_question_job_aware(request: JobBasedQuestionRequest):
+    """
+    Get the next optimal question with job description context for enhanced selection
+    """
+    try:
+        logger.info(f"Selecting job-aware question for session {request.session_id}")
+        
+        # Get job analysis and adjustments
+        difficulty_adjustment = await app.state.job_analyzer_client.get_interview_difficulty_adjustment(
+            request.job_description,
+            request.key_responsibilities
+        )
+        
+        technical_skills = await app.state.job_analyzer_client.get_technical_skills_for_filtering(
+            request.job_description,
+            request.key_responsibilities
+        )
+        
+        # Adjust difficulty range based on job analysis
+        adjusted_min_difficulty = max(
+            request.current_theta - 1.5,
+            difficulty_adjustment.get('min_difficulty', -1.5)
+        )
+        adjusted_max_difficulty = min(
+            request.current_theta + 1.5,
+            difficulty_adjustment.get('max_difficulty', 2.0)
+        )
+        
+        # Use enhanced question selector with job context
+        question = await app.state.question_selector.select_next_question(
+            session_id=request.session_id,
+            current_theta=request.current_theta,
+            standard_error=request.standard_error,
+            answered_questions=request.answered_questions,
+            job_role=request.job_role,
+            experience_level=request.experience_level,
+            technologies=technical_skills,  # Use analyzed skills
+            difficulty_range=(adjusted_min_difficulty, adjusted_max_difficulty),
+            question_type=request.question_type,
+            job_description=request.job_description,
+            key_responsibilities=request.key_responsibilities
+        )
+        
+        if not question:
+            raise HTTPException(status_code=404, detail="No suitable job-relevant question found")
+        
+        response = QuestionResponse(
+            question_id=question["question_id"],
+            question_text=question["question_text"],
+            question_type=question["question_type"],
+            difficulty=question["difficulty"],
+            discrimination=question["discrimination"],
+            category=question["category"],
+            technologies=question["technologies"],
+            expected_duration_minutes=question["expected_duration_minutes"],
+            coding_required=question.get("coding_required", False),
+            multi_part=question.get("multi_part", False),
+            followup_questions=question.get("followup_questions", []),
+            confidence_score=question["confidence_score"],
+            selection_reason=f"Job-aware selection: {question['selection_reason']}"
+        )
+        
+        logger.info(f"Selected job-aware question {question['question_id']} for session {request.session_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error selecting job-aware question: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Job-aware question selection failed: {str(e)}")
+
+@app.post("/preview-interview")
+async def preview_interview_strategy(request: JobAnalysisRequest):
+    """
+    Preview the interview strategy based on job description analysis
+    """
+    try:
+        logger.info("Generating interview preview based on job analysis")
+        
+        # Get comprehensive preview from job analyzer
+        preview = await app.state.job_analyzer_client.preview_interview_questions(
+            request.job_description,
+            request.key_responsibilities
+        )
+        
+        if not preview:
+            raise HTTPException(status_code=503, detail="Unable to generate preview")
+        
+        # Add adaptive engine specific recommendations
+        difficulty_adjustment = await app.state.job_analyzer_client.get_interview_difficulty_adjustment(
+            request.job_description,
+            request.key_responsibilities
+        )
+        
+        enhanced_preview = {
+            **preview,
+            "adaptive_engine_recommendations": {
+                "initial_theta": difficulty_adjustment.get('initial_theta', 0.0),
+                "difficulty_range": {
+                    "min": difficulty_adjustment.get('min_difficulty', -1.5),
+                    "max": difficulty_adjustment.get('max_difficulty', 2.0)
+                },
+                "expected_questions_count": f"{8 + difficulty_adjustment.get('experience_years', 3) * 2}-{15 + difficulty_adjustment.get('experience_years', 3) * 3}",
+                "termination_criteria": {
+                    "min_questions": 5,
+                    "max_questions": 20,
+                    "theta_stability_threshold": 0.3,
+                    "confidence_threshold": 0.7
+                }
+            }
+        }
+        
+        return enhanced_preview
+        
+    except Exception as e:
+        logger.error(f"Error generating interview preview: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Preview generation failed: {str(e)}")
+
 @app.get("/analytics/session/{session_id}")
 async def get_session_analytics(session_id: str):
     """
@@ -402,4 +596,23 @@ def analyze_learning_trajectory(theta_history: List[Dict]) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001, log_level="info")
+    import os
+    
+    # Check if SSL certificates exist
+    ssl_cert_path = "../ssl-certs/aria-cert.pem"
+    ssl_key_path = "../ssl-certs/aria-key.pem"
+    
+    if os.path.exists(ssl_cert_path) and os.path.exists(ssl_key_path):
+        # Run with SSL
+        uvicorn.run(
+            app, 
+            host="0.0.0.0", 
+            port=8001, 
+            log_level="info",
+            ssl_keyfile=ssl_key_path,
+            ssl_certfile=ssl_cert_path
+        )
+    else:
+        # Fallback to HTTP
+        print("Warning: SSL certificates not found, running with HTTP")
+        uvicorn.run(app, host="0.0.0.0", port=8001, log_level="info")

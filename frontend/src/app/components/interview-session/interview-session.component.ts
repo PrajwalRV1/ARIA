@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, interval, fromEvent } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -8,7 +9,7 @@ import * as monaco from 'monaco-editor';
 
 // Services
 import { InterviewService } from '../../services/interview.service';
-import { WebrtcService } from '../../services/webrtc.service';
+import { WebRTCService } from '../../services/webrtc.service';
 import { TranscriptService } from '../../services/transcript.service';
 
 // Models
@@ -78,7 +79,8 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
     private router: Router,
     private interviewService: InterviewService,
     private webrtcService: WebRTCService,
-    private transcriptService: TranscriptService
+    private transcriptService: TranscriptService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
@@ -89,9 +91,11 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
       return;
     }
     
+    if (isPlatformBrowser(this.platformId)) {
     this.initializeInterview();
-    this.setupKeyboardListeners();
-    this.setupSpacebarDetection();
+      this.setupKeyboardListeners();
+      this.setupSpacebarDetection();
+    }
   }
 
   ngOnDestroy(): void {
@@ -156,18 +160,26 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
       await this.webrtcService.initialize(this.sessionId, this.localStream);
       
       // Set up WebRTC event handlers
-      this.webrtcService.onRemoteStream((stream: MediaStream) => {
+      const remoteStreamSub = this.webrtcService.onRemoteStream().subscribe((stream: MediaStream) => {
         this.remoteVideo.nativeElement.srcObject = stream;
       });
       
-      this.webrtcService.onConnectionStateChange((state: RTCPeerConnectionState) => {
+      const connectionStateSub = this.webrtcService.onConnectionStateChange().subscribe((state: RTCPeerConnectionState) => {
         this.isConnected = state === 'connected';
         this.updateConnectionQuality(state);
       });
       
-      this.webrtcService.onDataChannelMessage((message: any) => {
+      const dataChannelSub = this.webrtcService.onDataChannelMessage().subscribe((message: any) => {
         this.handleDataChannelMessage(message);
       });
+      
+      // Add subscriptions for cleanup
+      this.subscriptions.push(remoteStreamSub, connectionStateSub, dataChannelSub);
+      
+      // Join Daily.co room if we have session info
+      if (this.session?.meetingLink) {
+        await this.webrtcService.joinRoom(this.session.meetingLink);
+      }
       
       console.log('WebRTC initialized successfully');
       
@@ -266,11 +278,15 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Spacebar detection for response completion
+  // Spacebar detection for response completion with debouncing
   private setupSpacebarDetection(): void {
     const spacebarSubscription = fromEvent<KeyboardEvent>(document, 'keydown')
+      .pipe(
+        debounceTime(300), // Prevent rapid repeated presses
+        distinctUntilChanged((prev, curr) => prev.code === curr.code)
+      )
       .subscribe((event: KeyboardEvent) => {
-        if (event.code === 'Space' && !this.isTypingInEditor()) {
+        if (event.code === 'Space' && !this.isTypingInEditor() && !this.spacebarPressed) {
           event.preventDefault();
           this.onSpacebarPressed();
         }
@@ -324,25 +340,32 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
     this.spacebarPressed = true;
     this.responseEndTime = new Date();
     
-    console.log('Spacebar pressed - ending response');
+    console.log('✅ Spacebar pressed - ending response immediately');
     
     try {
-      // Signal end of response to transcript service
-      await this.transcriptService.signalResponseEnd(this.sessionId);
+      // 🚀 IMMEDIATE: Signal end of response (non-blocking)
+      this.transcriptService.signalResponseEnd(this.sessionId).catch(error => {
+        console.warn('Transcript service warning:', error);
+      });
       
-      // Submit current response
-      await this.submitResponse();
+      // 🚀 IMMEDIATE: Trigger UI update for "processing" state
+      this.showProcessingState();
       
-      // Reset for next response
+      // 🚀 NON-BLOCKING: Submit response asynchronously 
+      this.submitResponseAsync();
+      
+      // 🚀 IMMEDIATE: Reset UI state for next response (within 500ms)
       setTimeout(() => {
         this.spacebarPressed = false;
         this.responseStartTime = null;
         this.responseEndTime = null;
-      }, 1000);
+        this.hideProcessingState();
+      }, 500); // Reduced from 1000ms to 500ms
       
     } catch (error) {
       console.error('Error handling spacebar press:', error);
       this.spacebarPressed = false;
+      this.hideProcessingState();
     }
   }
 
@@ -426,6 +449,34 @@ export class InterviewSessionComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Failed to submit response:', error);
       this.handleError('Failed to submit response');
+    }
+  }
+
+  // 🚀 NEW: Non-blocking async response submission
+  private submitResponseAsync(): void {
+    this.submitResponse().then(result => {
+      console.log('✅ Response submitted successfully');
+      // Handle success (AI Avatar should continue immediately)
+    }).catch(error => {
+      console.error('❌ Response submission failed:', error);
+      this.handleError('Response submission failed');
+    });
+  }
+
+  // 🚀 NEW: Show processing state to user
+  private showProcessingState(): void {
+    // Add visual indicator that response is being processed
+    const processingElement = document.querySelector('.response-processing');
+    if (processingElement) {
+      processingElement.classList.add('visible');
+    }
+  }
+
+  // 🚀 NEW: Hide processing state
+  private hideProcessingState(): void {
+    const processingElement = document.querySelector('.response-processing');
+    if (processingElement) {
+      processingElement.classList.remove('visible');
     }
   }
 

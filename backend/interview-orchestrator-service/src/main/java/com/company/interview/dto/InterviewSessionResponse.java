@@ -56,6 +56,15 @@ public class InterviewSessionResponse {
     private Double communicationScore;
     private Map<String, Double> aiMetrics;
     
+    // Job Analysis Integration Fields
+    private Boolean jobAnalysisCompleted;
+    private List<String> keyCompetencies;
+    private List<String> priorityTechnicalSkills;
+    private Integer suggestedDuration;
+    private Double jobAnalysisConfidence;
+    private Double recommendedInitialTheta;
+    private Map<String, Double> questionCategoryWeights;
+    
     // Status Information
     private Boolean canStart;
     private Boolean canTerminateEarly;

@@ -54,10 +54,10 @@ public class InterviewSession {
     private Integer durationMinutes;
     
     // IRT Parameters for adaptive questioning
-    @Column(name = "theta", precision = 10, scale = 4)
+    @Column(name = "theta")
     private Double theta = 0.0; // Candidate ability estimate
     
-    @Column(name = "standard_error", precision = 10, scale = 4)
+    @Column(name = "standard_error")
     private Double standardError = 1.0; // Uncertainty in theta estimate
     
     @Column(name = "min_questions")
@@ -114,16 +114,16 @@ public class InterviewSession {
     @Column(name = "metric_value")
     private Map<String, Double> aiMetrics;
     
-    @Column(name = "bias_score", precision = 10, scale = 4)
+    @Column(name = "bias_score")
     private Double biasScore;
     
-    @Column(name = "engagement_score", precision = 10, scale = 4)
+    @Column(name = "engagement_score")
     private Double engagementScore;
     
-    @Column(name = "technical_score", precision = 10, scale = 4)
+    @Column(name = "technical_score")
     private Double technicalScore;
     
-    @Column(name = "communication_score", precision = 10, scale = 4)
+    @Column(name = "communication_score")
     private Double communicationScore;
     
     // Session Configuration

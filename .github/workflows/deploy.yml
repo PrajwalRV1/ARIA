@@ -1,0 +1,169 @@
+name: Deploy ARIA Services
+
+on:
+  push:
+    branches: [ main, production ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+        python-version: [3.11]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Test Frontend (Angular)
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+
+    - name: Test frontend
+      run: |
+        cd frontend
+        npm run test -- --watch=false --browsers=ChromeHeadless
+
+    # Test Python Services
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+    - name: Install Python dependencies and test services
+      run: |
+        python -m pip install --upgrade pip
+        # Test each Python service
+        for service in speech-service adaptive-engine ai-services/analytics-service; do
+          echo "Testing $service"
+          cd $service
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+            # Add service-specific tests here
+            python -m py_compile *.py
+          fi
+          cd ..
+        done
+
+  deploy-render:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to Render
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      run: |
+        echo "Render will automatically deploy based on render.yaml configuration"
+        echo "Manual deployment trigger can be added here if needed"
+
+  deploy-railway:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Railway CLI
+      run: npm install -g @railway/cli
+
+    - name: Deploy AI Avatar Service to Railway
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        cd ai-services/ai-avatar-service
+        railway login --token $RAILWAY_TOKEN
+        railway up --detach
+
+    - name: Deploy Mozilla TTS Service to Railway
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        cd ai-services/mozilla-tts-service
+        railway login --token $RAILWAY_TOKEN
+        railway up --detach
+
+    - name: Deploy Voice Isolation Service to Railway
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        cd ai-services/voice-isolation-service
+        railway login --token $RAILWAY_TOKEN
+        railway up --detach
+
+    - name: Deploy Voice Synthesis Service to Railway
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        cd ai-services/voice-synthesis-service
+        railway login --token $RAILWAY_TOKEN
+        railway up --detach
+
+  health-check:
+    needs: [deploy-render, deploy-railway]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/production'
+    
+    steps:
+    - name: Wait for deployments
+      run: sleep 120  # Wait 2 minutes for services to start
+
+    - name: Health check services
+      run: |
+        services=(
+          "https://aria-frontend.onrender.com"
+          "https://aria-speech-service.onrender.com/health"
+          "https://aria-adaptive-engine.onrender.com/health"
+          "https://aria-analytics-service.onrender.com/health"
+          "https://aria-test-orchestrator.onrender.com/health"
+          "https://aria-test-service.onrender.com/health"
+        )
+        
+        for url in "${services[@]}"; do
+          echo "Checking $url"
+          if curl -f -s --max-time 30 "$url" > /dev/null; then
+            echo "✅ $url is healthy"
+          else
+            echo "❌ $url is not responding"
+          fi
+        done
+
+  notify:
+    needs: [health-check]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Notify deployment status
+      run: |
+        if [ "${{ needs.health-check.result }}" == "success" ]; then
+          echo "🎉 ARIA deployment successful!"
+        else
+          echo "❌ ARIA deployment failed"
+        fi

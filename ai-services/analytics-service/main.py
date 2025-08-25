@@ -20,11 +20,14 @@ import uvicorn
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseSettings
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    from pydantic import BaseSettings
 
-from video_analysis import VideoAnalyzer
-from nlp_analysis import NLPAnalyzer
-from bias_detection import BiasDetector
+from video_analysis_stub import VideoAnalyzer
+from nlp_analysis_stub import NLPAnalyzer
+from bias_detection_stub import BiasDetector
 from models import (
     VideoAnalysisRequest, VideoAnalysisResponse,
     TextAnalysisRequest, TextAnalysisResponse,
@@ -658,11 +661,32 @@ async def generate_performance_reports():
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host=settings.api_host,
-        port=settings.api_port,
-        workers=settings.api_workers if not settings.debug else 1,
-        reload=settings.debug,
-        log_level="debug" if settings.debug else "info"
-    )
+    import os
+    
+    # Check if SSL certificates exist
+    ssl_cert_path = "../../ssl-certs/aria-cert.pem"
+    ssl_key_path = "../../ssl-certs/aria-key.pem"
+    
+    if os.path.exists(ssl_cert_path) and os.path.exists(ssl_key_path):
+        # Run with SSL
+        uvicorn.run(
+            "main:app",
+            host=settings.api_host,
+            port=settings.api_port,
+            workers=settings.api_workers if not settings.debug else 1,
+            reload=settings.debug,
+            log_level="debug" if settings.debug else "info",
+            ssl_keyfile=ssl_key_path,
+            ssl_certfile=ssl_cert_path
+        )
+    else:
+        # Fallback to HTTP
+        print("Warning: SSL certificates not found, running with HTTP")
+        uvicorn.run(
+            "main:app",
+            host=settings.api_host,
+            port=settings.api_port,
+            workers=settings.api_workers if not settings.debug else 1,
+            reload=settings.debug,
+            log_level="debug" if settings.debug else "info"
+        )

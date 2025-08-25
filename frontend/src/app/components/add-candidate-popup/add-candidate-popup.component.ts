@@ -59,6 +59,11 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    // Only proceed if form is initialized
+    if (!this.form) {
+      return;
+    }
+    
     // Pre-fill data when switching to edit mode OR when candidateData changes
     if ((changes['candidateData'] || changes['mode']) && this.mode === 'edit' && this.candidateData) {
       this.initializeEditForm();

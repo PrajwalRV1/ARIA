@@ -1,0 +1,504 @@
+<!-- Schedule Interview Modal - Integrated directly into recruiter-dashboard component -->
+
+<!-- Main Scheduling Options Modal -->
+<div *ngIf="showSchedulingModal" class="modal-overlay" (click)="closeSchedulingModal()">
+  <div class="scheduling-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-calendar-alt"></i>
+        Schedule Interview
+      </h3>
+      <button class="close-btn" (click)="closeSchedulingModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="candidate-info" *ngIf="selectedCandidateForInterview">
+        <div class="candidate-details">
+          <div class="candidate-avatar">
+            {{ getInitials(selectedCandidateForInterview.name) }}
+          </div>
+          <div class="candidate-text">
+            <h4>{{ selectedCandidateForInterview.name }}</h4>
+            <p>{{ selectedCandidateForInterview.jobTitle }}</p>
+            <span class="requisition-id">Req ID: {{ selectedCandidateForInterview.requisitionId }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="scheduling-options">
+        <h4>When would you like to schedule the interview?</h4>
+        
+        <div class="option-buttons">
+          <button class="schedule-option immediate" (click)="scheduleNow()" [disabled]="isProcessing">
+            <div class="option-icon">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="option-content">
+              <h5>Schedule Immediately</h5>
+              <p>Start the interview right now. The meeting link will be created instantly and shared with all participants.</p>
+            </div>
+          </button>
+          
+          <button class="schedule-option later" (click)="scheduleForLater()" [disabled]="isProcessing">
+            <div class="option-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="option-content">
+              <h5>Schedule For Later</h5>
+              <p>Pick a specific date and time. Meeting invitations will be sent to all participants.</p>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Date/Time Picker Modal (shown when "Schedule For Later" is selected) -->
+<div *ngIf="showDateTimeModal" class="modal-overlay" (click)="closeSchedulingModal()">
+  <div class="datetime-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fas fa-calendar-check"></i>
+        Select Interview Time
+      </h3>
+      <button class="close-btn" (click)="closeSchedulingModal()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="datetime-picker">
+        <div class="datetime-info">
+          <p>Please select when you'd like to schedule the interview for <strong>{{ selectedCandidateForInterview?.name }}</strong>.</p>
+          <p class="timezone-info">
+            <i class="fas fa-globe"></i>
+            Current timezone: <strong>{{ getCurrentTimezone() }}</strong>
+          </p>
+        </div>
+        
+        <div class="datetime-input-group">
+          <label for="scheduleDateTime">Interview Date & Time:</label>
+          <input 
+            type="datetime-local" 
+            id="scheduleDateTime"
+            class="datetime-input"
+            [(ngModel)]="selectedScheduleTime"
+            [min]="getCurrentDateTime()"
+            required
+          >
+          <small class="help-text">
+            <i class="fas fa-info-circle"></i>
+            Minimum time is 5 minutes from now
+          </small>
+        </div>
+        
+        <div class="datetime-preview" *ngIf="selectedScheduleTime">
+          <h5>Selected Time:</h5>
+          <p>{{ selectedScheduleTime | date:'fullDate' }} at {{ selectedScheduleTime | date:'shortTime' }}</p>
+        </div>
+      </div>
+      
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="closeSchedulingModal()">
+          <i class="fas fa-times"></i>
+          Cancel
+        </button>
+        <button 
+          class="btn-confirm" 
+          (click)="confirmScheduleForLater()" 
+          [disabled]="!selectedScheduleTime || isProcessing"
+        >
+          <i class="fas fa-check" [class.fa-spin]="isProcessing"></i>
+          {{ isProcessing ? 'Scheduling...' : 'Schedule Interview' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Modal Base Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.scheduling-modal,
+.datetime-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 0;
+  border-bottom: 1px solid #e0e6ed;
+  margin-bottom: 24px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5em;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: #7f8c8d;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background-color: #f8f9fa;
+  color: #e74c3c;
+}
+
+.modal-body {
+  padding: 0 24px 24px;
+}
+
+/* Candidate Info Styles */
+.candidate-info {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  color: white;
+}
+
+.candidate-details {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.candidate-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2em;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.candidate-text h4 {
+  margin: 0 0 4px 0;
+  font-size: 1.3em;
+}
+
+.candidate-text p {
+  margin: 0 0 8px 0;
+  opacity: 0.9;
+}
+
+.requisition-id {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+/* Scheduling Options Styles */
+.scheduling-options h4 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  text-align: center;
+}
+
+.option-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.schedule-option {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.schedule-option:hover:not(:disabled) {
+  border-color: #3498db;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(52, 152, 219, 0.15);
+}
+
+.schedule-option:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.schedule-option.immediate {
+  border-color: #2ecc71;
+}
+
+.schedule-option.immediate:hover:not(:disabled) {
+  border-color: #27ae60;
+  background: #f8fff9;
+}
+
+.schedule-option.later {
+  border-color: #f39c12;
+}
+
+.schedule-option.later:hover:not(:disabled) {
+  border-color: #e67e22;
+  background: #fffbf5;
+}
+
+.option-icon {
+  margin-right: 20px;
+  font-size: 2.5em;
+  color: #3498db;
+}
+
+.schedule-option.immediate .option-icon {
+  color: #2ecc71;
+}
+
+.schedule-option.later .option-icon {
+  color: #f39c12;
+}
+
+.option-content h5 {
+  margin: 0 0 8px 0;
+  font-size: 1.2em;
+  color: #2c3e50;
+}
+
+.option-content p {
+  margin: 0;
+  color: #7f8c8d;
+  line-height: 1.5;
+}
+
+/* DateTime Picker Styles */
+.datetime-picker {
+  max-width: 100%;
+}
+
+.datetime-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.datetime-info p {
+  margin: 0 0 8px 0;
+  color: #2c3e50;
+}
+
+.timezone-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7f8c8d !important;
+  font-size: 0.9em;
+}
+
+.datetime-input-group {
+  margin-bottom: 20px;
+}
+
+.datetime-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.datetime-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 1em;
+  transition: all 0.3s ease;
+}
+
+.datetime-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.help-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: #7f8c8d;
+  font-size: 0.85em;
+}
+
+.datetime-preview {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.datetime-preview h5 {
+  margin: 0 0 8px 0;
+  opacity: 0.9;
+}
+
+.datetime-preview p {
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e6ed;
+}
+
+.btn-cancel,
+.btn-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cancel {
+  background: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.btn-cancel:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .scheduling-modal,
+  .datetime-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .candidate-details {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .option-buttons {
+    gap: 12px;
+  }
+  
+  .schedule-option {
+    padding: 16px;
+  }
+  
+  .option-icon {
+    font-size: 2em;
+    margin-right: 16px;
+  }
+  
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .btn-cancel,
+  .btn-confirm {
+    width: 100%;
+    justify-content: center;
+  }
+}
+</style>

@@ -120,7 +120,11 @@ ai-services/*/*.py,cover
 ai-services/*/.hypothesis/
 
 # Machine Learning models and data
-models/
+*.h5
+*.pkl
+*.model
+*.weights
+ml-models/
 datasets/
 *.h5
 *.pkl

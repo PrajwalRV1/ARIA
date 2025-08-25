@@ -1,22 +1,11 @@
 services:
-  # Angular Frontend (Static Site)
-  - type: static_site
-    name: aria-frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: ./dist/frontend/browser
-    envVars:
-      - key: NODE_ENV
-        value: production
-    autoDeploy: true
-    rootDir: frontend
-
-  # Speech Service (Python)
+  # Speech Service (Python) - Simplified for Python 3.13 compatibility
   - type: web
     name: aria-speech-service
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install fastapi uvicorn pydantic
+    startCommand: uvicorn main_simple:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
       - key: PORT

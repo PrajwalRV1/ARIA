@@ -1,6 +1,6 @@
 services:
-  # Angular Frontend (Static)
-  - type: static
+  # Angular Frontend (Static Site)
+  - type: static_site
     name: aria-frontend
     buildCommand: npm ci && npm run build
     staticPublishPath: ./dist/frontend/browser

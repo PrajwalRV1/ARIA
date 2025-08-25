@@ -1,17 +1,12 @@
 services:
-  # Angular SSR Frontend
-  - type: web
+  # Angular Frontend (Static)
+  - type: static
     name: aria-frontend
-    runtime: node
-    plan: free
     buildCommand: npm ci && npm run build
-    startCommand: npm run serve:ssr:frontend
-    healthCheckPath: /
+    staticPublishPath: ./dist/frontend/browser
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
     autoDeploy: true
     rootDir: frontend
 

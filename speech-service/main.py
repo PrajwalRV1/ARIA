@@ -51,9 +51,16 @@ except ImportError:
 # Audio processing
 import webrtcvad
 import collections
-import audioop
 import threading
 import queue
+
+# Python 3.13 compatibility: audioop was removed
+try:
+    import audioop
+    AUDIOOP_AVAILABLE = True
+except ImportError:
+    AUDIOOP_AVAILABLE = False
+    logging.warning("audioop not available in Python 3.13+, using fallback methods")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

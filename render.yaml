@@ -24,7 +24,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: render
       - key: DATABASE_URL
-        value: "jdbc:postgresql://db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
+        value: "jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
       - key: DB_USERNAME
         value: "postgres"
       - key: DB_PASSWORD
@@ -53,7 +53,7 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: supabase
       - key: DATABASE_URL
-        value: "jdbc:postgresql://db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
+        value: "jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
       - key: DB_USERNAME
         value: "postgres"
       - key: DB_PASSWORD

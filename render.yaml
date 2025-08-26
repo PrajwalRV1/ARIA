@@ -53,9 +53,9 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: supabase
       - key: DATABASE_URL
-        value: "jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require"
+        value: "jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require"
       - key: DB_USERNAME
-        value: "postgres"
+        value: "postgres.deqfzxsmuydhrepyiagq"
       - key: DB_PASSWORD
         value: "CoolLife@AriaDB"
       - key: UPSTASH_REDIS_REST_URL

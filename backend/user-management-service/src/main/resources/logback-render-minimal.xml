@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- ULTRA-MINIMAL LOGBACK FOR RENDER DEBUGGING -->
+    
+    <!-- Simple console appender only - no file operations -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>utf8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Root logger - console output only -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+    
+    <!-- Debug logging for critical components -->
+    <logger name="org.springframework.boot.web.embedded.tomcat" level="DEBUG"/>
+    <logger name="org.apache.catalina" level="DEBUG"/>
+    <logger name="com.company.user" level="INFO"/>
+</configuration>

@@ -20,7 +20,7 @@ public class StartupConfiguration {
     @Value("${server.port}")
     private String serverPort;
 
-    @Value("${server.address}")
+    @Value("${server.address:0.0.0.0}")
     private String serverAddress;
 
     @Bean

@@ -26,7 +26,7 @@ services:
       - key: PORT
         value: "8080"
       - key: DATABASE_URL
-        value: "postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
+        value: "jdbc:postgresql://db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
       - key: DB_USERNAME
         value: "postgres"
       - key: DB_PASSWORD
@@ -57,7 +57,7 @@ services:
       - key: PORT
         value: "8081"
       - key: DATABASE_URL
-        value: "postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
+        value: "jdbc:postgresql://db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
       - key: DB_USERNAME
         value: "postgres"
       - key: DB_PASSWORD

@@ -1,4 +1,16 @@
 services:
+  # Frontend Service (Angular)
+  - type: static
+    name: aria-frontend
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist/frontend
+    envVars:
+      - key: NODE_ENV
+        value: production
+    autoDeploy: true
+    rootDir: .
+
+  # User Management Service (Spring Boot)
   - type: web
     name: aria-user-management
     env: docker
@@ -29,6 +41,7 @@ services:
     autoDeploy: true
     rootDir: .
 
+  # Interview Orchestrator Service (Spring Boot)
   - type: web
     name: aria-interview-orchestrator
     env: docker
@@ -60,6 +73,54 @@ services:
     healthCheckPath: /api/interview/actuator/health
     autoDeploy: true
     rootDir: .
+
+  # Speech Service (Python)
+  - type: web
+    name: aria-speech-service
+    env: python
+    plan: free
+    buildCommand: pip install fastapi uvicorn pydantic
+    startCommand: uvicorn main_simple:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8001"
+      - key: PYTHONPATH
+        value: "."
+    autoDeploy: true
+    rootDir: speech-service
+
+  # Adaptive Engine Service (Python)
+  - type: web
+    name: aria-adaptive-engine
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8002"
+      - key: PYTHONPATH
+        value: "."
+    autoDeploy: true
+    rootDir: adaptive-engine
+
+  # Analytics Service (Python)
+  - type: web
+    name: aria-analytics-service
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8003"
+      - key: PYTHONPATH
+        value: "."
+    autoDeploy: true
+    rootDir: ai-services/analytics-service
 
 # databases:
 #   - name: aria-postgres

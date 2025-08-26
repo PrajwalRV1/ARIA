@@ -19,7 +19,7 @@ services:
     plan: free
     buildCommand: ""
     startCommand: ""
-    dockerfilePath: backend/user-management-service/Dockerfile
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: render
@@ -41,7 +41,7 @@ services:
         value: "https://aria-frontend.onrender.com"
     healthCheckPath: /api/auth/actuator/health
     autoDeploy: true
-    rootDir: .
+    rootDir: backend/user-management-service
 
   # Interview Orchestrator Service (Spring Boot)
   - type: web
@@ -50,7 +50,7 @@ services:
     plan: free
     buildCommand: ""
     startCommand: ""
-    dockerfilePath: backend/interview-orchestrator-service/Dockerfile
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: supabase
@@ -74,7 +74,7 @@ services:
         value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
     healthCheckPath: /api/interview/actuator/health
     autoDeploy: true
-    rootDir: .
+    rootDir: backend/interview-orchestrator-service
 
   # Speech Service (Python)
   - type: web

@@ -141,8 +141,8 @@ jobs:
           "https://aria-speech-service.onrender.com/health"
           "https://aria-adaptive-engine.onrender.com/health"
           "https://aria-analytics-service.onrender.com/health"
-          "https://aria-test-orchestrator.onrender.com/health"
-          "https://aria-test-service.onrender.com/health"
+          "https://aria-user-management.onrender.com/api/auth/actuator/health"
+          "https://aria-interview-orchestrator.onrender.com/api/interview/actuator/health"
         )
         
         for url in "${services[@]}"; do

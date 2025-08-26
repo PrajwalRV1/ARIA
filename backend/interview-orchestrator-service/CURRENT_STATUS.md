@@ -50,7 +50,9 @@ Add these environment variables in Render dashboard (Environment tab):
 **Redis Configuration (CRITICAL for success):**
 - `UPSTASH_REDIS_HOST=renewing-falcon-41265.upstash.io`
 - `UPSTASH_REDIS_PORT=6379`
-- `UPSTASH_REDIS_REST_TOKEN=AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU`
+- `UPSTASH_REDIS_PASSWORD=AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU`
+
+✅ **Updated with actual aria-redis database connection details from Upstash dashboard**
 
 ### 2. Alternative: Verify Current Settings
 The application should now work with the default `none` value, but if issues persist, check:

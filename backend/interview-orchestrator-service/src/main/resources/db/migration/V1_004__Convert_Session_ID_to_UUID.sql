@@ -62,10 +62,11 @@ BEGIN
 END
 $$;
 
--- Perform the actual conversion
+-- Perform the actual conversion with proper foreign key handling
 DO $$
 DECLARE
     current_type TEXT;
+    constraint_rec RECORD;
 BEGIN
     -- Double-check current type before conversion
     SELECT data_type INTO current_type
@@ -75,33 +76,109 @@ BEGIN
       AND column_name = 'session_id';
     
     IF current_type IN ('character varying', 'varchar', 'text', 'character') THEN
-        -- Step 1: Convert primary table (interview_sessions)
+        RAISE NOTICE 'Starting UUID conversion process...';
+        
+        -- Step 1: Drop all foreign key constraints that reference interview_sessions.session_id
+        RAISE NOTICE 'Dropping foreign key constraints...';
+        
+        FOR constraint_rec IN
+            SELECT tc.constraint_name, tc.table_name
+            FROM information_schema.table_constraints tc
+            JOIN information_schema.key_column_usage kcu 
+                ON tc.constraint_name = kcu.constraint_name
+            JOIN information_schema.constraint_column_usage ccu 
+                ON ccu.constraint_name = tc.constraint_name
+            WHERE tc.constraint_type = 'FOREIGN KEY'
+              AND tc.table_schema = 'public'
+              AND ccu.table_name = 'interview_sessions'
+              AND ccu.column_name = 'session_id'
+        LOOP
+            EXECUTE format('ALTER TABLE %I DROP CONSTRAINT %I', constraint_rec.table_name, constraint_rec.constraint_name);
+            RAISE NOTICE 'Dropped constraint: % from table %', constraint_rec.constraint_name, constraint_rec.table_name;
+        END LOOP;
+        
+        -- Step 2: Convert all session_id columns to UUID simultaneously
+        RAISE NOTICE 'Converting all session_id columns to UUID...';
+        
+        -- Primary table
         ALTER TABLE interview_sessions 
         ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
         
-        -- Step 2: Convert session-related tables
-        ALTER TABLE session_ice_servers 
-        ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        -- Session-related tables (if they exist)
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_ice_servers') THEN
+            ALTER TABLE session_ice_servers 
+            ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        END IF;
         
-        ALTER TABLE session_question_pool 
-        ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_question_pool') THEN
+            ALTER TABLE session_question_pool 
+            ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        END IF;
         
-        ALTER TABLE session_asked_questions 
-        ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_asked_questions') THEN
+            ALTER TABLE session_asked_questions 
+            ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        END IF;
         
-        ALTER TABLE session_ai_metrics 
-        ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_ai_metrics') THEN
+            ALTER TABLE session_ai_metrics 
+            ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        END IF;
         
-        ALTER TABLE session_tech_stack 
-        ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_tech_stack') THEN
+            ALTER TABLE session_tech_stack 
+            ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        END IF;
         
-        -- Step 3: Convert interview_responses
+        -- Main related tables
         ALTER TABLE interview_responses 
         ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
         
-        -- Step 4: Convert interview_events
         ALTER TABLE interview_events 
         ALTER COLUMN session_id TYPE UUID USING session_id::UUID;
+        
+        -- Step 3: Recreate foreign key constraints
+        RAISE NOTICE 'Recreating foreign key constraints...';
+        
+        -- Recreate constraints for session-related tables
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_ice_servers') THEN
+            ALTER TABLE session_ice_servers 
+            ADD CONSTRAINT session_ice_servers_session_id_fkey 
+            FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE;
+        END IF;
+        
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_question_pool') THEN
+            ALTER TABLE session_question_pool 
+            ADD CONSTRAINT session_question_pool_session_id_fkey 
+            FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE;
+        END IF;
+        
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_asked_questions') THEN
+            ALTER TABLE session_asked_questions 
+            ADD CONSTRAINT session_asked_questions_session_id_fkey 
+            FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE;
+        END IF;
+        
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_ai_metrics') THEN
+            ALTER TABLE session_ai_metrics 
+            ADD CONSTRAINT session_ai_metrics_session_id_fkey 
+            FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE;
+        END IF;
+        
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'session_tech_stack') THEN
+            ALTER TABLE session_tech_stack 
+            ADD CONSTRAINT session_tech_stack_session_id_fkey 
+            FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE;
+        END IF;
+        
+        -- Recreate constraints for main related tables
+        ALTER TABLE interview_responses 
+        ADD CONSTRAINT interview_responses_session_id_fkey 
+        FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE;
+        
+        ALTER TABLE interview_events 
+        ADD CONSTRAINT interview_events_session_id_fkey 
+        FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE;
         
         RAISE NOTICE 'Successfully converted all session_id columns from VARCHAR(36) to UUID';
     ELSE

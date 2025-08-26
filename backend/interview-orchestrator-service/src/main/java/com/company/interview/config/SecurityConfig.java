@@ -25,7 +25,12 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authz -> authz
+                // Health check endpoints
                 .requestMatchers("/health", "/actuator/**").permitAll()
+                .requestMatchers("/api/interview/actuator/**").permitAll()
+                .requestMatchers("/api/interview/health-check").permitAll()
+                .requestMatchers("/api/interview/").permitAll()
+                // Application endpoints
                 .requestMatchers("/schedule", "/session/**", "/meeting/**").permitAll()
                 .anyRequest().permitAll()
             )

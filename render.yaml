@@ -11,17 +11,17 @@ services:
       - key: PORT
         value: 8080
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres
       - key: DB_USERNAME
-        sync: false
+        value: postgres
       - key: DB_PASSWORD
-        sync: false
+        value: CoolLife@AriaDB
       - key: UPSTASH_REDIS_REST_URL
-        sync: false
+        value: redis://renewing-falcon-41265.upstash.io:6379
       - key: UPSTASH_REDIS_REST_TOKEN
-        sync: false
+        value: AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
       - key: JWT_SECRET
-        sync: false
+        value: kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
       - key: CORS_ORIGINS
         value: https://aria-frontend.onrender.com
     healthCheckPath: /api/auth/actuator/health
@@ -40,21 +40,21 @@ services:
       - key: PORT
         value: 8081
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres
       - key: DB_USERNAME
-        sync: false
+        value: postgres
       - key: DB_PASSWORD
-        sync: false
+        value: CoolLife@AriaDB
       - key: UPSTASH_REDIS_REST_URL
-        sync: false
+        value: redis://renewing-falcon-41265.upstash.io:6379
       - key: UPSTASH_REDIS_REST_TOKEN
-        sync: false
+        value: AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
       - key: USER_MGMT_URL
         value: https://aria-user-management.onrender.com
       - key: CORS_ORIGINS
         value: https://aria-frontend.onrender.com
       - key: JWT_SECRET
-        sync: false
+        value: kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
     healthCheckPath: /api/interview/actuator/health
     autoDeploy: true
     rootDir: .

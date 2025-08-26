@@ -75,10 +75,16 @@
         </dependency>
 
         <!-- Database -->
-        <!-- PostgreSQL driver for Supabase -->
+        <!-- PostgreSQL driver for production/Render -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+        </dependency>
+        
+        <!-- MySQL driver for local development -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
         </dependency>
         
         <!-- Flyway for migrations -->

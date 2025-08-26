@@ -41,15 +41,15 @@ RUN mkdir -p logs && chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
-# Expose port
-EXPOSE 8081
+# Expose port (dynamic for Render)
+EXPOSE ${PORT:-8081}
 
-# Health check
+# Health check with dynamic port
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8081/api/interview/actuator/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8081}/api/interview/actuator/health || exit 1
 
 # JVM optimization for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
 
-# Start the application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-supabase} -jar app.jar"]
+# Start the application with production profile for Render
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-production} -jar app.jar"]

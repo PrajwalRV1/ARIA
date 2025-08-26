@@ -1,67 +1,68 @@
 services:
-  # User Management Service (Spring Boot)
   - type: web
     name: aria-user-management
-    runtime: docker
+    env: docker
     plan: free
+    buildCommand: ""
+    startCommand: ""
     dockerfilePath: backend/user-management-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: render
       - key: PORT
-        value: 8080
+        value: "8080"
       - key: DATABASE_URL
-        value: postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres
+        value: "postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
       - key: DB_USERNAME
-        value: postgres
+        value: "postgres"
       - key: DB_PASSWORD
-        value: CoolLife@AriaDB
+        value: "CoolLife@AriaDB"
       - key: UPSTASH_REDIS_REST_URL
-        value: redis://renewing-falcon-41265.upstash.io:6379
+        value: "redis://renewing-falcon-41265.upstash.io:6379"
       - key: UPSTASH_REDIS_REST_TOKEN
-        value: AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
+        value: "AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU"
       - key: JWT_SECRET
-        value: kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
+        value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
       - key: CORS_ORIGINS
-        value: https://aria-frontend.onrender.com
+        value: "https://aria-frontend.onrender.com"
     healthCheckPath: /api/auth/actuator/health
     autoDeploy: true
     rootDir: .
 
-  # Interview Orchestrator Service (Spring Boot)
   - type: web
     name: aria-interview-orchestrator
-    runtime: docker
+    env: docker
     plan: free
+    buildCommand: ""
+    startCommand: ""
     dockerfilePath: backend/interview-orchestrator-service/Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: supabase
       - key: PORT
-        value: 8081
+        value: "8081"
       - key: DATABASE_URL
-        value: postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres
+        value: "postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
       - key: DB_USERNAME
-        value: postgres
+        value: "postgres"
       - key: DB_PASSWORD
-        value: CoolLife@AriaDB
+        value: "CoolLife@AriaDB"
       - key: UPSTASH_REDIS_REST_URL
-        value: redis://renewing-falcon-41265.upstash.io:6379
+        value: "redis://renewing-falcon-41265.upstash.io:6379"
       - key: UPSTASH_REDIS_REST_TOKEN
-        value: AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
+        value: "AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU"
       - key: USER_MGMT_URL
-        value: https://aria-user-management.onrender.com
+        value: "https://aria-user-management.onrender.com"
       - key: CORS_ORIGINS
-        value: https://aria-frontend.onrender.com
+        value: "https://aria-frontend.onrender.com"
       - key: JWT_SECRET
-        value: kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
+        value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
     healthCheckPath: /api/interview/actuator/health
     autoDeploy: true
     rootDir: .
 
-_databases:
-  # Optional: PostgreSQL database (can use Supabase instead)
-  # - name: aria-postgres
-  #   databaseName: aria_db
-  #   user: aria_user
-  #   plan: free
+# databases:
+#   - name: aria-postgres
+#     databaseName: aria_db
+#     user: aria_user
+#     plan: free

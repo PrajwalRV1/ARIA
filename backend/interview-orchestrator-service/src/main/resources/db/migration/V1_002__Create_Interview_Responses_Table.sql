@@ -2,7 +2,7 @@
 -- For capturing and analyzing candidate responses (speech, text, code)
 CREATE TABLE interview_responses (
     response_id BIGSERIAL PRIMARY KEY,
-    session_id VARCHAR(36) NOT NULL,
+    session_id UUID NOT NULL,
     question_id BIGINT NOT NULL,
     question_sequence INTEGER NOT NULL,
     

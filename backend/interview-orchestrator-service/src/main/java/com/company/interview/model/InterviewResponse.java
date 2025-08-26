@@ -142,7 +142,7 @@ public class InterviewResponse {
     @Column(name = "followup_reason", columnDefinition = "TEXT")
     private String followupReason;
     
-    @Column(name = "adapted_next_difficulty", columnDefinition = "DECIMAL(5,4)")
+    @Column(name = "adapted_next_difficulty", columnDefinition = "NUMERIC(5,4)")
     private Double adaptedNextDifficulty; // Suggested difficulty for next question
     
     // Metadata

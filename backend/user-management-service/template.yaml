@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: ARIA User Management Service - Serverless Deployment
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 1024
+    Runtime: java17
+    Environment:
+      Variables:
+        SPRING_PROFILES_ACTIVE: aws
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, staging, prod]
+
+Resources:
+  UserManagementFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub aria-user-management-${Environment}
+      CodeUri: target/user-management-service-0.0.1-SNAPSHOT.jar
+      Handler: com.company.user.LambdaHandler::handleRequest
+      Runtime: java17
+      MemorySize: 1024
+      Timeout: 30
+      Environment:
+        Variables:
+          SPRING_PROFILES_ACTIVE: aws
+          DATABASE_URL: postgresql://postgres:CoolLife@AriaDB@db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres
+          DB_USERNAME: postgres
+          DB_PASSWORD: CoolLife@AriaDB
+          JWT_SECRET: kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
+          UPSTASH_REDIS_REST_TOKEN: AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
+          SMTP_USERNAME: workwithrvprajwal@gmail.com
+          SMTP_PASSWORD: vclhowpwtmopdqdz
+      Events:
+        ApiGateway:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId: !Ref UserManagementApi
+        HealthCheck:
+          Type: Api
+          Properties:
+            Path: /api/auth/actuator/health
+            Method: GET
+            RestApiId: !Ref UserManagementApi
+        Root:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            RestApiId: !Ref UserManagementApi
+
+  UserManagementApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub aria-user-management-api-${Environment}
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"
+      BinaryMediaTypes:
+        - "*/*"
+
+  # IAM Role for Lambda function
+  UserManagementFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+
+Outputs:
+  UserManagementApi:
+    Description: "API Gateway endpoint URL for User Management Service"
+    Value: !Sub "https://${UserManagementApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"
+  
+  UserManagementFunction:
+    Description: "User Management Lambda Function ARN"
+    Value: !GetAtt UserManagementFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FunctionArn"
+  
+  HealthCheckEndpoint:
+    Description: "Health check endpoint"
+    Value: !Sub "https://${UserManagementApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/api/auth/actuator/health"

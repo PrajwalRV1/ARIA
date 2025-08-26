@@ -92,6 +92,13 @@
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
         </dependency>
+        
+        <!-- PostgreSQL driver for Supabase/AWS RDS -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- Lombok (annotation processing) -->
         <dependency>
@@ -128,6 +135,13 @@
             <artifactId>flyway-mysql</artifactId>
         </dependency>
 
+        <!-- AWS Lambda Support -->
+        <dependency>
+            <groupId>com.amazonaws.serverless</groupId>
+            <artifactId>aws-serverless-java-container-springboot3</artifactId>
+            <version>2.0.0</version>
+        </dependency>
+        
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

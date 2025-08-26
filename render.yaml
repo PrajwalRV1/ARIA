@@ -1,53 +1,65 @@
 services:
-  # Speech Service (Python) - Simplified for Python 3.13 compatibility
+  # User Management Service (Spring Boot)
   - type: web
-    name: aria-speech-service
-    runtime: python
+    name: aria-user-management
+    runtime: docker
     plan: free
-    buildCommand: pip install fastapi uvicorn pydantic
-    startCommand: uvicorn main_simple:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
+    dockerfilePath: backend/user-management-service/Dockerfile
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: PORT
-        value: 8001
-      - key: PYTHONPATH
-        value: .
+        value: 8080
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://aria-frontend.onrender.com
+    healthCheckPath: /api/auth/actuator/health
     autoDeploy: true
-    rootDir: speech-service
+    rootDir: .
 
-  # Adaptive Engine Service (Python)
+  # Interview Orchestrator Service (Spring Boot)
   - type: web
-    name: aria-adaptive-engine
-    runtime: python
+    name: aria-interview-orchestrator
+    runtime: docker
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
+    dockerfilePath: backend/interview-orchestrator-service/Dockerfile
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: supabase
       - key: PORT
-        value: 8002
-      - key: PYTHONPATH
-        value: .
+        value: 8081
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: USER_MGMT_URL
+        value: https://aria-user-management.onrender.com
+      - key: CORS_ORIGINS
+        value: https://aria-frontend.onrender.com
+      - key: JWT_SECRET
+        sync: false
+    healthCheckPath: /api/interview/actuator/health
     autoDeploy: true
-    rootDir: adaptive-engine
+    rootDir: .
 
-  # Analytics Service (Python)
-  - type: web
-    name: aria-analytics-service
-    runtime: python
-    plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
-    envVars:
-      - key: PORT
-        value: 8003
-      - key: PYTHONPATH
-        value: .
-    autoDeploy: true
-    rootDir: ai-services/analytics-service
-
-databases:
+_databases:
   # Optional: PostgreSQL database (can use Supabase instead)
   # - name: aria-postgres
   #   databaseName: aria_db

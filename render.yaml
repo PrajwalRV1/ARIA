@@ -1,9 +1,11 @@
 services:
   # Frontend Service (Angular)
-  - type: static
+  - type: web
     name: aria-frontend
-    buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: frontend/dist/frontend
+    env: node
+    plan: free
+    buildCommand: cd frontend && npm ci && npm install -g serve && npm run build
+    startCommand: cd frontend && npx serve -s dist/frontend -l $PORT
     envVars:
       - key: NODE_ENV
         value: production

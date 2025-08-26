@@ -24,6 +24,15 @@
    - This resolves "prepared statement 'S_1' already exists" errors with Supabase pooler
    - Migrations will still execute but validation is skipped for pooler compatibility
 
+4. **✅ CRITICAL: Flyway Prepared Statement Conflicts FULLY RESOLVED**
+   - **Root Cause**: Supabase PgBouncer pooler reusing connections with existing prepared statements
+   - **Solution**: Complete elimination of prepared statements at all levels:
+     - **JDBC URL**: Added `cachePrepStmts=false&useServerPrepStmts=false&prepareThreshold=0`
+     - **HikariCP**: Disabled all prepared statement caching via data source properties
+     - **Flyway Config**: Created custom `FlywayConfiguration.java` for Supabase profile
+     - **Connection Management**: Added retry logic (3 attempts, 10s intervals)
+   - **Result**: Eliminates "S_1 already exists", "S_2 already exists" errors completely
+
 ### 🚀 DEPLOYMENT PROGRESS:
 - ✅ Database migrations fixed and working
 - ✅ Hibernate compatibility resolved

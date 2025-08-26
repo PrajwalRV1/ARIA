@@ -23,8 +23,6 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: render
-      - key: PORT
-        value: "8080"
       - key: DATABASE_URL
         value: "jdbc:postgresql://db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
       - key: DB_USERNAME
@@ -54,8 +52,6 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: supabase
-      - key: PORT
-        value: "8081"
       - key: DATABASE_URL
         value: "jdbc:postgresql://db.deqfzxsmuydhrepyiagq.supabase.co:5432/postgres"
       - key: DB_USERNAME

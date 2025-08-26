@@ -5,7 +5,7 @@
 CREATE TYPE session_status AS ENUM ('SCHEDULED', 'IN_PROGRESS', 'PAUSED', 'COMPLETED', 'CANCELLED', 'EXPIRED', 'TECHNICAL_ISSUES');
 
 CREATE TABLE interview_sessions (
-    session_id UUID NOT NULL PRIMARY KEY,
+    session_id VARCHAR(36) NOT NULL PRIMARY KEY,
     candidate_id BIGINT NOT NULL,
     recruiter_id BIGINT NOT NULL,
     status session_status NOT NULL DEFAULT 'SCHEDULED',
@@ -60,7 +60,7 @@ CREATE INDEX idx_interview_sessions_created_at ON interview_sessions (created_at
 
 -- Session ICE Servers (for WebRTC)
 CREATE TABLE session_ice_servers (
-    session_id UUID NOT NULL,
+    session_id VARCHAR(36) NOT NULL,
     ice_server_url VARCHAR(255) NOT NULL,
     PRIMARY KEY (session_id, ice_server_url),
     FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE
@@ -68,7 +68,7 @@ CREATE TABLE session_ice_servers (
 
 -- Session Question Pool
 CREATE TABLE session_question_pool (
-    session_id UUID NOT NULL,
+    session_id VARCHAR(36) NOT NULL,
     question_id BIGINT NOT NULL,
     PRIMARY KEY (session_id, question_id),
     FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE
@@ -79,7 +79,7 @@ CREATE INDEX idx_session_question_pool_question_id ON session_question_pool (que
 
 -- Session Asked Questions (for tracking)
 CREATE TABLE session_asked_questions (
-    session_id UUID NOT NULL,
+    session_id VARCHAR(36) NOT NULL,
     question_id BIGINT NOT NULL,
     asked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (session_id, question_id),
@@ -91,7 +91,7 @@ CREATE INDEX idx_session_asked_questions_asked_at ON session_asked_questions (as
 
 -- Session AI Metrics (flexible key-value storage)
 CREATE TABLE session_ai_metrics (
-    session_id UUID NOT NULL,
+    session_id VARCHAR(36) NOT NULL,
     metric_name VARCHAR(100) NOT NULL,
     metric_value DECIMAL(10,4) NOT NULL,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -101,7 +101,7 @@ CREATE TABLE session_ai_metrics (
 
 -- Session Technology Stack
 CREATE TABLE session_tech_stack (
-    session_id UUID NOT NULL,
+    session_id VARCHAR(36) NOT NULL,
     technology VARCHAR(100) NOT NULL,
     PRIMARY KEY (session_id, technology),
     FOREIGN KEY (session_id) REFERENCES interview_sessions(session_id) ON DELETE CASCADE

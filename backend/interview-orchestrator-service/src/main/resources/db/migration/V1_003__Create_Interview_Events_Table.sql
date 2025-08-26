@@ -6,7 +6,7 @@ CREATE TYPE event_severity AS ENUM ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITIC
 
 CREATE TABLE interview_events (
     event_id BIGSERIAL PRIMARY KEY,
-    session_id UUID NOT NULL,
+    session_id VARCHAR(36) NOT NULL,
     event_type VARCHAR(50) NOT NULL, -- SESSION_STARTED, QUESTION_PRESENTED, SPACEBAR_PRESSED, etc.
     event_source VARCHAR(50) NULL, -- USER, SYSTEM, AI_ENGINE, SPEECH_SERVICE, etc.
     event_description VARCHAR(500) NULL,

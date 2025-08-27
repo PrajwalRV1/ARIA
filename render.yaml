@@ -22,7 +22,7 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
-        value: render-minimal
+        value: render
       - key: DATABASE_URL
         value: "jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&cachePrepStmts=false&useServerPrepStmts=false&rewriteBatchedStatements=false&prepareThreshold=0&preparedStatementCacheSize=0&preparedStatementCacheSqlLimit=0&ApplicationName=ARIA-User-Management"
       - key: DB_USERNAME

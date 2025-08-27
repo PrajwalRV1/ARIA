@@ -8,19 +8,18 @@ import org.springframework.context.annotation.Profile;
 
 /**
  * Health controller for Render.com port detection
- * Maps to ROOT context to bypass /api/auth context path
+ * Provides multiple endpoints for Render to detect the service
  */
 @RestController
 @Profile("render")
 public class RenderHealthController {
 
     /**
-     * Simple health check endpoint that Render can access
-     * Available at: http://host:port/health (bypasses /api/auth context)
+     * Primary health check endpoint for Render
      */
     @GetMapping("/health")
     public ResponseEntity<String> health() {
-        System.out.println("DEBUG: Health endpoint accessed!");
+        System.out.println("🔍 DEBUG: /health endpoint accessed! Render should detect this.");
         return ResponseEntity.ok("OK");
     }
 
@@ -29,7 +28,25 @@ public class RenderHealthController {
      */
     @GetMapping("/")
     public ResponseEntity<String> root() {
-        System.out.println("DEBUG: Root endpoint accessed!");
-        return ResponseEntity.ok("ARIA User Management Service is running");
+        System.out.println("🔍 DEBUG: Root / endpoint accessed!");
+        return ResponseEntity.ok("ARIA User Management Service - READY");
+    }
+    
+    /**
+     * Alternative health endpoint
+     */
+    @GetMapping("/healthz")
+    public ResponseEntity<String> healthz() {
+        System.out.println("🔍 DEBUG: /healthz endpoint accessed!");
+        return ResponseEntity.ok("HEALTHY");
+    }
+    
+    /**
+     * Status endpoint
+     */
+    @GetMapping("/status")
+    public ResponseEntity<String> status() {
+        System.out.println("🔍 DEBUG: /status endpoint accessed!");
+        return ResponseEntity.ok("UP");
     }
 }

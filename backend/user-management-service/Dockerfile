@@ -44,9 +44,9 @@ USER appuser
 # Expose port (will be overridden by Render's PORT env var)
 EXPOSE 10000
 
-# Health check using PORT environment variable - root health endpoint
+# Health check using management health endpoint at root level
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/health || curl -f http://localhost:${PORT:-10000}/ || exit 1
 
 # JVM optimization for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"

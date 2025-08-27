@@ -40,12 +40,8 @@ public class EndpointDebugListener implements ApplicationListener<ApplicationRea
         });
         
         System.out.println("🚀 ========================================");
-        System.out.println("✅ KEY ENDPOINTS FOR RENDER:");
-        System.out.println("🔍 http://0.0.0.0:" + port + "/ (Root)");
-        System.out.println("🔍 http://0.0.0.0:" + port + "/health (Health)");  
-        System.out.println("🔍 http://0.0.0.0:" + port + "/healthz (Alt Health)");
-        System.out.println("🔍 http://0.0.0.0:" + port + "/status (Status)");
-        System.out.println("🔍 http://0.0.0.0:" + port + "/actuator/health (Spring Actuator)");
+        System.out.println("✅ KEY ENDPOINT FOR RENDER (SAME AS WORKING INTERVIEW-ORCHESTRATOR):");
+        System.out.println("🔍 http://0.0.0.0:" + port + "/api/auth/actuator/health (Health Check)");
         System.out.println("🚀 ========================================");
         
         // Test internal call

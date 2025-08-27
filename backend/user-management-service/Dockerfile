@@ -44,14 +44,9 @@ USER appuser
 # Expose port (will be overridden by Render's PORT env var)
 EXPOSE 10000
 
-# Health check with multiple endpoint fallbacks for Render detection
+# Health check - use actuator health endpoint with context path like working service
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-10000}/ || \
-        curl -f http://localhost:${PORT:-10000}/health || \
-        curl -f http://localhost:${PORT:-10000}/healthz || \
-        curl -f http://localhost:${PORT:-10000}/status || \
-        curl -f http://localhost:${PORT:-10000}/actuator/health || \
-        exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
 
 # JVM optimization for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"

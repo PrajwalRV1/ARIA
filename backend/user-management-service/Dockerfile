@@ -16,8 +16,8 @@ RUN mvn dependency:go-offline -B
 # Copy source code
 COPY src src
 
-# Build the application
-RUN mvn clean package -DskipTests -B
+# Build the application with explicit goal
+RUN mvn clean package -DskipTests -B --no-transfer-progress
 
 # Production image
 FROM eclipse-temurin:17-jre-alpine
@@ -35,21 +35,21 @@ WORKDIR /app
 # Copy the built JAR from build stage
 COPY --from=build /app/target/user-management-service-*.jar app.jar
 
-# Create logs directory
-RUN mkdir -p logs && chown -R appuser:appuser /app
+# Set ownership for app directory
+RUN chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
 
-# Expose port
-EXPOSE 8080
+# Expose port (will be overridden by Render's PORT env var)
+EXPOSE 10000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/api/auth/actuator/health || exit 1
+# Health check using PORT environment variable
+HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
 
 # JVM optimization for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
 
 # Start the application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-aws} -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-render} -jar app.jar"]

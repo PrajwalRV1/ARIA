@@ -14,12 +14,16 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.company.user.security.JwtAuthenticationFilter;
 import com.company.user.security.InternalServiceAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${CORS_ORIGINS:https://localhost:4200}")
+    private String corsOrigins;
 
     // Password encoder
     @Bean
@@ -31,7 +35,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Add both environment-specific origins and localhost for development
         configuration.setAllowedOriginPatterns(Arrays.asList(
+            corsOrigins,
             "http://localhost:*", 
             "http://127.0.0.1:*",
             "https://localhost:*", 
@@ -66,12 +73,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints (no authentication required)
                         .requestMatchers(
-                                "/send-otp",
-                                "/verify-otp",
-                                "/register",
-                                "/login",
-                                "/forgot-password",
-                                "/reset-password",
+                                "/api/auth/send-otp",
+                                "/api/auth/verify-otp",
+                                "/api/auth/resend-otp",
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
+                                "/api/auth/refresh-token",
                                 "/health",
                                 "/actuator/**",
                                 "/h2-console/**",

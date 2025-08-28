@@ -7,7 +7,7 @@
     ]
   },
   "deploy": {
-    "healthcheckPath": "/actuator/health",
+    "healthcheckPath": "/api/auth/actuator/health",
     "healthcheckTimeout": 90
   }
 }

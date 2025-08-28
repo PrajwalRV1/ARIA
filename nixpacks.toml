@@ -1,0 +1,15 @@
+[providers]
+java = "*"
+
+[variables]
+NIXPACKS_BUILD_DIR = "backend/user-management-service"
+
+[phases.setup]
+nixPkgs = ["maven", "openjdk17"]
+
+[phases.build]
+workDir = "backend/user-management-service"
+cmds = ["mvn clean package -DskipTests -Dmaven.test.skip=true"]
+
+[phases.start]
+cmd = "java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar backend/user-management-service/target/user-management-service-0.0.1-SNAPSHOT.jar"

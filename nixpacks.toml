@@ -8,6 +8,3 @@ nixPkgs = ["maven", "openjdk17"]
 
 [phases.build]
 cmds = ["cd /app/backend/user-management-service && mvn clean package -DskipTests -Dmaven.test.skip=true"]
-
-[phases.start]
-cmd = "java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar /app/backend/user-management-service/target/user-management-service-0.0.1-SNAPSHOT.jar"

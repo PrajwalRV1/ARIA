@@ -122,3 +122,17 @@ services:
         value: "."
     autoDeploy: true
     rootDir: ai-services/analytics-service
+
+  # Minimal Test Service for Platform Verification
+  - type: web
+    name: aria-test-service
+    env: java
+    plan: free
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/test-service-*.jar
+    healthCheckPath: /health
+    envVars:
+      - key: SERVER_PORT
+        value: "10000"
+    autoDeploy: true
+    rootDir: test-service

@@ -62,26 +62,29 @@ public class FallbackController {
     }
 
     /**
-     * Handle requests to root path - provide API information
+     * Handle requests to root path - RENDER HEALTH CHECK
+     * Simple OK response for Render.com port detection
      */
     @RequestMapping("/")
     public ResponseEntity<?> handleRootPath(HttpServletRequest request) {
-        logger.info("Request to root path detected from IP: {}", 
-            request.getRemoteAddr());
+        logger.info("🎯 RENDER: Root path request from IP: {} - USER-AGENT: {}", 
+            request.getRemoteAddr(), request.getHeader("User-Agent"));
         
+        // Check if this looks like a Render health check
+        String userAgent = request.getHeader("User-Agent");
+        if (userAgent != null && (userAgent.contains("curl") || userAgent.contains("wget") || userAgent.contains("health"))) {
+            logger.info("🎯 RENDER: Health check request detected! Returning simple OK response.");
+            return ResponseEntity.ok("OK");
+        }
+        
+        // For other requests, return API info
         Map<String, Object> response = Map.of(
             "service", "ARIA User Management API",
+            "status", "HEALTHY",
             "version", "1.0.0",
             "message", "REST API backend for ARIA recruitment platform",
-            "frontend_url", "http://localhost:4200",
-            "api_base", "/api",
-            "auth_endpoints", Map.of(
-                "login", "POST /api/auth/login",
-                "register", "POST /api/auth/register", 
-                "send_otp", "POST /api/auth/send-otp",
-                "verify_otp", "POST /api/auth/verify-otp"
-            ),
-            "health_check", "/actuator/health",
+            "api_base", "/api/auth",
+            "health_check", "/api/auth/actuator/health",
             "timestamp", Instant.now().toString()
         );
         

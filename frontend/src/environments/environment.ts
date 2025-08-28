@@ -1,9 +1,9 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://localhost:8080/api',
+  apiBaseUrl: 'https://aria-user-management-v2.onrender.com/api',
   
   // Session Service Configuration (User Management Service)
-  sessionServiceBaseUrl: 'https://localhost:8080/api/user/sessions',
+  sessionServiceBaseUrl: 'https://aria-user-management-v2.onrender.com/api/user/sessions',
   
   // AI Services Configuration
   aiServices: {
@@ -106,7 +106,7 @@ export const environment = {
   // Security Configuration
   security: {
     enableCSRFProtection: false,
-    allowedOrigins: ['https://localhost:4200', 'http://localhost:4200', 'http://localhost:3000'],
+    allowedOrigins: ['https://localhost:4200', 'http://localhost:4200', 'http://localhost:3000', 'https://aria-frontend.onrender.com'],
     enableSecureCookies: true
   },
   

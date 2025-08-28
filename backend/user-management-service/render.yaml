@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: aria-user-management-v2
+    env: docker
+    dockerfilePath: ./Dockerfile
+    repo: https://github.com/PrajwalRamannaVenkatesh/ARIA
+    branch: main
+    rootDir: backend/user-management-service
+    plan: free
+    region: oregon
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: supabase
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        value: jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&cachePrepStmts=false&useServerPrepStmts=false&rewriteBatchedStatements=false&prepareThreshold=0&preparedStatementCacheSize=0&preparedStatementCacheSqlLimit=0&ApplicationName=ARIA-User-Management
+      - key: DB_USERNAME
+        value: postgres.deqfzxsmuydhrepyiagq
+      - key: DB_PASSWORD
+        value: CoolLife@AriaDB
+      - key: JWT_SECRET
+        value: kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
+      - key: UPSTASH_REDIS_REST_URL
+        value: https://renewing-falcon-41265.upstash.io
+      - key: UPSTASH_REDIS_REST_TOKEN
+        value: AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USERNAME
+        value: workwithrvprajwal@gmail.com
+      - key: SMTP_PASSWORD
+        value: vclhowpwtmopdqdz
+      - key: CORS_ORIGINS
+        value: https://aria-frontend.onrender.com
+      - key: JPA_DDL_AUTO
+        value: none
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -Dspring.profiles.active=supabase -jar target/user-management-service-0.0.1-SNAPSHOT.jar
+    healthCheckPath: /api/auth/actuator/health

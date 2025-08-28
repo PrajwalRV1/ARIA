@@ -38,3 +38,4 @@ services:
     # buildCommand: handled by Dockerfile multi-stage build
     # startCommand: handled by Dockerfile ENTRYPOINT
     healthCheckPath: /api/auth/actuator/health
+    autoDeploy: true

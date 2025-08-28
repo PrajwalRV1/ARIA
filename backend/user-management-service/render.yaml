@@ -21,12 +21,8 @@ services:
         value: CoolLife@AriaDB
       - key: JWT_SECRET
         value: kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
-      - key: UPSTASH_REDIS_HOST
-        value: renewing-falcon-41265.upstash.io
-      - key: UPSTASH_REDIS_PORT
-        value: 6379
-      - key: UPSTASH_REDIS_PASSWORD
-        value: AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
+      - key: SPRING_REDIS_URL
+        value: rediss://default:AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU@renewing-falcon-41265.upstash.io:6379
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT

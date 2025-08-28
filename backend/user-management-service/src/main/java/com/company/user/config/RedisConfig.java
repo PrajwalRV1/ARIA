@@ -32,17 +32,44 @@ public class RedisConfig {
     @Bean
     @Profile("supabase")
     public RedisConnectionFactory upstashRedisConnectionFactory() {
+        if (redisUrl == null || redisUrl.isEmpty()) {
+            // Fallback to default Upstash configuration if URL is not set
+            RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+            config.setHostName("renewing-falcon-41265.upstash.io");
+            config.setPort(6379);
+            config.setPassword("AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU");
+            
+            LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
+            factory.setUseSsl(true);
+            factory.setVerifyPeer(false);
+            
+            return factory;
+        }
+        
         try {
-            // Parse the Upstash Redis URL
-            URI redisUri = URI.create(redisUrl.replace("redis://", "").replace("rediss://", ""));
+            // Parse the Upstash Redis URL (rediss://default:password@host:port)
+            URI redisUri = URI.create(redisUrl);
+            
+            // Extract connection details
+            String host = redisUri.getHost();
+            int port = redisUri.getPort() != -1 ? redisUri.getPort() : 6379;
+            String password = null;
+            
+            // Extract password from URL
+            String userInfo = redisUri.getUserInfo();
+            if (userInfo != null && userInfo.contains(":")) {
+                password = userInfo.split(":", 2)[1];
+            }
             
             RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-            config.setHostName(redisUri.getHost());
-            config.setPort(redisUri.getPort() != -1 ? redisUri.getPort() : (sslEnabled ? 6380 : 6379));
-            config.setPassword(redisPassword);
+            config.setHostName(host);
+            config.setPort(port);
+            if (password != null) {
+                config.setPassword(password);
+            }
 
             LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
-            factory.setUseSsl(sslEnabled);
+            factory.setUseSsl(redisUrl.startsWith("rediss://"));
             factory.setVerifyPeer(false); // For Upstash compatibility
             
             return factory;
@@ -50,8 +77,8 @@ public class RedisConfig {
             // Fallback to default configuration if URL parsing fails
             RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
             config.setHostName("renewing-falcon-41265.upstash.io");
-            config.setPort(6380);
-            config.setPassword(redisPassword);
+            config.setPort(6379);
+            config.setPassword("AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU");
             
             LettuceConnectionFactory factory = new LettuceConnectionFactory(config);
             factory.setUseSsl(true);

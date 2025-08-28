@@ -32,7 +32,7 @@ services:
       - key: SMTP_PASSWORD
         value: vclhowpwtmopdqdz
       - key: CORS_ORIGINS
-        value: https://aria-frontend.onrender.com
+        value: https://aria-frontend-fs01.onrender.com
       - key: JPA_DDL_AUTO
         value: none
     # buildCommand: handled by Dockerfile multi-stage build

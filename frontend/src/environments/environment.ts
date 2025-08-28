@@ -106,7 +106,7 @@ export const environment = {
   // Security Configuration
   security: {
     enableCSRFProtection: false,
-    allowedOrigins: ['https://localhost:4200', 'http://localhost:4200', 'http://localhost:3000', 'https://aria-frontend.onrender.com'],
+    allowedOrigins: ['https://localhost:4200', 'http://localhost:4200', 'http://localhost:3000', 'https://aria-frontend-fs01.onrender.com'],
     enableSecureCookies: true
   },
   

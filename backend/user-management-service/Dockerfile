@@ -42,11 +42,11 @@ RUN chown -R appuser:appuser /app
 USER appuser
 
 # Expose port (dynamic for Render)
-EXPOSE ${PORT:-8080}
+EXPOSE ${PORT:-10000}
 
 # Health check with dynamic port
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget -q --spider http://localhost:${PORT:-8080}/api/auth/actuator/health || exit 1
+    CMD wget -q --spider http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
 
 # JVM optimization for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"

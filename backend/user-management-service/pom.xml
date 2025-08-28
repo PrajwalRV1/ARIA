@@ -73,6 +73,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Redis for session management and caching -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- JJWT (API + impl + jackson for runtime) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

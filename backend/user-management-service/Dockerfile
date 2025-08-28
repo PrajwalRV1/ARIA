@@ -22,8 +22,8 @@ RUN mvn clean package -DskipTests -B --no-transfer-progress
 # Production image
 FROM eclipse-temurin:17-jre-alpine
 
-# Install wget for health checks
-RUN apk add --no-cache wget
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S appuser && \
@@ -35,8 +35,8 @@ WORKDIR /app
 # Copy the built JAR from build stage
 COPY --from=build /app/target/user-management-service-*.jar app.jar
 
-# Set ownership for app directory
-RUN chown -R appuser:appuser /app
+# Create logs directory
+RUN mkdir -p logs && chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
@@ -46,7 +46,7 @@ EXPOSE ${PORT:-10000}
 
 # Health check with dynamic port
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget -q --spider http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
 
 # JVM optimization for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"

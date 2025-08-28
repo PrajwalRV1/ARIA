@@ -1,5 +1,9 @@
 -- Bias Detection Results Table (Simplified)
 -- For tracking bias detection results across interviews
+
+-- Drop table if it exists (for clean migration)
+DROP TABLE IF EXISTS bias_detection_results;
+
 CREATE TABLE bias_detection_results (
     id BIGSERIAL PRIMARY KEY,
     interview_session_id VARCHAR(255) NOT NULL,

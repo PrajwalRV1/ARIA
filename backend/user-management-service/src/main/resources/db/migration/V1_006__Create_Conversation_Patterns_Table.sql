@@ -1,5 +1,9 @@
 -- Conversation Patterns Table (Simplified)
 -- For analysis of communication patterns during interviews
+
+-- Drop table if it exists (for clean migration)
+DROP TABLE IF EXISTS conversation_patterns;
+
 CREATE TABLE conversation_patterns (
     id BIGSERIAL PRIMARY KEY,
     interview_session_id VARCHAR(255) NOT NULL UNIQUE,

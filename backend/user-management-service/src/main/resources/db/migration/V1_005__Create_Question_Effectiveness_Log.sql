@@ -1,5 +1,9 @@
 -- Question Effectiveness Log Table
 -- For continuous learning and improvement of the adaptive questioning system
+
+-- Drop table if it exists (for clean migration)
+DROP TABLE IF EXISTS question_effectiveness_log;
+
 CREATE TABLE question_effectiveness_log (
     id BIGSERIAL PRIMARY KEY,
     question_id BIGINT NOT NULL,

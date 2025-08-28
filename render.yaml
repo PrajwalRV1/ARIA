@@ -40,7 +40,7 @@ services:
       - key: CORS_ORIGINS
         value: "https://aria-frontend.onrender.com"
     healthCheckPath: /api/auth/actuator/health
-    autoDeploy: false
+    autoDeploy: true
     rootDir: backend/user-management-service
 
   # Interview Orchestrator Service (Spring Boot) - RECONFIGURED

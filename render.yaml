@@ -15,11 +15,10 @@ services:
   # User Management Service (Spring Boot) - RECONFIGURED
   - type: web
     name: aria-user-management-v2
-    env: docker
+    env: java
     plan: free
-    buildCommand: ""
-    startCommand: ""
-    dockerfilePath: ./Dockerfile
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/user-management-service-*.jar
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: supabase

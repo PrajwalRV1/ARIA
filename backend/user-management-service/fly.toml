@@ -1,0 +1,32 @@
+# Fly.io deployment configuration for user-management-service
+app = "aria-user-management"
+primary_region = "sjc"
+
+[build]
+  builder = "heroku/java"
+
+[env]
+  SPRING_PROFILES_ACTIVE = "flyio"
+  JVM_OPTS = "-XX:MaxRAMPercentage=75.0 -XX:+UseG1GC"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "30s"
+    interval = "15s"
+    method = "GET"
+    path = "/api/auth/actuator/health"
+    timeout = "10s"
+
+[deploy]
+  strategy = "rolling"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512

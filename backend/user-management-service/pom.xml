@@ -67,6 +67,12 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
+        <!-- Actuator for health checks -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- JJWT (API + impl + jackson for runtime) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

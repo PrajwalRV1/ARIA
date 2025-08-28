@@ -62,22 +62,12 @@ public class FallbackController {
     }
 
     /**
-     * Handle requests to root path - RENDER HEALTH CHECK
-     * Simple OK response for Render.com port detection
+     * Handle requests to root path - API info
      */
     @RequestMapping("/")
     public ResponseEntity<?> handleRootPath(HttpServletRequest request) {
-        logger.info("🎯 RENDER: Root path request from IP: {} - USER-AGENT: {}", 
-            request.getRemoteAddr(), request.getHeader("User-Agent"));
+        logger.info("Root path request from IP: {}", request.getRemoteAddr());
         
-        // Check if this looks like a Render health check
-        String userAgent = request.getHeader("User-Agent");
-        if (userAgent != null && (userAgent.contains("curl") || userAgent.contains("wget") || userAgent.contains("health"))) {
-            logger.info("🎯 RENDER: Health check request detected! Returning simple OK response.");
-            return ResponseEntity.ok("OK");
-        }
-        
-        // For other requests, return API info
         Map<String, Object> response = Map.of(
             "service", "ARIA User Management API",
             "status", "HEALTHY",

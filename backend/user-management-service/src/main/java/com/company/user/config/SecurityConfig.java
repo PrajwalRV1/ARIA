@@ -57,6 +57,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Disable frame options for H2 console
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
                 // Add internal service authentication filter (before JWT filter)
                 .addFilterBefore(internalServiceFilter, UsernamePasswordAuthenticationFilter.class)
                 // Add JWT authentication filter (after internal service filter)
@@ -64,26 +66,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints (no authentication required)
                         .requestMatchers(
-                                "/api/auth/send-otp",
-                                "/api/auth/verify-otp",
-                                "/api/auth/register",
-                                "/api/auth/login",
-                                "/api/auth/forgot-password",
-                                "/api/auth/reset-password",
-                                // Support both /auth/** and /api/auth/** patterns
-                                "/auth/send-otp",
-                                "/auth/verify-otp", 
-                                "/auth/register",
-                                "/auth/login",
-                                "/auth/forgot-password",
-                                "/auth/reset-password",
-                                // User session endpoints for interview token generation
-                                "/api/user/sessions/login",
-                                "/api/user/sessions/health",
-                                "/api/user/sessions/refresh",
-                                "/api/user/sessions/logout",
+                                "/send-otp",
+                                "/verify-otp",
+                                "/register",
+                                "/login",
+                                "/forgot-password",
+                                "/reset-password",
+                                "/health",
+                                "/actuator/**",
+                                "/h2-console/**",
                                 "/error",
-                                "/actuator/health",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()

@@ -1,4 +1,4 @@
-# Multi-stage build for Render deployment
+# Multi-stage build for clean deployment
 FROM eclipse-temurin:17-jdk-alpine AS build
 
 # Install Maven
@@ -16,16 +16,16 @@ RUN mvn dependency:go-offline -B
 # Copy source code
 COPY src src
 
-# Build the application with explicit goal
+# Build the application
 RUN mvn clean package -DskipTests -B --no-transfer-progress
 
 # Production image
 FROM eclipse-temurin:17-jre-alpine
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install wget for health checks
+RUN apk add --no-cache wget
 
-# Create non-root user
+# Create non-root user for security
 RUN addgroup -g 1001 -S appuser && \
     adduser -S appuser -u 1001
 
@@ -41,15 +41,15 @@ RUN chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
-# Expose port (will be overridden by Render's PORT env var)
-EXPOSE 10000
+# Expose port (dynamic for Render)
+EXPOSE ${PORT:-8080}
 
-# Health check - use root endpoint that returns simple OK for Render detection
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-    CMD curl -f -H "User-Agent: render-health-check" http://localhost:${PORT:-10000}/ || exit 1
+# Health check with dynamic port
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD wget -q --spider http://localhost:${PORT:-8080}/api/auth/actuator/health || exit 1
 
 # JVM optimization for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
 
-# Start the application
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-render} -jar app.jar"]
+# Start the application with supabase profile for Render
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-supabase} -jar app.jar"]

@@ -129,10 +129,20 @@
     </logger>
 
     <!-- Application-specific loggers -->
-    <logger name="com.company.user" level="DEBUG"/>
-    <logger name="com.company.user.client" level="INFO"/>
-    <logger name="com.company.user.service" level="DEBUG"/>
-    <logger name="com.company.user.controller" level="INFO"/>
+    <springProfile name="!railway">
+        <logger name="com.company.user" level="DEBUG"/>
+        <logger name="com.company.user.client" level="INFO"/>
+        <logger name="com.company.user.service" level="DEBUG"/>
+        <logger name="com.company.user.controller" level="INFO"/>
+    </springProfile>
+    
+    <!-- Railway optimized logging -->
+    <springProfile name="railway">
+        <logger name="com.company.user" level="INFO"/>
+        <logger name="com.company.user.client" level="WARN"/>
+        <logger name="com.company.user.service" level="INFO"/>
+        <logger name="com.company.user.controller" level="INFO"/>
+    </springProfile>
 
     <!-- Spring and framework loggers -->
     <logger name="org.springframework.web" level="INFO"/>
@@ -167,6 +177,14 @@
         <root level="WARN">
             <appender-ref ref="ASYNC_FILE"/>
             <appender-ref ref="ASYNC_JSON_FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- Optimized Railway deployment profile -->
+    <springProfile name="railway">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
             <appender-ref ref="ERROR_FILE"/>
         </root>
     </springProfile>

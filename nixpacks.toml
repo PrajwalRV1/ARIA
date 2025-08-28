@@ -1,5 +1,4 @@
-[providers]
-java = "*"
+providers = ["java"]
 
 [variables]
 NIXPACKS_BUILD_DIR = "backend/user-management-service"

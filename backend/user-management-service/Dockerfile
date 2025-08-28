@@ -1,4 +1,21 @@
-# Production Dockerfile for Render deployment
+# Production Dockerfile for Render deployment - Multi-stage build
+# Stage 1: Build the application
+FROM eclipse-temurin:17-jdk-alpine AS builder
+
+# Install Maven
+RUN apk add --no-cache maven
+
+# Set working directory for build
+WORKDIR /build
+
+# Copy pom.xml and source code
+COPY pom.xml .
+COPY src ./src
+
+# Build the application (skip tests to speed up deployment)
+RUN mvn clean package -DskipTests
+
+# Stage 2: Runtime image
 FROM eclipse-temurin:17-jre-alpine
 
 # Install curl for health checks
@@ -11,8 +28,8 @@ RUN addgroup -g 1001 -S appuser && \
 # Set working directory
 WORKDIR /app
 
-# Copy the pre-built JAR file
-COPY target/user-management-service-0.0.1-SNAPSHOT.jar app.jar
+# Copy the built JAR file from builder stage
+COPY --from=builder /build/target/user-management-service-0.0.1-SNAPSHOT.jar app.jar
 
 # Create logs directory
 RUN mkdir -p logs && chown -R appuser:appuser /app

@@ -9,71 +9,78 @@ DROP TABLE IF EXISTS roles;
 
 -- Create roles table
 CREATE TABLE roles (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     description TEXT,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    INDEX idx_name (name),
-    INDEX idx_active (is_active)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create indexes for roles table
+CREATE INDEX idx_roles_name ON roles(name);
+CREATE INDEX idx_roles_active ON roles(is_active);
 
 -- Create permissions table  
 CREATE TABLE permissions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
     resource VARCHAR(50) NOT NULL,
     action VARCHAR(50) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    INDEX idx_name (name),
-    INDEX idx_resource (resource),
-    INDEX idx_action (action),
-    INDEX idx_active (is_active),
-    UNIQUE KEY uk_resource_action (resource, action)
+    CONSTRAINT uk_resource_action UNIQUE (resource, action)
 );
+
+-- Create indexes for permissions table
+CREATE INDEX idx_permissions_name ON permissions(name);
+CREATE INDEX idx_permissions_resource ON permissions(resource);
+CREATE INDEX idx_permissions_action ON permissions(action);
+CREATE INDEX idx_permissions_active ON permissions(is_active);
 
 -- Create role_permissions junction table
 CREATE TABLE role_permissions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     role_id BIGINT NOT NULL,
     permission_id BIGINT NOT NULL,
-    granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     granted_by BIGINT,
     
     CONSTRAINT fk_role_permissions_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
     CONSTRAINT fk_role_permissions_permission FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
     CONSTRAINT fk_role_permissions_granted_by FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL,
     
-    UNIQUE KEY uk_role_permission (role_id, permission_id),
-    INDEX idx_role_id (role_id),
-    INDEX idx_permission_id (permission_id)
+    CONSTRAINT uk_role_permission UNIQUE (role_id, permission_id)
 );
+
+-- Create indexes for role_permissions table
+CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
+CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
 
 -- Create user_permissions table for additional user-specific permissions
 CREATE TABLE user_permissions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     permission_id BIGINT NOT NULL,
     granted BOOLEAN DEFAULT TRUE,
-    granted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     granted_by BIGINT,
-    expires_at DATETIME NULL,
+    expires_at TIMESTAMP NULL,
     
     CONSTRAINT fk_user_permissions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_user_permissions_permission FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE,
     CONSTRAINT fk_user_permissions_granted_by FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL,
     
-    UNIQUE KEY uk_user_permission (user_id, permission_id),
-    INDEX idx_user_id (user_id),
-    INDEX idx_permission_id (permission_id),
-    INDEX idx_expires_at (expires_at)
+    CONSTRAINT uk_user_permission UNIQUE (user_id, permission_id)
 );
+
+-- Create indexes for user_permissions table
+CREATE INDEX idx_user_permissions_user_id ON user_permissions(user_id);
+CREATE INDEX idx_user_permissions_permission_id ON user_permissions(permission_id);
+CREATE INDEX idx_user_permissions_expires_at ON user_permissions(expires_at);
 
 -- Insert default roles
 INSERT INTO roles (name, description) VALUES

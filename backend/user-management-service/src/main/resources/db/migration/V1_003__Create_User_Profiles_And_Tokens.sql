@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS user_profiles;
 
 -- Create user_profiles table for extended user information
 CREATE TABLE user_profiles (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL UNIQUE,
     
     -- Professional Information
@@ -38,7 +38,7 @@ CREATE TABLE user_profiles (
     -- Resume and Documents
     resume_url VARCHAR(500),
     resume_filename VARCHAR(255),
-    resume_uploaded_at DATETIME,
+    resume_uploaded_at TIMESTAMP,
     cover_letter_url VARCHAR(500),
     
     -- Privacy and Communication Preferences
@@ -46,32 +46,32 @@ CREATE TABLE user_profiles (
     allow_sms_notifications BOOLEAN DEFAULT FALSE,
     allow_marketing_emails BOOLEAN DEFAULT FALSE,
     data_processing_consent BOOLEAN DEFAULT FALSE,
-    data_processing_consent_date DATETIME,
+    data_processing_consent_date TIMESTAMP,
     
     -- Audit fields
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
     
     CONSTRAINT fk_user_profiles_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
-    INDEX idx_user_id (user_id),
-    INDEX idx_company (company),
-    INDEX idx_industry (industry),
-    INDEX idx_experience_years (experience_years),
-    INDEX idx_city (city),
-    INDEX idx_country (country)
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX
 );
 
 -- Create refresh_tokens table for JWT token management
 CREATE TABLE refresh_tokens (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     token VARCHAR(500) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
     
     -- Token lifecycle
-    issued_at DATETIME NOT NULL,
-    expires_at DATETIME NOT NULL,
-    revoked_at DATETIME NULL,
+    issued_at TIMESTAMP NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    revoked_at TIMESTAMP NULL,
     is_revoked BOOLEAN DEFAULT FALSE,
     
     -- Device and session information
@@ -82,21 +82,21 @@ CREATE TABLE refresh_tokens (
     user_agent TEXT,
     
     -- Security
-    last_used_at DATETIME,
+    last_used_at TIMESTAMP,
     usage_count INT DEFAULT 0,
     
     CONSTRAINT fk_refresh_tokens_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
-    INDEX idx_token (token),
-    INDEX idx_user_id (user_id),
-    INDEX idx_expires_at (expires_at),
-    INDEX idx_revoked (is_revoked),
-    INDEX idx_device_id (device_id)
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX
 );
 
 -- Create session_logs table for audit trail
 CREATE TABLE session_logs (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     
     -- Session information
@@ -114,16 +114,16 @@ CREATE TABLE session_logs (
     two_factor_used BOOLEAN DEFAULT FALSE,
     
     -- Timing
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT fk_session_logs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     
-    INDEX idx_user_id (user_id),
-    INDEX idx_session_id (session_id),
-    INDEX idx_action (action),
-    INDEX idx_status (status),
-    INDEX idx_created_at (created_at),
-    INDEX idx_ip_address (ip_address)
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX
 );
 
 -- Insert default user profiles for existing users

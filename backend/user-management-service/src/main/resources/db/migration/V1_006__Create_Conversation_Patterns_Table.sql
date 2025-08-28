@@ -1,7 +1,7 @@
 -- Conversation Patterns Table
 -- For comprehensive analysis of communication patterns during interviews
 CREATE TABLE conversation_patterns (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT NOT NULL SERIAL PRIMARY KEY,
     interview_session_id VARCHAR(255) NOT NULL UNIQUE,
     candidate_id BIGINT NOT NULL,
     recruiter_id BIGINT NULL,
@@ -83,24 +83,24 @@ CREATE TABLE conversation_patterns (
     processing_time INT NOT NULL COMMENT 'time taken to analyze (in milliseconds)',
     
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
     
     -- Foreign Keys
     FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
     
     -- Indexes
-    INDEX idx_interview_session_id (interview_session_id),
-    INDEX idx_candidate_id (candidate_id),
-    INDEX idx_total_duration (total_duration),
-    INDEX idx_engagement_score (engagement_score),
-    INDEX idx_confidence_score (confidence_score),
-    INDEX idx_professionalism_score (professionalism_score),
-    INDEX idx_overall_sentiment (overall_sentiment),
-    INDEX idx_peer_comparison_score (peer_comparison_score),
-    INDEX idx_created_at (created_at),
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
     
     -- Composite indexes for analysis queries
-    INDEX idx_communication_quality (clarity_score, coherence_score, professionalism_score),
-    INDEX idx_engagement_confidence (engagement_score, confidence_score),
-    INDEX idx_speech_patterns (speaking_pace, vocabulary_richness, technical_term_usage)
+    -- INDEX,
+    -- INDEX,
+    -- INDEX
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

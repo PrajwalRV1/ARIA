@@ -1,7 +1,7 @@
 -- Bias Detection Results Table
 -- For tracking and monitoring bias detection results across interviews
 CREATE TABLE bias_detection_results (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT NOT NULL SERIAL PRIMARY KEY,
     interview_session_id VARCHAR(255) NOT NULL,
     candidate_id BIGINT NOT NULL,
     analysis_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -70,7 +70,7 @@ CREATE TABLE bias_detection_results (
     mitigation_suggestions TEXT NULL COMMENT 'JSON array of suggested mitigations',
     intervention_required BOOLEAN NOT NULL DEFAULT FALSE,
     intervention_type VARCHAR(100) NULL COMMENT 'Type of intervention needed',
-    intervention_urgency ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') NULL,
+    intervention_urgency VARCHAR(20) NULL,
     
     -- Context and Metadata
     job_role VARCHAR(100) NULL,
@@ -97,25 +97,25 @@ CREATE TABLE bias_detection_results (
     follow_up_required BOOLEAN NOT NULL DEFAULT FALSE,
     
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
     
     -- Foreign Keys
     FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
     
     -- Indexes
-    INDEX idx_interview_session_id (interview_session_id),
-    INDEX idx_candidate_id (candidate_id),
-    INDEX idx_overall_bias_score (overall_bias_score),
-    INDEX idx_bias_detected (bias_detected),
-    INDEX idx_intervention_required (intervention_required),
-    INDEX idx_intervention_urgency (intervention_urgency),
-    INDEX idx_job_role (job_role),
-    INDEX idx_analysis_timestamp (analysis_timestamp),
-    INDEX idx_created_at (created_at),
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
     
     -- Composite indexes for bias monitoring
-    INDEX idx_bias_monitoring (bias_detected, overall_bias_score, analysis_timestamp),
-    INDEX idx_demographic_analysis (demographic_bias_score, age_bias_score, gender_bias_score),
-    INDEX idx_fairness_metrics (statistical_parity, equalized_odds, individual_fairness),
-    INDEX idx_intervention_tracking (intervention_required, intervention_urgency, remediation_applied)
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

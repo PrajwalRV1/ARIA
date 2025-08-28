@@ -1,7 +1,7 @@
 -- Question Effectiveness Log Table
 -- For continuous learning and improvement of the adaptive questioning system
 CREATE TABLE question_effectiveness_log (
-    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id BIGINT NOT NULL SERIAL PRIMARY KEY,
     question_id BIGINT NOT NULL,
     interview_session_id VARCHAR(255) NOT NULL,
     candidate_id BIGINT NOT NULL,
@@ -76,18 +76,18 @@ CREATE TABLE question_effectiveness_log (
     FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
     
     -- Indexes
-    INDEX idx_question_id (question_id),
-    INDEX idx_interview_session_id (interview_session_id),
-    INDEX idx_candidate_id (candidate_id),
-    INDEX idx_question_position (question_position),
-    INDEX idx_job_role (job_role),
-    INDEX idx_logged_at (logged_at),
-    INDEX idx_information_efficiency (information_efficiency),
-    INDEX idx_prediction_error (prediction_error),
-    INDEX idx_demographic_group (demographic_group),
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
+    -- INDEX,
     
     -- Composite indexes for analysis queries
-    INDEX idx_question_effectiveness (question_id, information_efficiency, prediction_error),
-    INDEX idx_bias_analysis (demographic_group, expected_score_demographic, actual_score_demographic),
-    INDEX idx_session_analysis (interview_session_id, question_position, logged_at)
+    -- INDEX,
+    -- INDEX,
+    -- INDEX
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -189,6 +189,13 @@
         </root>
     </springProfile>
 
+    <!-- Ultra-fast startup profile for Railway -->
+    <springProfile name="render">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
     <!-- Shutdown hook -->
     <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
 </configuration>

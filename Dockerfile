@@ -33,20 +33,21 @@ COPY --from=builder /app/backend/user-management-service/target/user-management-
 RUN useradd -m appuser && chown appuser:appuser app.jar
 USER appuser
 
-# Expose port
-EXPOSE 8080
+# Expose port (match interview-orchestrator strategy)
+EXPOSE 10000
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-8080}/api/auth/actuator/health || exit 1
+# Add health check with correct context path
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD curl -f http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
 
-# Run the application with optimized JVM settings for Railway
+# Run the application with optimized JVM settings (match interview-orchestrator)
 CMD ["java", \
-     "-Dserver.port=${PORT:-8080}", \
-     "-Dspring.profiles.active=railway", \
-     "-Xmx400m", \
-     "-Xms200m", \
+     "-Dserver.port=${PORT:-10000}", \
+     "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-render}", \
+     "-Xmx350m", \
+     "-Xms150m", \
      "-XX:+UseG1GC", \
      "-XX:MaxGCPauseMillis=100", \
+     "-XX:+ExitOnOutOfMemoryError", \
      "-Djava.security.egd=file:/dev/./urandom", \
      "-jar", "app.jar"]

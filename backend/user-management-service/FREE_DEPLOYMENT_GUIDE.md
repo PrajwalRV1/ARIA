@@ -18,19 +18,24 @@ This guide covers completely FREE alternatives to deploy your Spring Boot user-m
 #### Environment Variables to Set:
 ```bash
 SPRING_PROFILES_ACTIVE=railway
-JWT_SECRET=your-jwt-secret
-MAIL_USERNAME=your-email
-MAIL_PASSWORD=your-password
+JWT_SECRET=kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
+MAIL_USERNAME=workwithrvprajwal@gmail.com
+MAIL_PASSWORD=vclhowpwtmopdqdz
 CORS_ORIGINS=https://aria-frontend.onrender.com
+
+# Your Supabase Database (already configured)
+DATABASE_URL=jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&cachePrepStmts=false&useServerPrepStmts=false&rewriteBatchedStatements=false&prepareThreshold=0&preparedStatementCacheSize=0&preparedStatementCacheSqlLimit=0&ApplicationName=ARIA-User-Management
+DB_USERNAME=postgres.deqfzxsmuydhrepyiagq
+DB_PASSWORD=CoolLife@AriaDB
+
+# Your Upstash Redis (already configured)
+UPSTASH_REDIS_HOST=renewing-falcon-41265.upstash.io
+UPSTASH_REDIS_PORT=6379
+UPSTASH_REDIS_PASSWORD=AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU
 ```
 
-#### Add Database:
-1. In Railway dashboard → "New Service" → PostgreSQL
-2. DATABASE_URL will be auto-provided
-
-#### Add Redis:
-1. In Railway dashboard → "New Service" → Redis  
-2. REDIS_URL will be auto-provided
+#### ✅ No Need to Add Database or Redis!
+Your existing Supabase PostgreSQL and Upstash Redis are already configured in the application properties!
 
 ---
 
@@ -97,14 +102,17 @@ The configuration files are already created:
 4. Select "Database" → "Redis"
 ```
 
-### Step 4: Environment Variables
-In Railway dashboard, set these variables:
+### Step 4: Environment Variables (Optional - defaults are set)
+The app will work with default values, but you can customize in Railway dashboard:
 ```
 SPRING_PROFILES_ACTIVE=railway
 JWT_SECRET=kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN
-MAIL_USERNAME=workwithrvprajwal@gmail.com  
+MAIL_USERNAME=workwithrvprajwal@gmail.com
 MAIL_PASSWORD=vclhowpwtmopdqdz
 CORS_ORIGINS=https://aria-frontend.onrender.com
+
+# Your databases are already configured with defaults!
+# Supabase PostgreSQL and Upstash Redis credentials are built-in
 ```
 
 ### Step 5: Test Deployment

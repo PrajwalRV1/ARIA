@@ -8,7 +8,7 @@
     }
   },
   "deploy": {
-    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=railway -jar target/user-management-service-*.jar",
+    "startCommand": "java -Dserver.port=$PORT -Dspring.profiles.active=minimal -jar target/user-management-service-*.jar",
     "healthcheckPath": "/api/auth/actuator/health",
     "healthcheckTimeout": 300
   }

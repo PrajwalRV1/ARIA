@@ -12,36 +12,6 @@ services:
     autoDeploy: true
     rootDir: .
 
-  # User Management Service (Spring Boot) - RECONFIGURED
-  - type: web
-    name: aria-user-management-v2
-    env: java
-    plan: free
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -jar target/user-management-service-*.jar
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: supabase
-      - key: DATABASE_URL
-        value: "jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&cachePrepStmts=false&useServerPrepStmts=false&rewriteBatchedStatements=false&prepareThreshold=0&preparedStatementCacheSize=0&preparedStatementCacheSqlLimit=0&ApplicationName=ARIA-User-Management"
-      - key: DB_USERNAME
-        value: "postgres.deqfzxsmuydhrepyiagq"
-      - key: DB_PASSWORD
-        value: "CoolLife@AriaDB"
-      - key: UPSTASH_REDIS_HOST
-        value: "renewing-falcon-41265.upstash.io"
-      - key: UPSTASH_REDIS_PORT
-        value: "6379"
-      - key: UPSTASH_REDIS_PASSWORD
-        value: "AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU"
-      - key: JWT_SECRET
-        value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
-      - key: CORS_ORIGINS
-        value: "https://aria-frontend.onrender.com"
-    healthCheckPath: /api/auth/actuator/health
-    autoDeploy: true
-    rootDir: backend/user-management-service
-
   # Interview Orchestrator Service (Spring Boot) - RECONFIGURED
   - type: web
     name: aria-interview-orchestrator-v2
@@ -123,16 +93,3 @@ services:
     autoDeploy: true
     rootDir: ai-services/analytics-service
 
-  # Minimal Test Service for Platform Verification
-  - type: web
-    name: aria-test-service
-    env: java
-    plan: free
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -jar target/test-service-*.jar
-    healthCheckPath: /health
-    envVars:
-      - key: SERVER_PORT
-        value: "10000"
-    autoDeploy: true
-    rootDir: test-service

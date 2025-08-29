@@ -84,7 +84,7 @@ services:
         value: "workwithrvprajwal@gmail.com"
       - key: SMTP_PASSWORD
         value: "vclhowpwtmopdqdz"
-    healthCheckPath: /actuator/health
+    healthCheckPath: /api/auth/actuator/health
     autoDeploy: true
     rootDir: backend/user-management-service
 

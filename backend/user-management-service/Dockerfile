@@ -1,21 +1,25 @@
-# Production Dockerfile for Render deployment - Multi-stage build v2.0
-# Stage 1: Build the application
-FROM eclipse-temurin:17-jdk-alpine AS builder
+# Multi-stage build for User Management Service (Following interview-orchestrator pattern)
+FROM eclipse-temurin:17-jdk-alpine AS build
 
 # Install Maven
 RUN apk add --no-cache maven
 
-# Set working directory for build
-WORKDIR /build
+# Set working directory
+WORKDIR /app
 
-# Copy pom.xml and source code
+# Copy Maven files
 COPY pom.xml .
-COPY src ./src
 
-# Build the application (skip tests to speed up deployment)
-RUN mvn clean package -DskipTests
+# Download dependencies (cached layer)
+RUN mvn dependency:go-offline -B
 
-# Stage 2: Runtime image
+# Copy source code
+COPY src src
+
+# Build the application
+RUN mvn clean package -DskipTests -B
+
+# Production image
 FROM eclipse-temurin:17-jre-alpine
 
 # Install curl for health checks
@@ -28,8 +32,8 @@ RUN addgroup -g 1001 -S appuser && \
 # Set working directory
 WORKDIR /app
 
-# Copy the built JAR file from builder stage
-COPY --from=builder /build/target/user-management-service-0.0.1-SNAPSHOT.jar app.jar
+# Copy the built JAR from build stage
+COPY --from=build /app/target/user-management-service-*.jar app.jar
 
 # Create logs directory
 RUN mkdir -p logs && chown -R appuser:appuser /app
@@ -37,10 +41,10 @@ RUN mkdir -p logs && chown -R appuser:appuser /app
 # Switch to non-root user
 USER appuser
 
-# Expose port 10000 (Render's expected port)
-EXPOSE 10000
+# Expose port (dynamic for Render)
+EXPOSE ${PORT:-10000}
 
-# Health check for the correct port and path
+# Health check with dynamic port
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT:-10000}/actuator/health || exit 1
 

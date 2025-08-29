@@ -173,6 +173,16 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       console.log('Form is invalid:', this.form.errors);
+      console.log('Form control errors:');
+      Object.keys(this.form.controls).forEach(key => {
+        const control = this.form.get(key);
+        if (control && control.errors) {
+          console.log(`- ${key}:`, control.errors);
+        }
+      });
+      
+      // Show user-friendly error message
+      alert('⚠️ Please fill in all required fields before saving.');
       return;
     }
   

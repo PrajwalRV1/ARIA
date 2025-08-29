@@ -212,6 +212,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error updating candidate:', err);
+          this.showErrorNotification('Failed to update candidate. Please try again.');
+          // Don't close popup on error so user can retry
         }
       });
     } else {
@@ -224,6 +226,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error saving candidate:', err);
+          this.showErrorNotification('Failed to save candidate. Please try again.');
+          // Don't close popup on error so user can retry
         }
       });
     }

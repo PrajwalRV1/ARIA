@@ -107,9 +107,12 @@ export class CandidateService {
     if (isPlatformBrowser(this.platformId)) {
       const token = localStorage.getItem('auth_token');
       if (token) {
+        console.log('Using auth token for candidate request:', token.substring(0, 20) + '...');
         return {
           Authorization: `Bearer ${token}`
         };
+      } else {
+        console.warn('No auth token found in localStorage for candidate request');
       }
     }
     return {};

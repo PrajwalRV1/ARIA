@@ -45,6 +45,49 @@ services:
     autoDeploy: true
     rootDir: backend/interview-orchestrator-service
 
+  # User Management Service (Spring Boot) - FOLLOWING SUCCESSFUL PATTERN
+  - type: web
+    name: aria-user-management-v2
+    env: docker  
+    plan: free
+    buildCommand: ""
+    startCommand: ""
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: neon
+      - key: DATABASE_URL
+        value: "jdbc:postgresql://ep-muddy-truth-ad583n4q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&ApplicationName=ARIA-User-Management"
+      - key: DB_USERNAME
+        value: "neondb_owner"
+      - key: DB_PASSWORD
+        value: "npg_SxyCtjKD16EU"
+      - key: UPSTASH_REDIS_HOST
+        value: "renewing-falcon-41265.upstash.io"
+      - key: UPSTASH_REDIS_PORT
+        value: "6379"
+      - key: UPSTASH_REDIS_PASSWORD
+        value: "AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU"
+      - key: UPSTASH_REDIS_REST_URL
+        value: "https://renewing-falcon-41265.upstash.io"
+      - key: UPSTASH_REDIS_REST_TOKEN
+        value: "AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU"
+      - key: CORS_ORIGINS
+        value: "https://aria-frontend-fs01.onrender.com"
+      - key: JWT_SECRET
+        value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
+      - key: SMTP_HOST
+        value: "smtp.gmail.com"
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        value: "workwithrvprajwal@gmail.com"
+      - key: SMTP_PASSWORD
+        value: "vclhowpwtmopdqdz"
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    rootDir: backend/user-management-service
+
   # Speech Service (Python) - KEEP INTACT
   - type: web
     name: aria-speech-service

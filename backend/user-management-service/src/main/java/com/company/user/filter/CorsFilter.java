@@ -17,8 +17,8 @@ import java.util.List;
  * Backup CORS Filter to ensure CORS headers are always set.
  * This runs at the highest priority to handle CORS before Spring Security.
  */
-@Component
-@Order(1)
+// @Component - Disabled to prevent conflicts with Spring Security CORS
+// @Order(1)
 public class CorsFilter implements Filter {
 
     private static final Logger logger = LoggerFactory.getLogger(CorsFilter.class);

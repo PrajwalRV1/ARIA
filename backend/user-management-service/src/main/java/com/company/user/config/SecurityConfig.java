@@ -39,32 +39,36 @@ public class SecurityConfig {
         logger.info("Configuring CORS with origins: {}", corsOrigins);
         
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Parse comma-separated origins if multiple origins are provided
-        String[] origins = corsOrigins.split(",");
-        for (int i = 0; i < origins.length; i++) {
-            origins[i] = origins[i].trim();
-        }
-        
-        // Add explicit allowed origins for production
-        configuration.setAllowedOrigins(Arrays.asList(
-            "https://aria-frontend-fs01.onrender.com",
-            corsOrigins.trim()
-        ));
-        
-        // Add allowed origin patterns for development and flexibility
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:*", 
-            "http://127.0.0.1:*",
-            "https://localhost:*", 
-            "https://127.0.0.1:*",
-            "https://aria-frontend-*.onrender.com"
-        ));
-        
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         configuration.setAllowCredentials(true);
+        
+        // Set allowed origins - use both explicit and patterns
+        configuration.addAllowedOrigin("https://aria-frontend-fs01.onrender.com");
+        configuration.addAllowedOrigin(corsOrigins.trim());
+        
+        // Add origin patterns for flexibility
+        configuration.addAllowedOriginPattern("http://localhost:*");
+        configuration.addAllowedOriginPattern("https://localhost:*");
+        configuration.addAllowedOriginPattern("http://127.0.0.1:*");
+        configuration.addAllowedOriginPattern("https://127.0.0.1:*");
+        configuration.addAllowedOriginPattern("https://aria-frontend-*.onrender.com");
+        
+        // Set allowed methods
+        configuration.addAllowedMethod("GET");
+        configuration.addAllowedMethod("POST");
+        configuration.addAllowedMethod("PUT");
+        configuration.addAllowedMethod("DELETE");
+        configuration.addAllowedMethod("OPTIONS");
+        configuration.addAllowedMethod("PATCH");
+        configuration.addAllowedMethod("HEAD");
+        
+        // Set allowed headers
+        configuration.addAllowedHeader("*");
+        
+        // Set exposed headers
+        configuration.addExposedHeader("Authorization");
+        configuration.addExposedHeader("Content-Type");
+        configuration.addExposedHeader("X-Total-Count");
+        
         configuration.setMaxAge(3600L);
         
         logger.info("CORS configuration - Allowed Origins: {}", configuration.getAllowedOrigins());
@@ -101,6 +105,7 @@ public class SecurityConfig {
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
                                 "/api/auth/refresh-token",
+                                "/api/auth/cors-test",
                                 "/health",
                                 "/actuator/**",
                                 "/h2-console/**",

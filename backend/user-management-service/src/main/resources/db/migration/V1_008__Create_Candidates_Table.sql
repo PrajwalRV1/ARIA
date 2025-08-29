@@ -1,6 +1,15 @@
 -- Create candidates table migration
 -- This table stores candidate information for recruitment process
 
+-- Create candidate_status ENUM type if it doesn't exist
+-- This ENUM may already exist from previous schema setup
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'candidate_status') THEN
+        CREATE TYPE candidate_status AS ENUM ('APPLIED', 'SCREENING', 'INTERVIEW', 'REJECTED', 'HIRED');
+    END IF;
+END$$;
+
 CREATE TABLE IF NOT EXISTS candidates (
     id BIGSERIAL PRIMARY KEY,
     
@@ -14,7 +23,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     total_experience DOUBLE PRECISION,
     relevant_experience DOUBLE PRECISION,
     interview_round VARCHAR(100),
-    status VARCHAR(50) DEFAULT 'PENDING',
+    status candidate_status DEFAULT 'APPLIED',
     
     -- Job description and responsibilities
     job_description TEXT,
@@ -45,7 +54,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     -- Constraints
-    CONSTRAINT chk_candidates_status CHECK (status IN ('PENDING', 'SCHEDULED', 'COMPLETED', 'SELECTED', 'REJECTED', 'ON_HOLD')),
+    -- Note: status uses candidate_status ENUM type which includes ('APPLIED', 'SCREENING', 'INTERVIEW', 'REJECTED', 'HIRED')
     CONSTRAINT uk_candidates_email_requisition UNIQUE (email, requisition_id)
 );
 
@@ -87,9 +96,9 @@ INSERT INTO candidates (
     total_experience, relevant_experience, interview_round, 
     status, recruiter_id, created_at, updated_at
 ) VALUES 
-    ('FSDT1R1', 'John Doe', 'john.doe@example.com', '1234567890', 'Senior Software Engineer', 5.0, 4.0, 'Technical - T1', 'PENDING', 'recruiter@aria.com', NOW(), NOW()),
-    ('FSDT1R1', 'Jane Smith', 'jane.smith@example.com', '9876543210', 'Senior Software Engineer', 6.0, 5.5, 'Technical - T1', 'SCHEDULED', 'recruiter@aria.com', NOW(), NOW()),
-    ('FSDT2R1', 'Bob Johnson', 'bob.johnson@example.com', '5555551234', 'Full Stack Developer', 3.0, 2.5, 'HR - Round 1', 'PENDING', 'recruiter@aria.com', NOW(), NOW())
+    ('FSDT1R1', 'John Doe', 'john.doe@example.com', '1234567890', 'Senior Software Engineer', 5.0, 4.0, 'Technical - T1', 'APPLIED', 'recruiter@aria.com', NOW(), NOW()),
+    ('FSDT1R1', 'Jane Smith', 'jane.smith@example.com', '9876543210', 'Senior Software Engineer', 6.0, 5.5, 'Technical - T1', 'SCREENING', 'recruiter@aria.com', NOW(), NOW()),
+    ('FSDT2R1', 'Bob Johnson', 'bob.johnson@example.com', '5555551234', 'Full Stack Developer', 3.0, 2.5, 'HR - Round 1', 'INTERVIEW', 'recruiter@aria.com', NOW(), NOW())
 ON CONFLICT (email, requisition_id) DO NOTHING;
 
 -- Insert sample skills

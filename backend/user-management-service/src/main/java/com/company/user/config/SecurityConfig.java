@@ -24,6 +24,8 @@ public class SecurityConfig {
 
     @Value("${CORS_ORIGINS:https://localhost:4200}")
     private String corsOrigins;
+    
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SecurityConfig.class);
 
     // Password encoder
     @Bean
@@ -34,21 +36,39 @@ public class SecurityConfig {
     // CORS configuration source
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        logger.info("Configuring CORS with origins: {}", corsOrigins);
+        
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Add both environment-specific origins and localhost for development
+        // Parse comma-separated origins if multiple origins are provided
+        String[] origins = corsOrigins.split(",");
+        for (int i = 0; i < origins.length; i++) {
+            origins[i] = origins[i].trim();
+        }
+        
+        // Add explicit allowed origins for production
+        configuration.setAllowedOrigins(Arrays.asList(
+            "https://aria-frontend-fs01.onrender.com",
+            corsOrigins.trim()
+        ));
+        
+        // Add allowed origin patterns for development and flexibility
         configuration.setAllowedOriginPatterns(Arrays.asList(
-            corsOrigins,
             "http://localhost:*", 
             "http://127.0.0.1:*",
             "https://localhost:*", 
-            "https://127.0.0.1:*"
+            "https://127.0.0.1:*",
+            "https://aria-frontend-*.onrender.com"
         ));
+        
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Total-Count", "Access-Control-Allow-Origin", "Access-Control-Allow-Credentials"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
+        
+        logger.info("CORS configuration - Allowed Origins: {}", configuration.getAllowedOrigins());
+        logger.info("CORS configuration - Allowed Origin Patterns: {}", configuration.getAllowedOriginPatterns());
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

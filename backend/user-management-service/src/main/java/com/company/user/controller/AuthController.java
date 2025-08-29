@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/")  // Empty mapping since context path is already /api/auth
 public class AuthController {
 
     private final OtpService otpService;

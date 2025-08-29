@@ -22,7 +22,7 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${CORS_ORIGINS:https://aria-frontend-fs01.onrender.com}")
+    @Value("${CORS_ORIGINS:https://aria-frontend-tc4z.onrender.com}")
     private String corsOrigins;
     
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SecurityConfig.class);
@@ -42,7 +42,7 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
         
         // Set allowed origins - use both explicit and patterns
-        configuration.addAllowedOrigin("https://aria-frontend-fs01.onrender.com");
+        configuration.addAllowedOrigin("https://aria-frontend-tc4z.onrender.com");
         configuration.addAllowedOrigin(corsOrigins.trim());
         
         // Add origin patterns for flexibility

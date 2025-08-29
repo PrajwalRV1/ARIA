@@ -51,7 +51,7 @@ public class SecurityConfig {
             "http://localhost:3000",
             "https://localhost:4200",
             "https://localhost:3000",
-            "https://aria-frontend-fs01.onrender.com",
+            "https://aria-frontend-tc4z.onrender.com",
             "https://aria-frontend-*.onrender.com"
         ));
         

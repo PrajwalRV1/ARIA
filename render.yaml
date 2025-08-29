@@ -22,13 +22,13 @@ services:
     dockerfilePath: ./Dockerfile
     envVars:
       - key: SPRING_PROFILES_ACTIVE
-        value: supabase
+        value: neon
       - key: DATABASE_URL
-        value: "jdbc:postgresql://aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&cachePrepStmts=false&useServerPrepStmts=false&rewriteBatchedStatements=false&prepareThreshold=0&preparedStatementCacheSize=0&preparedStatementCacheSqlLimit=0&ApplicationName=ARIA-Interview-Orchestrator"
+        value: "jdbc:postgresql://ep-muddy-truth-ad583n4q-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&ApplicationName=ARIA-Interview-Orchestrator"
       - key: DB_USERNAME
-        value: "postgres.deqfzxsmuydhrepyiagq"
+        value: "neondb_owner"
       - key: DB_PASSWORD
-        value: "CoolLife@AriaDB"
+        value: "npg_SxyCtjKD16EU"
       - key: UPSTASH_REDIS_HOST
         value: "renewing-falcon-41265.upstash.io"
       - key: UPSTASH_REDIS_PORT

@@ -96,6 +96,15 @@ BEGIN
     END IF;
 END$$;
 
+-- Add primary key constraint for candidate_skills if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints 
+                   WHERE table_name = 'candidate_skills' AND constraint_type = 'PRIMARY KEY') THEN
+        ALTER TABLE candidate_skills ADD PRIMARY KEY (candidate_id, skill);
+    END IF;
+END$$;
+
 -- Trigger for updated_at (if update_updated_at_column function exists)
 -- CREATE TRIGGER update_candidates_updated_at BEFORE UPDATE ON candidates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

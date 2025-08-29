@@ -36,9 +36,9 @@ services:
       - key: UPSTASH_REDIS_PASSWORD
         value: "AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU"
       - key: USER_MGMT_URL
-        value: "https://aria-user-management-v2.onrender.com"
+        value: "https://aria-user-management-v2-uq1g.onrender.com"
       - key: CORS_ORIGINS
-        value: "https://aria-frontend-fs01.onrender.com"
+        value: "https://aria-frontend-tc4z.onrender.com"
       - key: JWT_SECRET
         value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
     healthCheckPath: /api/interview/actuator/health
@@ -73,7 +73,7 @@ services:
       - key: UPSTASH_REDIS_REST_TOKEN
         value: "AaExAAIncDE3NTczYWIxNDNjYjA0NzI2YWQ2NmY0ZTZjZTg5Y2IyMXAxNDEyNjU"
       - key: CORS_ORIGINS
-        value: "https://aria-frontend-fs01.onrender.com"
+        value: "https://aria-frontend-tc4z.onrender.com"
       - key: JWT_SECRET
         value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
       - key: SMTP_HOST

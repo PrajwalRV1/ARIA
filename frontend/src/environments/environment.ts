@@ -5,39 +5,39 @@ export const environment = {
   // Session Service Configuration (User Management Service)
   sessionServiceBaseUrl: 'https://aria-user-management-v2.onrender.com/api/user/sessions',
   
-  // AI Services Configuration
+  // AI Services Configuration - Updated for Production URLs
   aiServices: {
-    // Interview Orchestrator Service
-    orchestratorBaseUrl: 'https://localhost:8081/api',
-    orchestratorWsUrl: 'wss://localhost:8081/ws',
+    // Interview Orchestrator Service (Render)
+    orchestratorBaseUrl: 'https://aria-interview-orchestrator-v2.onrender.com/api/interview',
+    orchestratorWsUrl: 'wss://aria-interview-orchestrator-v2.onrender.com/ws',
     
-    // Speech Processing Service (Open-source STT) - SSL enabled on port 8002
-    speechServiceBaseUrl: 'https://localhost:8002/api',
-    speechServiceWsUrl: 'wss://localhost:8002/ws',
+    // Speech Processing Service (Render) - Open-source STT
+    speechServiceBaseUrl: 'https://aria-speech-service.onrender.com',
+    speechServiceWsUrl: 'wss://aria-speech-service.onrender.com/ws',
     
-    // Analytics Service - SSL enabled on port 8003
-    analyticsServiceBaseUrl: 'https://localhost:8003/api',
-    analyticsServiceWsUrl: 'wss://localhost:8003/ws',
+    // Analytics Service (Render)
+    analyticsServiceBaseUrl: 'https://aria-analytics-service.onrender.com',
+    analyticsServiceWsUrl: 'wss://aria-analytics-service.onrender.com/ws',
     
-    // Mozilla TTS Service - SSL enabled on port 8004  
-    mozillaTtsServiceBaseUrl: 'https://localhost:8004/api',
-    mozillaTtsServiceWsUrl: 'wss://localhost:8004/ws',
+    // Adaptive Engine Service (Render)
+    adaptiveEngineBaseUrl: 'https://aria-adaptive-engine.onrender.com',
+    adaptiveEngineWsUrl: 'wss://aria-adaptive-engine.onrender.com/ws',
     
-    // Job Description Analyzer - SSL enabled on port 8005
-    jobAnalyzerServiceBaseUrl: 'https://localhost:8005/api',
-    jobAnalyzerServiceWsUrl: 'wss://localhost:8005/ws',
+    // AI Avatar Service (Railway - TBD)
+    alexAiServiceUrl: 'https://ai-avatar-service.railway.app', // Placeholder - update with actual Railway URL
+    aiAvatarServiceUrl: 'https://ai-avatar-service.railway.app',
     
-    // AI Avatar Service with Alex AI integration - SSL enabled on port 8006
-    alexAiServiceUrl: 'https://localhost:8006',
-    aiAvatarServiceUrl: 'https://localhost:8006',
+    // Mozilla TTS Service (Railway - TBD)
+    mozillaTtsServiceBaseUrl: 'https://mozilla-tts-service.railway.app', // Placeholder
+    mozillaTtsServiceWsUrl: 'wss://mozilla-tts-service.railway.app/ws',
     
-    // Voice Synthesis Service - SSL enabled on port 8007
-    voiceSynthesisBaseUrl: 'https://localhost:8007/api',
-    voiceSynthesisWsUrl: 'wss://localhost:8007/ws',
+    // Voice Synthesis Service (Railway - TBD)
+    voiceSynthesisBaseUrl: 'https://voice-synthesis-service.railway.app', // Placeholder
+    voiceSynthesisWsUrl: 'wss://voice-synthesis-service.railway.app/ws',
     
-    // Voice Isolation Service - SSL enabled on port 8008
-    voiceIsolationBaseUrl: 'https://localhost:8008/api',
-    voiceIsolationWsUrl: 'wss://localhost:8008/ws',
+    // Voice Isolation Service (Railway - TBD)
+    voiceIsolationBaseUrl: 'https://voice-isolation-service.railway.app', // Placeholder
+    voiceIsolationWsUrl: 'wss://voice-isolation-service.railway.app/ws',
     
     // AI Avatar Configuration (Open-source)
     avatarConfig: {

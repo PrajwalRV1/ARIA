@@ -5,7 +5,7 @@ export const environment = {
   // Session Service Configuration (User Management Service)
   sessionServiceBaseUrl: 'https://aria-user-management-v2.onrender.com/api/user/sessions',
   
-  // AI Services Configuration - Production URLs
+  // AI Services Configuration - Render Production URLs
   aiServices: {
     // Interview Orchestrator Service (Render)
     orchestratorBaseUrl: 'https://aria-interview-orchestrator-v2.onrender.com/api/interview',
@@ -23,15 +23,23 @@ export const environment = {
     adaptiveEngineBaseUrl: 'https://aria-adaptive-engine.onrender.com',
     adaptiveEngineWsUrl: 'wss://aria-adaptive-engine.onrender.com/ws',
     
-    // AI Avatar Service (Railway - Update with actual URLs when available)
+    // AI Avatar Service (Railway - Update when Railway URLs are available)
     alexAiServiceUrl: 'https://ai-avatar-service.railway.app',
     aiAvatarServiceUrl: 'https://ai-avatar-service.railway.app',
     
-    // Mozilla TTS Service (Railway)
+    // Mozilla TTS Service (Railway - Update when Railway URLs are available)
     mozillaTtsServiceBaseUrl: 'https://mozilla-tts-service.railway.app',
     mozillaTtsServiceWsUrl: 'wss://mozilla-tts-service.railway.app/ws',
     
-    // AI Avatar Configuration (Open-source)
+    // Voice Synthesis Service (Railway - Update when Railway URLs are available)
+    voiceSynthesisBaseUrl: 'https://voice-synthesis-service.railway.app',
+    voiceSynthesisWsUrl: 'wss://voice-synthesis-service.railway.app/ws',
+    
+    // Voice Isolation Service (Railway - Update when Railway URLs are available)
+    voiceIsolationBaseUrl: 'https://voice-isolation-service.railway.app',
+    voiceIsolationWsUrl: 'wss://voice-isolation-service.railway.app/ws',
+    
+    // AI Avatar Configuration (Production)
     avatarConfig: {
       enableSpeechSynthesis: true,
       speechRate: 1.0,
@@ -49,7 +57,7 @@ export const environment = {
       reconnectAttempts: 5,
       reconnectInterval: 3000,
       heartbeatInterval: 30000,
-      connectionTimeout: 10000
+      connectionTimeout: 15000  // Increased for production
     }
   },
   
@@ -64,10 +72,9 @@ export const environment = {
   
   // WebRTC Configuration
   webrtc: {
-    jitsiDomain: 'meet.jit.si', // Free Jitsi Meet server
+    jitsiDomain: 'meet.jit.si',
     enableLocalVideo: true,
     enableAudioProcessing: true,
-    // Jitsi Meet configuration options
     jitsiConfig: {
       enableWelcomePage: false,
       enableCalendarIntegration: false,
@@ -78,7 +85,7 @@ export const environment = {
   // Security Configuration
   security: {
     enableCSRFProtection: true,
-    allowedOrigins: ['https://aria.com', 'https://www.aria.com'],
+    allowedOrigins: ['https://aria-frontend-fs01.onrender.com'],
     enableSecureCookies: true
   },
   

@@ -36,9 +36,9 @@ USER appuser
 # Expose port (match interview-orchestrator strategy)
 EXPOSE 10000
 
-# Add health check with correct context path
+# Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
+  CMD curl -f http://localhost:${PORT:-10000}/actuator/health || exit 1
 
 # Run the application with optimized JVM settings (match interview-orchestrator)
 CMD ["java", \

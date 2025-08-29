@@ -45,12 +45,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow specific origins (Angular frontend)
+        // Allow specific origins (Angular frontend) - Updated for Production
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:4200",
             "http://localhost:3000",
             "https://localhost:4200",
-            "https://localhost:3000"
+            "https://localhost:3000",
+            "https://aria-frontend-fs01.onrender.com",
+            "https://aria-frontend-*.onrender.com"
         ));
         
         // Allow all HTTP methods

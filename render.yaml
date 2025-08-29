@@ -42,7 +42,7 @@ services:
       - key: JWT_SECRET
         value: "kV7pL9zR3mX1tU5qW8bC2yJ6fH4nE0sDmA3gK9xZ2vF8uQ4tY7rP1wE6iO5sL0hN"
     healthCheckPath: /api/interview/actuator/health
-    autoDeploy: false
+    autoDeploy: true
     rootDir: backend/interview-orchestrator-service
 
   # Speech Service (Python) - KEEP INTACT

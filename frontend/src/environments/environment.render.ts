@@ -1,9 +1,9 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://aria-user-management-v2.onrender.com/api',
+  apiBaseUrl: 'https://aria-user-management-v2.onrender.com/api/auth',
   
   // Session Service Configuration (User Management Service)
-  sessionServiceBaseUrl: 'https://aria-user-management-v2.onrender.com/api/user/sessions',
+  sessionServiceBaseUrl: 'https://aria-user-management-v2.onrender.com/api/auth/api/user/sessions',
   
   // AI Services Configuration - Render Production URLs
   aiServices: {

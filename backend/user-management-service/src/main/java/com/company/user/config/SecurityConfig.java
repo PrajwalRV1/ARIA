@@ -22,7 +22,7 @@ import java.util.Arrays;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${CORS_ORIGINS:https://localhost:4200}")
+    @Value("${CORS_ORIGINS:https://aria-frontend-fs01.onrender.com}")
     private String corsOrigins;
     
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(SecurityConfig.class);
@@ -117,7 +117,7 @@ public class SecurityConfig {
                         // Email service endpoints (accessible by internal services and authenticated users)
                         .requestMatchers("/api/email/**").hasAnyRole("INTERNAL_SERVICE", "USER", "ADMIN")
                         // Authenticated endpoints (require valid JWT token)
-                        .requestMatchers("/api/candidates/**").authenticated()
+                        .requestMatchers("/candidates/**").authenticated()
                         .requestMatchers("/api/interview/**").authenticated()
                         // Allow preflight OPTIONS requests for CORS
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()

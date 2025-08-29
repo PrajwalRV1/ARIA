@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/candidates")
+@RequestMapping("/candidates") // Relative to context path /api/auth
 @RequiredArgsConstructor
 @Validated
 public class CandidateController {

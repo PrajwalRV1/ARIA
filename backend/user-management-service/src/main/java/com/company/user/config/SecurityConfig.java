@@ -107,6 +107,7 @@ public class SecurityConfig {
                                 "/reset-password", // /api/auth/reset-password
                                 "/refresh-token",  // /api/auth/refresh-token
                                 "/cors-test",      // /api/auth/cors-test
+                                "/test",           // /api/auth/test
                                 "/health",         // /api/auth/health (if exists)
                                 "/actuator/**",    // /api/auth/actuator/**
                                 "/h2-console/**",  // /api/auth/h2-console/**

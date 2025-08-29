@@ -2,7 +2,8 @@
 -- Initial creation of users table for user management system
 
 -- Drop table if exists (for clean migration)
-DROP TABLE IF EXISTS users;
+-- Use CASCADE to handle foreign key constraints from other tables
+DROP TABLE IF EXISTS users CASCADE;
 
 -- Create users table
 CREATE TABLE users (

@@ -35,6 +35,8 @@ services:
         value: https://aria-frontend-fs01.onrender.com
       - key: JPA_DDL_AUTO
         value: none
+      - key: SPRING_FLYWAY_ENABLED
+        value: false
     # buildCommand: handled by Dockerfile multi-stage build
     # startCommand: handled by Dockerfile ENTRYPOINT
     healthCheckPath: /actuator/health

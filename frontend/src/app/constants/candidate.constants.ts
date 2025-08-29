@@ -12,14 +12,18 @@ export const INTERVIEW_ROUNDS = [
 
 // Candidate status enum values - MUST match backend CandidateStatus enum exactly
 export const CANDIDATE_STATUS = [
-  'PENDING',     // Initial status when candidate is added
-  'APPLIED',     // When candidate has applied but not yet screened
-  'SCREENING',   // During initial screening phase
-  'SCHEDULED',   // When interview is scheduled
-  'COMPLETED',   // When interview is completed
-  'SELECTED',    // When candidate is selected
-  'REJECTED',    // When candidate is rejected
-  'ON_HOLD'      // When candidate is put on hold
+  'PENDING',        // Initial status when candidate is added
+  'APPLIED',        // When candidate has applied but not yet screened
+  'SCREENING',      // During initial screening phase
+  'INTERVIEW',      // During interview process
+  'SCHEDULED',      // When interview is scheduled
+  'IN_PROGRESS',    // Interview in progress
+  'COMPLETED',      // When interview is completed
+  'UNDER_REVIEW',   // Under review by hiring team
+  'SELECTED',       // When candidate is selected
+  'REJECTED',       // When candidate is rejected
+  'ON_HOLD',        // When candidate is put on hold
+  'WITHDRAWN'       // When candidate withdraws
 ];
 
 // Display labels for status (for better UX)
@@ -27,11 +31,15 @@ export const STATUS_LABELS: { [key: string]: string } = {
   'PENDING': 'Pending',
   'APPLIED': 'Applied',
   'SCREENING': 'Screening',
+  'INTERVIEW': 'Interview',
   'SCHEDULED': 'Scheduled',
+  'IN_PROGRESS': 'In Progress',
   'COMPLETED': 'Completed',
+  'UNDER_REVIEW': 'Under Review',
   'SELECTED': 'Selected',
   'REJECTED': 'Rejected',
-  'ON_HOLD': 'On Hold'
+  'ON_HOLD': 'On Hold',
+  'WITHDRAWN': 'Withdrawn'
 };
 
 // CSS classes for different status values
@@ -39,11 +47,15 @@ export const STATUS_CLASSES: { [key: string]: string } = {
   'PENDING': 'status-pending',
   'APPLIED': 'status-applied',
   'SCREENING': 'status-screening',
-  'SCHEDULED': 'status-scheduled', 
+  'INTERVIEW': 'status-interview',
+  'SCHEDULED': 'status-scheduled',
+  'IN_PROGRESS': 'status-in-progress',
   'COMPLETED': 'status-completed',
+  'UNDER_REVIEW': 'status-under-review',
   'SELECTED': 'status-selected',
   'REJECTED': 'status-rejected',
-  'ON_HOLD': 'status-on-hold'
+  'ON_HOLD': 'status-on-hold',
+  'WITHDRAWN': 'status-withdrawn'
 };
 
 // Validation constants

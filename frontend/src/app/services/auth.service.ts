@@ -17,7 +17,7 @@ import { SendOtpRequest, VerifyOtpRequest, OtpResponse } from '../models/auth.mo
   providedIn: 'root',
 })
 export class AuthService {
-  private baseUrl = `${environment.apiBaseUrl}/auth`;
+  private baseUrl = environment.apiBaseUrl;
   private tokenExpiryTimer?: Subscription;
   private tokenWarningTimer?: Subscription;
 

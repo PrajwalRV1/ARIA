@@ -121,7 +121,7 @@ export class ApiClientService {
    */
   sendOtp(email: string): Observable<any> {
     return this.http.post(
-      `${environment.apiBaseUrl}/auth/send-otp`,
+      `${environment.apiBaseUrl}/send-otp`,
       { email },
       { headers: this.getHeaders() }
     ).pipe(
@@ -136,7 +136,7 @@ export class ApiClientService {
    */
   verifyOtp(email: string, otp: string): Observable<any> {
     return this.http.post(
-      `${environment.apiBaseUrl}/auth/verify-otp`,
+      `${environment.apiBaseUrl}/verify-otp`,
       { email, otp },
       { headers: this.getHeaders() }
     ).pipe(
@@ -151,7 +151,7 @@ export class ApiClientService {
    */
   login(credentials: any): Observable<any> {
     return this.http.post(
-      `${environment.apiBaseUrl}/auth/login`,
+      `${environment.apiBaseUrl}/login`,
       credentials,
       { headers: this.getHeaders() }
     ).pipe(
@@ -166,7 +166,7 @@ export class ApiClientService {
    */
   register(userData: any): Observable<any> {
     return this.http.post(
-      `${environment.apiBaseUrl}/auth/register`,
+      `${environment.apiBaseUrl}/register`,
       userData,
       { headers: this.getHeaders() }
     ).pipe(

@@ -1,27 +1,27 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://aria-user-management-v2.onrender.com/api/auth',
+  apiBaseUrl: 'https://aria-user-management-v2-uq1g.onrender.com/api/auth',
   
   // Session Service Configuration (User Management Service)
-  sessionServiceBaseUrl: 'https://aria-user-management-v2.onrender.com/api/auth/api/user/sessions',
+  sessionServiceBaseUrl: 'https://aria-user-management-v2-uq1g.onrender.com/api/auth/api/user/sessions',
   
   // AI Services Configuration - Updated for Production URLs
   aiServices: {
     // Interview Orchestrator Service (Render)
-    orchestratorBaseUrl: 'https://aria-interview-orchestrator-v2.onrender.com/api/interview',
-    orchestratorWsUrl: 'wss://aria-interview-orchestrator-v2.onrender.com/ws',
+    orchestratorBaseUrl: 'https://aria-interview-orchestrator-v2-sppr.onrender.com/api/interview',
+    orchestratorWsUrl: 'wss://aria-interview-orchestrator-v2-sppr.onrender.com/ws',
     
     // Speech Processing Service (Render) - Open-source STT
-    speechServiceBaseUrl: 'https://aria-speech-service.onrender.com',
-    speechServiceWsUrl: 'wss://aria-speech-service.onrender.com/ws',
+    speechServiceBaseUrl: 'https://aria-speech-service-l4cl.onrender.com',
+    speechServiceWsUrl: 'wss://aria-speech-service-l4cl.onrender.com/ws',
     
     // Analytics Service (Render)
-    analyticsServiceBaseUrl: 'https://aria-analytics-service.onrender.com',
-    analyticsServiceWsUrl: 'wss://aria-analytics-service.onrender.com/ws',
+    analyticsServiceBaseUrl: 'https://aria-analytics-service-betb.onrender.com',
+    analyticsServiceWsUrl: 'wss://aria-analytics-service-betb.onrender.com/ws',
     
     // Adaptive Engine Service (Render)
-    adaptiveEngineBaseUrl: 'https://aria-adaptive-engine.onrender.com',
-    adaptiveEngineWsUrl: 'wss://aria-adaptive-engine.onrender.com/ws',
+    adaptiveEngineBaseUrl: 'https://aria-adaptive-engine-ntsr.onrender.com',
+    adaptiveEngineWsUrl: 'wss://aria-adaptive-engine-ntsr.onrender.com/ws',
     
     // AI Avatar Service (Railway - TBD)
     alexAiServiceUrl: 'https://ai-avatar-service.railway.app', // Placeholder - update with actual Railway URL

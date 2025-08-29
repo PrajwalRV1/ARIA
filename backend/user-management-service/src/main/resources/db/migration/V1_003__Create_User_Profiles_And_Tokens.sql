@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS refresh_tokens;
 DROP TABLE IF EXISTS user_profiles;
 
 -- Create user_profiles table for extended user information
-CREATE TABLE user_profiles (
+CREATE TABLE IF NOT EXISTS user_profiles (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL UNIQUE,
     
@@ -63,7 +63,7 @@ CREATE TABLE user_profiles (
 );
 
 -- Create refresh_tokens table for JWT token management
-CREATE TABLE refresh_tokens (
+CREATE TABLE IF NOT EXISTS refresh_tokens (
     id BIGSERIAL PRIMARY KEY,
     token VARCHAR(500) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE refresh_tokens (
 );
 
 -- Create session_logs table for audit trail
-CREATE TABLE session_logs (
+CREATE TABLE IF NOT EXISTS session_logs (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     
@@ -130,9 +130,10 @@ CREATE TABLE session_logs (
 INSERT INTO user_profiles (user_id, allow_email_notifications, data_processing_consent, data_processing_consent_date)
 SELECT id, TRUE, TRUE, NOW()
 FROM users
-WHERE email IN ('admin@aria.com', 'recruiter@aria.com', 'interviewer@aria.com');
+WHERE email IN ('admin@aria.com', 'recruiter@aria.com', 'interviewer@aria.com')
+ON CONFLICT (user_id) DO NOTHING;
 
 -- Create indexes for performance optimization
-CREATE INDEX idx_users_email_active ON users(email, is_active);
-CREATE INDEX idx_users_role_active ON users(role, is_active);
-CREATE INDEX idx_refresh_tokens_user_active ON refresh_tokens(user_id, is_revoked, expires_at);
+CREATE INDEX IF NOT EXISTS idx_users_email_active ON users(email, is_active);
+CREATE INDEX IF NOT EXISTS idx_users_role_active ON users(role, is_active);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_active ON refresh_tokens(user_id, is_revoked, expires_at);

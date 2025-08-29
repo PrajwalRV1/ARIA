@@ -42,7 +42,7 @@ EXPOSE 10000
 
 # Health check for the correct port and path
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-10000}/api/auth/actuator/health || exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/actuator/health || exit 1
 
 # JVM optimization for containers and limited memory
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom"

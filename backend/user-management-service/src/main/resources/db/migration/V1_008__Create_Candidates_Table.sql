@@ -87,6 +87,15 @@ CREATE INDEX IF NOT EXISTS idx_candidates_role_status ON candidates(applied_role
 -- Full-text search index for names and tags (PostgreSQL specific)
 CREATE INDEX IF NOT EXISTS idx_candidates_search ON candidates USING gin(to_tsvector('english', name || ' ' || COALESCE(tags, '')));
 
+-- Add unique constraint if it doesn't exist (for existing tables)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints 
+                   WHERE table_name = 'candidates' AND constraint_name = 'uk_candidates_email_requisition') THEN
+        ALTER TABLE candidates ADD CONSTRAINT uk_candidates_email_requisition UNIQUE (email, requisition_id);
+    END IF;
+END$$;
+
 -- Trigger for updated_at (if update_updated_at_column function exists)
 -- CREATE TRIGGER update_candidates_updated_at BEFORE UPDATE ON candidates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 

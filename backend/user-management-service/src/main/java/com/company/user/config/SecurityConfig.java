@@ -96,22 +96,23 @@ public class SecurityConfig {
                 .addFilterAfter(jwtAuthenticationFilter, InternalServiceAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints (no authentication required)
+                        // NOTE: With context path /api/auth, Spring Security sees paths relative to context
                         .requestMatchers(
-                                "/api/auth/send-otp",
-                                "/api/auth/verify-otp",
-                                "/api/auth/resend-otp",
-                                "/api/auth/register",
-                                "/api/auth/login",
-                                "/api/auth/forgot-password",
-                                "/api/auth/reset-password",
-                                "/api/auth/refresh-token",
-                                "/api/auth/cors-test",
-                                "/health",
-                                "/actuator/**",
-                                "/h2-console/**",
-                                "/error",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/send-otp",       // /api/auth/send-otp
+                                "/verify-otp",     // /api/auth/verify-otp
+                                "/resend-otp",     // /api/auth/resend-otp
+                                "/register",       // /api/auth/register
+                                "/login",          // /api/auth/login
+                                "/forgot-password", // /api/auth/forgot-password
+                                "/reset-password", // /api/auth/reset-password
+                                "/refresh-token",  // /api/auth/refresh-token
+                                "/cors-test",      // /api/auth/cors-test
+                                "/health",         // /api/auth/health (if exists)
+                                "/actuator/**",    // /api/auth/actuator/**
+                                "/h2-console/**",  // /api/auth/h2-console/**
+                                "/error",          // /api/auth/error
+                                "/swagger-ui/**",  // /api/auth/swagger-ui/**
+                                "/v3/api-docs/**"  // /api/auth/v3/api-docs/**
                         ).permitAll()
                         // Email service endpoints (accessible by internal services and authenticated users)
                         .requestMatchers("/api/email/**").hasAnyRole("INTERNAL_SERVICE", "USER", "ADMIN")

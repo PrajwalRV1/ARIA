@@ -119,9 +119,28 @@ INSERT INTO candidates (
     ('FSDT2R1', 'Bob Johnson', 'bob.johnson@example.com', '5555551234', 'Full Stack Developer', 3.0, 2.5, 'HR - Round 1', 'INTERVIEW', 'recruiter@aria.com', NOW(), NOW())
 ON CONFLICT (email, requisition_id) DO NOTHING;
 
--- Insert sample skills
-INSERT INTO candidate_skills (candidate_id, skill) VALUES 
-    (1, 'Java'), (1, 'Spring Boot'), (1, 'Angular'), (1, 'PostgreSQL'),
-    (2, 'Python'), (2, 'Django'), (2, 'React'), (2, 'MySQL'),
-    (3, 'JavaScript'), (3, 'Node.js'), (3, 'Vue.js'), (3, 'MongoDB')
-ON CONFLICT (candidate_id, skill) DO NOTHING;
+-- Insert sample skills (only for candidates that actually exist)
+DO $$
+DECLARE
+    candidate_count INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO candidate_count FROM candidates;
+    
+    IF candidate_count >= 3 THEN
+        -- Insert skills using actual candidate IDs from the database
+        INSERT INTO candidate_skills (candidate_id, skill) 
+        SELECT c.id, skill_name
+        FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM candidates LIMIT 3) c
+        CROSS JOIN (
+            VALUES 
+                ('Java'), ('Spring Boot'), ('Angular'), ('PostgreSQL'),
+                ('Python'), ('Django'), ('React'), ('MySQL'),
+                ('JavaScript'), ('Node.js'), ('Vue.js'), ('MongoDB')
+        ) AS skills(skill_name)
+        WHERE 
+            (c.rn = 1 AND skill_name IN ('Java', 'Spring Boot', 'Angular', 'PostgreSQL')) OR
+            (c.rn = 2 AND skill_name IN ('Python', 'Django', 'React', 'MySQL')) OR
+            (c.rn = 3 AND skill_name IN ('JavaScript', 'Node.js', 'Vue.js', 'MongoDB'))
+        ON CONFLICT (candidate_id, skill) DO NOTHING;
+    END IF;
+END$$;

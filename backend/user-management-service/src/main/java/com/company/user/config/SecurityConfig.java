@@ -116,9 +116,10 @@ public class SecurityConfig {
                         ).permitAll()
                         // Email service endpoints (accessible by internal services and authenticated users)
                         .requestMatchers("/api/email/**").hasAnyRole("INTERNAL_SERVICE", "USER", "ADMIN")
-                        // Authenticated endpoints (require valid JWT token)
-                        // TEMPORARY: Allow GET access to candidates for testing
+                        // TEMPORARY: Allow GET access to candidates for testing (must be before general candidates rules)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/candidates").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/candidates/**").permitAll()
+                        // Authenticated endpoints (require valid JWT token)
                         .requestMatchers("/candidates/**").authenticated()
                         .requestMatchers("/api/interview/**").authenticated()
                         // Allow preflight OPTIONS requests for CORS

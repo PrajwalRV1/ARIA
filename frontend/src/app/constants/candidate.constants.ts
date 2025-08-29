@@ -13,6 +13,8 @@ export const INTERVIEW_ROUNDS = [
 // Candidate status enum values - MUST match backend CandidateStatus enum exactly
 export const CANDIDATE_STATUS = [
   'PENDING',     // Initial status when candidate is added
+  'APPLIED',     // When candidate has applied but not yet screened
+  'SCREENING',   // During initial screening phase
   'SCHEDULED',   // When interview is scheduled
   'COMPLETED',   // When interview is completed
   'SELECTED',    // When candidate is selected
@@ -23,6 +25,8 @@ export const CANDIDATE_STATUS = [
 // Display labels for status (for better UX)
 export const STATUS_LABELS: { [key: string]: string } = {
   'PENDING': 'Pending',
+  'APPLIED': 'Applied',
+  'SCREENING': 'Screening',
   'SCHEDULED': 'Scheduled',
   'COMPLETED': 'Completed',
   'SELECTED': 'Selected',
@@ -33,6 +37,8 @@ export const STATUS_LABELS: { [key: string]: string } = {
 // CSS classes for different status values
 export const STATUS_CLASSES: { [key: string]: string } = {
   'PENDING': 'status-pending',
+  'APPLIED': 'status-applied',
+  'SCREENING': 'status-screening',
   'SCHEDULED': 'status-scheduled', 
   'COMPLETED': 'status-completed',
   'SELECTED': 'status-selected',

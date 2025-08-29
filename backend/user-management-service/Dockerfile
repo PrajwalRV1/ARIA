@@ -1,4 +1,4 @@
-# Production Dockerfile for Render deployment - Multi-stage build
+# Production Dockerfile for Render deployment - Multi-stage build v2.0
 # Stage 1: Build the application
 FROM eclipse-temurin:17-jdk-alpine AS builder
 
@@ -47,5 +47,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 # JVM optimization for containers and limited memory
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom"
 
-# Start the application with neon profile as default
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-10000} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE:-neon} -jar app.jar"]
+# Start the application with neon profile as default - Force neon profile
+ENV SPRING_PROFILES_ACTIVE=neon
+ENTRYPOINT ["sh", "-c", "echo 'Starting with profile:' ${SPRING_PROFILES_ACTIVE} && java $JAVA_OPTS -Dserver.port=${PORT:-10000} -Dspring.profiles.active=${SPRING_PROFILES_ACTIVE} -jar app.jar"]

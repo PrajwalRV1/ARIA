@@ -252,6 +252,7 @@ public class Candidate {
                            targetStatus == CandidateStatus.WITHDRAWN;
                            
             case INTERVIEW_SCHEDULED -> targetStatus == CandidateStatus.IN_PROGRESS ||
+                                      targetStatus == CandidateStatus.COMPLETED ||
                                       targetStatus == CandidateStatus.REJECTED ||
                                       targetStatus == CandidateStatus.ON_HOLD ||
                                       targetStatus == CandidateStatus.WITHDRAWN;

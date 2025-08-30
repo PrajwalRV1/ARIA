@@ -26,7 +26,7 @@ export function getValidNextStatuses(currentStatus: CandidateStatus): CandidateS
       return ['INTERVIEW_SCHEDULED', 'REJECTED', 'ON_HOLD', 'WITHDRAWN'];
       
     case 'INTERVIEW_SCHEDULED':
-      return ['IN_PROGRESS', 'REJECTED', 'ON_HOLD', 'WITHDRAWN'];
+      return ['IN_PROGRESS', 'COMPLETED', 'REJECTED', 'ON_HOLD', 'WITHDRAWN'];
       
     case 'IN_PROGRESS':
       return ['COMPLETED', 'REJECTED', 'ON_HOLD'];

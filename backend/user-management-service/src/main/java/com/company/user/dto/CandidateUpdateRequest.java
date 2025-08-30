@@ -103,6 +103,7 @@ public class CandidateUpdateRequest {
                            status == CandidateStatus.WITHDRAWN;
                            
             case INTERVIEW_SCHEDULED -> status == CandidateStatus.IN_PROGRESS ||
+                                      status == CandidateStatus.COMPLETED ||
                                       status == CandidateStatus.REJECTED ||
                                       status == CandidateStatus.ON_HOLD ||
                                       status == CandidateStatus.WITHDRAWN;

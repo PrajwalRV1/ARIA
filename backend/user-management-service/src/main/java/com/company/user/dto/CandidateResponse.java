@@ -185,6 +185,7 @@ public class CandidateResponse {
             
             case INTERVIEW_SCHEDULED -> List.of(
                 CandidateStatus.IN_PROGRESS,
+                CandidateStatus.COMPLETED,
                 CandidateStatus.REJECTED,
                 CandidateStatus.ON_HOLD,
                 CandidateStatus.WITHDRAWN

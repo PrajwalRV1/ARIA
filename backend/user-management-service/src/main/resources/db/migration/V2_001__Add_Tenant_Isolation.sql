@@ -28,8 +28,18 @@ CREATE INDEX IF NOT EXISTS idx_candidates_tenant_status_created ON candidates(te
 CREATE INDEX IF NOT EXISTS idx_candidates_tenant_recruiter_status ON candidates(tenant_id, recruiter_id, status);
 
 -- Step 5: Add constraint to ensure tenant_id is not null or empty
-ALTER TABLE candidates ADD CONSTRAINT IF NOT EXISTS chk_candidates_tenant_not_empty 
-    CHECK (tenant_id IS NOT NULL AND tenant_id <> '');
+-- PostgreSQL doesn't support IF NOT EXISTS with ADD CONSTRAINT, so we check first
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'chk_candidates_tenant_not_empty' 
+        AND table_name = 'candidates'
+    ) THEN
+        ALTER TABLE candidates ADD CONSTRAINT chk_candidates_tenant_not_empty 
+            CHECK (tenant_id IS NOT NULL AND tenant_id <> '');
+    END IF;
+END$$;
 
 -- Step 6: Add foreign key constraint if tenants table exists (commented out for now)
 -- This would be enabled once a proper tenants table is implemented
@@ -134,9 +144,21 @@ BEGIN
 END$$;
 
 -- Step 12: Log migration completion for audit trail
-INSERT INTO flyway_schema_history_custom (description, success, execution_time) 
-SELECT 'Tenant isolation migration completed', true, CURRENT_TIMESTAMP
-WHERE NOT EXISTS (
-    SELECT 1 FROM information_schema.tables 
-    WHERE table_name = 'flyway_schema_history_custom'
-);
+-- Create custom history table if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'flyway_schema_history_custom'
+    ) THEN
+        CREATE TABLE flyway_schema_history_custom (
+            id SERIAL PRIMARY KEY,
+            description TEXT,
+            success BOOLEAN,
+            execution_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    END IF;
+    
+    INSERT INTO flyway_schema_history_custom (description, success, execution_time) 
+    VALUES ('Tenant isolation migration completed', true, CURRENT_TIMESTAMP);
+END$$;

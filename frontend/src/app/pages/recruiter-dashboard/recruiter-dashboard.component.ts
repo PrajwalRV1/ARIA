@@ -212,7 +212,17 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error updating candidate:', err);
-          this.showErrorNotification('Failed to update candidate. Please try again.');
+          
+          let errorMessage = 'Failed to update candidate.';
+          if (err.status === 500) {
+            errorMessage = 'Server error: The backend update service has a bug. Try refreshing the page and editing again, or contact support.';
+          } else if (err.status === 403) {
+            errorMessage = 'Authentication error: Please log in again.';
+          } else if (err.user) {
+            errorMessage = err.user;
+          }
+          
+          this.showErrorNotification(errorMessage);
           // Don't close popup on error so user can retry
         }
       });
@@ -226,7 +236,17 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error saving candidate:', err);
-          this.showErrorNotification('Failed to save candidate. Please try again.');
+          
+          let errorMessage = 'Failed to save candidate.';
+          if (err.status === 500) {
+            errorMessage = 'Server error: There may be a backend issue. Please try again or contact support.';
+          } else if (err.status === 403) {
+            errorMessage = 'Authentication error: Please log in again.';
+          } else if (err.user) {
+            errorMessage = err.user;
+          }
+          
+          this.showErrorNotification(errorMessage);
           // Don't close popup on error so user can retry
         }
       });

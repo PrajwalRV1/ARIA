@@ -3,7 +3,6 @@ package com.company.user.model;
 public enum CandidateStatus {
     PENDING,        // Initial status when candidate is added
     APPLIED,        // When candidate has applied but not yet screened
-    SCREENING,      // During initial screening phase
     INTERVIEW,      // During interview process
     SCHEDULED,      // When interview is scheduled
     IN_PROGRESS,    // Interview in progress

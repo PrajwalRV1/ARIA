@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -36,6 +36,9 @@ RUN adduser -S nextjs -u 1001
 # Change ownership of the app directory
 RUN chown -R nextjs:nodejs /app
 USER nextjs
+
+# Set the port environment variable
+ENV PORT=10000
 
 # Expose port
 EXPOSE 10000

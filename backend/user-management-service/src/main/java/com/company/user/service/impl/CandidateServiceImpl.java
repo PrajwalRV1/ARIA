@@ -181,29 +181,56 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional(readOnly = true)
     public List<CandidateResponse> getAllCandidates() {
-        log.debug("Fetching all candidates with tenant isolation");
+        log.info("[DEBUG] Fetching all candidates with tenant isolation");
         
         // ✅ SECURITY: Extract tenant and recruiter context
         String tenantId = tenantContextUtil.getCurrentTenantId();
         String recruiterId = tenantContextUtil.getCurrentRecruiterId();
         
-        log.debug("Fetching candidates for tenant: {} and recruiter: {}", tenantId, recruiterId);
+        log.info("[DEBUG] Extracted context - tenant: '{}', recruiter: '{}'", tenantId, recruiterId);
+        
+        // Log null/empty checks
+        if (tenantId == null) {
+            log.warn("[DEBUG] TenantId is NULL!");
+        } else if (tenantId.trim().isEmpty()) {
+            log.warn("[DEBUG] TenantId is EMPTY!");
+        }
+        
+        if (recruiterId == null) {
+            log.info("[DEBUG] RecruiterId is NULL - will use admin query");
+        } else if (recruiterId.trim().isEmpty()) {
+            log.info("[DEBUG] RecruiterId is EMPTY - will use admin query");
+        }
         
         // Use tenant-aware repository method
         List<Candidate> candidates;
         if (recruiterId != null && !recruiterId.trim().isEmpty()) {
             // Recruiter-specific view: see only their candidates within their tenant
+            log.info("[DEBUG] Using recruiter-specific query with tenant: '{}', recruiter: '{}'", tenantId, recruiterId);
             candidates = candidateRepository.findByTenantIdAndRecruiterIdOrderByCreatedAtDesc(tenantId, recruiterId);
         } else {
             // Admin view: see all candidates within their tenant
+            log.info("[DEBUG] Using admin query with tenant: '{}'", tenantId);
             candidates = candidateRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
         }
         
-        log.debug("Found {} candidates for tenant: {}", candidates.size(), tenantId);
+        log.info("[DEBUG] Repository query returned {} candidates", candidates != null ? candidates.size() : 0);
         
-        return candidates.stream()
+        // Log first few candidates for debugging
+        if (candidates != null && !candidates.isEmpty()) {
+            log.info("[DEBUG] First candidate example: id={}, tenant={}, recruiter={}, name={}", 
+                    candidates.get(0).getId(), 
+                    candidates.get(0).getTenantId(),
+                    candidates.get(0).getRecruiterId(),
+                    candidates.get(0).getName());
+        }
+        
+        List<CandidateResponse> result = candidates.stream()
                 .map(CandidateResponse::from)
                 .collect(Collectors.toList());
+        
+        log.info("[DEBUG] Returning {} candidate responses", result.size());
+        return result;
     }
     
     @Override

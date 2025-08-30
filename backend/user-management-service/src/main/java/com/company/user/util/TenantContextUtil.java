@@ -36,27 +36,34 @@ public class TenantContextUtil {
      */
     public String getCurrentTenantId() {
         try {
+            log.info("[DEBUG] getCurrentTenantId() called");
+            
             // First try to get from JWT token in request header
             String tenantId = extractTenantFromRequest();
+            log.info("[DEBUG] extractTenantFromRequest() returned: '{}'", tenantId);
+            
             if (tenantId != null && !tenantId.trim().isEmpty()) {
-                log.debug("Extracted tenant ID from request: {}", tenantId);
+                log.info("[DEBUG] Using tenant ID from request: '{}'", tenantId);
                 return tenantId;
             }
             
             // Fallback: try security context
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            log.info("[DEBUG] Authentication object: {}", authentication != null ? authentication.getClass().getSimpleName() : "null");
+            
             if (authentication != null) {
                 String authTenantId = extractTenantFromAuth(authentication);
+                log.info("[DEBUG] extractTenantFromAuth() returned: '{}'", authTenantId);
                 if (authTenantId != null && !authTenantId.trim().isEmpty()) {
                     return authTenantId;
                 }
             }
             
-            log.warn("No tenant information found, using default tenant");
+            log.warn("[DEBUG] No tenant information found, using default tenant: '{}'", DEFAULT_TENANT);
             return DEFAULT_TENANT;
             
         } catch (Exception e) {
-            log.error("Error extracting tenant ID, falling back to default: {}", e.getMessage());
+            log.error("[DEBUG] Error extracting tenant ID, falling back to default: {}", e.getMessage());
             return DEFAULT_TENANT;
         }
     }
@@ -217,13 +224,20 @@ public class TenantContextUtil {
      */
     private String extractTenantFromRequest() {
         try {
+            log.info("[DEBUG] extractTenantFromRequest() called");
             String token = getJwtTokenFromRequest();
+            log.info("[DEBUG] JWT token from request: {}", token != null ? "[TOKEN PRESENT]" : "null");
+            
             if (token != null) {
                 // Try to extract tenant from custom JWT claim
-                return extractCustomClaim(token, TENANT_CLAIM);
+                String tenantId = extractCustomClaim(token, TENANT_CLAIM);
+                log.info("[DEBUG] Extracted tenant claim '{}': '{}'", TENANT_CLAIM, tenantId);
+                return tenantId;
             }
+            
+            log.info("[DEBUG] No JWT token available in request");
         } catch (Exception e) {
-            log.debug("Could not extract tenant from request: {}", e.getMessage());
+            log.error("[DEBUG] Could not extract tenant from request: {}", e.getMessage());
         }
         return null;
     }

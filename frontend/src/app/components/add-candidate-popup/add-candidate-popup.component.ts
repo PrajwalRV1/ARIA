@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { INTERVIEW_ROUNDS, CANDIDATE_STATUS } from '../../constants/candidate.constants';
+import { INTERVIEW_ROUNDS, CANDIDATE_STATUS, STATUS_LABELS } from '../../constants/candidate.constants';
 
 @Component({
   selector: 'app-add-candidate-popup',
@@ -29,7 +29,7 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
       requisitionId: ['', Validators.required],
       candidateName: ['', Validators.required],
       candidateEmail: ['', [Validators.required, Validators.email]],
-      candidatePhone: ['', Validators.required],
+      candidatePhone: ['', [Validators.required, Validators.pattern(/^[+]?[1-9]\d{1,14}$|^\d{10}$/)]],
       appliedRole: ['', Validators.required],
       applicationDate: ['', Validators.required],
       totalExperience: [null, [Validators.required, Validators.min(0)]],
@@ -189,21 +189,48 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
     const raw = this.form.getRawValue();
     console.log('Form raw values:', raw);
   
+    // Validate and format phone number
+    let formattedPhone = raw.candidatePhone;
+    if (formattedPhone && !formattedPhone.startsWith('+')) {
+      // If phone doesn't start with +, assume it's Indian number and add +91
+      formattedPhone = formattedPhone.replace(/^0+/, ''); // Remove leading zeros
+      if (formattedPhone.length === 10) {
+        formattedPhone = '+91' + formattedPhone;
+      } else if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+' + formattedPhone;
+      }
+    }
+    
+    // Validate application date format (should be YYYY-MM-DD)
+    let applicationDate = raw.applicationDate;
+    if (applicationDate) {
+      const date = new Date(applicationDate);
+      if (!isNaN(date.getTime())) {
+        // Ensure date is in YYYY-MM-DD format
+        applicationDate = date.toISOString().split('T')[0];
+      }
+    }
+    
+    console.log('🔍 Data validation and formatting:');
+    console.log('  - Original phone:', raw.candidatePhone, '→ Formatted:', formattedPhone);
+    console.log('  - Application date:', applicationDate);
+    console.log('  - Status value:', raw.status);
+    
     const payload = {
-      requisitionId: raw.requisitionId,
-      name: raw.candidateName,       // map to DTO name
-      email: raw.candidateEmail,
-      phone: raw.candidatePhone,
-      appliedRole: raw.appliedRole,
-      applicationDate: raw.applicationDate,
-      totalExperience: raw.totalExperience,
-      relevantExperience: raw.relevantExperience,
-      interviewRound: raw.interviewRound,
-      status: raw.status,
-      jobDescription: raw.jobDescription,
-      keyResponsibilities: raw.keyResponsibilities,
-      skills: [],                    // optional, add from another control
-      source: '',
+      requisitionId: raw.requisitionId?.trim(),
+      name: raw.candidateName?.trim(),
+      email: raw.candidateEmail?.trim()?.toLowerCase(),
+      phone: formattedPhone,
+      appliedRole: raw.appliedRole?.trim(),
+      applicationDate: applicationDate,
+      totalExperience: parseInt(raw.totalExperience) || 0,
+      relevantExperience: parseInt(raw.relevantExperience) || 0,
+      interviewRound: raw.interviewRound?.trim(),
+      status: raw.status || 'PENDING', // Ensure valid status
+      jobDescription: raw.jobDescription?.trim(),
+      keyResponsibilities: raw.keyResponsibilities?.trim() || '',
+      skills: [],
+      source: 'Manual Entry',
       notes: '',
       tags: '',
       recruiterId: '',
@@ -221,5 +248,10 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
     this.form.markAsPristine();
     this.resetFiles();
     this.close.emit();
+  }
+
+  // Helper method to get user-friendly status labels
+  getStatusLabel(status: string): string {
+    return STATUS_LABELS[status] || status;
   }
 }

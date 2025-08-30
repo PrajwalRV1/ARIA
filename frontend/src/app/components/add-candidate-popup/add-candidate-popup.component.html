@@ -94,7 +94,7 @@
           <div class="field">
             <label>Status</label>
             <select formControlName="status">
-              <option *ngFor="let s of statusOptions" [value]="s">{{ s }}</option>
+              <option *ngFor="let s of statusOptions" [value]="s">{{ getStatusLabel(s) }}</option>
             </select>
           </div>
         </div>

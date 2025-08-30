@@ -55,7 +55,11 @@ EnhancedJwtUtil jwtUtil,
         r.setOtpVerified(true);
         recruiterRepository.save(r);
 
-        String access = jwtUtil.generateAccessToken(r.getId(), Map.of("email", r.getEmail(), "fullName", r.getFullName()));
+        String access = jwtUtil.generateAccessToken(r.getId(), Map.of(
+            "email", r.getEmail(), 
+            "fullName", r.getFullName(),
+            "userType", "RECRUITER"
+        ));
 
         AuthResponse resp = new AuthResponse();
         resp.token = access;
@@ -74,7 +78,11 @@ EnhancedJwtUtil jwtUtil,
             throw new IllegalArgumentException("Invalid credentials");
         }
 
-        var access = jwtUtil.generateAccessToken(recruiter.getId(), Map.of("email", recruiter.getEmail(), "fullName", recruiter.getFullName()));
+        var access = jwtUtil.generateAccessToken(recruiter.getId(), Map.of(
+            "email", recruiter.getEmail(), 
+            "fullName", recruiter.getFullName(),
+            "userType", "RECRUITER"
+        ));
 
         AuthResponse resp = new AuthResponse();
         resp.token = access;

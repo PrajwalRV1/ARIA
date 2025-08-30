@@ -2,7 +2,7 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
-import { catchError, retry } from 'rxjs/operators';
+import { catchError, retry, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { VALIDATION_MESSAGES } from '../constants/candidate.constants';
 
@@ -50,8 +50,29 @@ export class CandidateService {
           userMessage = 'Unable to connect to server. Please check your internet connection.';
           break;
         case 400:
-          errorMessage = `Bad Request: ${error.error?.message || 'Invalid data provided'}`;
-          userMessage = error.error?.message || 'Please check the information provided and try again.';
+          console.error('🔍 400 Bad Request Details:', {
+            status: error.status,
+            statusText: error.statusText,
+            url: error.url,
+            errorBody: error.error,
+            headers: error.headers
+          });
+          
+          let detailedMessage = 'Invalid data provided';
+          if (error.error) {
+            if (typeof error.error === 'string') {
+              detailedMessage = error.error;
+            } else if (error.error.message) {
+              detailedMessage = error.error.message;
+            } else if (error.error.error) {
+              detailedMessage = error.error.error;
+            } else {
+              detailedMessage = JSON.stringify(error.error);
+            }
+          }
+          
+          errorMessage = `Bad Request: ${detailedMessage}`;
+          userMessage = detailedMessage || 'Please check the information provided and try again.';
           break;
         case 401:
           errorMessage = 'Unauthorized access';
@@ -119,42 +140,67 @@ export class CandidateService {
   }
 
   addCandidate(candidate: Candidate, resumeFile?: File, profilePicture?: File): Observable<any> {
+    console.log('🚀 CandidateService.addCandidate() called');
+    console.log('📋 Input parameters:');
+    console.log('  - Candidate:', candidate);
+    console.log('  - Resume file:', resumeFile ? `${resumeFile.name} (${resumeFile.size} bytes, ${resumeFile.type})` : 'None');
+    console.log('  - Profile pic:', profilePicture ? `${profilePicture.name} (${profilePicture.size} bytes, ${profilePicture.type})` : 'None');
+    
     try {
       const formData = new FormData();
       
       // Append JSON data as a proper JSON part (backend expects @RequestPart("data"))
       const jsonBlob = new Blob([JSON.stringify(candidate)], { type: 'application/json' });
       formData.append('data', jsonBlob);
+      console.log('✅ JSON data blob added to FormData');
       
       // Add required files with correct parameter names matching backend
       if (resumeFile) {
         formData.append('resume', resumeFile);
-        console.log('Resume file added:', resumeFile.name, 'Size:', resumeFile.size);
+        console.log('✅ Resume file added to FormData:', resumeFile.name, 'Size:', resumeFile.size);
       } else {
-        console.warn('No resume file provided - this will likely cause validation error');
+        console.warn('⚠️ No resume file provided - this will likely cause validation error');
       }
       
       if (profilePicture) {
         formData.append('profilePic', profilePicture);
-        console.log('Profile picture added:', profilePicture.name, 'Size:', profilePicture.size);
+        console.log('✅ Profile picture added to FormData:', profilePicture.name, 'Size:', profilePicture.size);
       }
       
-      // Log form data contents for debugging
-      console.log('Adding candidate with FormData contents:');
-      console.log('- Candidate data:', candidate);
-      console.log('- Resume file:', resumeFile ? `${resumeFile.name} (${resumeFile.size} bytes)` : 'None');
-      console.log('- Profile pic:', profilePicture ? `${profilePicture.name} (${profilePicture.size} bytes)` : 'None');
+      // Log FormData contents for debugging
+      console.log('📦 FormData prepared with parts:');
+      for (let pair of formData.entries()) {
+        console.log(`  - ${pair[0]}: ${pair[1] instanceof File ? `File(${pair[1].name})` : 'Blob/Data'}`); 
+      }
       
-      return this.http.post(`${this.baseUrl}`, formData, {
-        headers: this.getAuthHeaders()
+      const headers = this.getAuthHeaders();
+      console.log('🔑 Request headers prepared:', headers);
+      console.log('🎯 Making POST request to:', this.baseUrl);
+      
+      const request$ = this.http.post(`${this.baseUrl}`, formData, {
+        headers: headers
       }).pipe(
         retry(1), // Retry once on failure
         catchError(this.handleError)
       );
+      
+      // Add tap operators to log request progress
+      return request$.pipe(
+        // Log when request starts
+        tap({
+          next: (response) => {
+            console.log('✅ HTTP POST successful! Response:', response);
+          },
+          error: (error) => {
+            console.error('❌ HTTP POST failed! Error:', error);
+          }
+        })
+      );
+      
     } catch (error) {
-      console.error('Error preparing candidate data:', error);
+      console.error('❌ Error in addCandidate preparation:', error);
       return throwError(() => ({
-        technical: 'Failed to prepare candidate data',
+        technical: 'Failed to prepare candidate data: ' + (error as Error).message,
         user: 'Please check the form data and try again.',
         status: 0
       }));

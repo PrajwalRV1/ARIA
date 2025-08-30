@@ -68,10 +68,28 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   isProcessing = false;
 
   private loadDashboardData() {
+    console.log('🔄 Starting loadDashboardData() - Dashboard refresh initiated');
     this.isLoading = true;
+    
     this.candidateService.getAllCandidates().subscribe({
       next: (candidates) => {
-        console.log('Loading dashboard data:', candidates);
+        console.log('📊 Backend response received - Raw candidates data:', candidates);
+        console.log('📊 Number of candidates returned:', candidates.length);
+        
+        // Log each candidate for detailed debugging
+        candidates.forEach((c, index) => {
+          console.log(`📋 Candidate ${index + 1}:`, {
+            id: c.id,
+            name: c.name,
+            appliedRole: c.appliedRole,
+            status: c.status,
+            email: c.email,
+            phone: c.phone
+          });
+        });
+        
+        // Store previous candidates count for comparison
+        const previousCount = this.candidates.length;
         
         // Map backend candidates to card format with proper field mapping
         this.candidates = candidates.map(c => ({
@@ -89,16 +107,29 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           active: false // Default to inactive
         })) as CandidateCard[];
         
-        console.log('Mapped candidates to cards:', this.candidates);
+        console.log('🎯 Mapped candidates to UI cards:', this.candidates);
+        console.log('📈 Candidate count: Previous =', previousCount, ', Current =', this.candidates.length);
+        
+        if (this.candidates.length > previousCount) {
+          console.log('✅ NEW CANDIDATES DETECTED! Dashboard should refresh with new data.');
+        } else if (this.candidates.length === previousCount) {
+          console.log('📊 Same number of candidates - checking for updates in existing records.');
+        } else {
+          console.log('📉 Fewer candidates than before - some may have been removed.');
+        }
+        
         this.isLoading = false;
+        console.log('🏁 Dashboard loading completed successfully');
         
         // Force UI update to ensure dropdowns reflect latest values
         setTimeout(() => {
+          console.log('🔄 Updating dropdown values after dashboard refresh');
           this.updateDropdownValues();
+          console.log('✅ Dashboard refresh cycle completed - UI should now show latest data');
         }, 100);
       },
       error: (err) => {
-        console.error('Error loading candidates:', err);
+        console.error('❌ Error loading candidates in loadDashboardData():', err);
         this.showErrorNotification('Failed to load candidates. Please refresh the page.');
         this.isLoading = false;
       }
@@ -228,12 +259,28 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       });
     } else {
       // Create new candidate
-      this.candidateService.addCandidate(candidateData, resumeFile, profilePic).subscribe({
+      console.log('🔄 Subscribing to CandidateService.addCandidate()...');
+      const addCandidateSubscription = this.candidateService.addCandidate(candidateData, resumeFile, profilePic);
+      console.log('🔄 Observable created:', addCandidateSubscription);
+      
+      addCandidateSubscription.subscribe({
         next: (response) => {
           console.log('✅ Candidate created successfully:', response);
-          this.loadDashboardData();  // Refresh using existing method
-          this.closeAddCandidatePopup(); // Close popup after successful save
+          
+          // Close popup immediately
+          this.closeAddCandidatePopup();
+          
+          // Show success message
+          this.showSuccessNotification(`Candidate ${candidateData.name} added successfully!`);
+          
+          // Add activity log
           this.addActivity(`Added new candidate ${candidateData.name}`, 'fas fa-user-plus');
+          
+          // Refresh dashboard data with a slight delay to ensure backend consistency
+          console.log('🔄 Refreshing dashboard data after candidate creation...');
+          setTimeout(() => {
+            this.loadDashboardData();
+          }, 500); // 500ms delay to ensure backend database is updated
         },
         error: (err) => {
           console.error('❌ Error saving candidate:', err);

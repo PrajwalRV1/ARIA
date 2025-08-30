@@ -35,6 +35,7 @@ public class CandidateServiceImpl implements CandidateService {
     private final CandidateRepository candidateRepository;
     private final FileStorageService fileStorageService;
     private final Optional<ResumeParsingService> resumeParsingService;
+    private final Optional<com.company.user.service.InterviewRoundService> interviewRoundService;
 
     // File type constants
     private static final Set<String> ALLOWED_RESUME_TYPES = Set.of(
@@ -552,6 +553,78 @@ public class CandidateServiceImpl implements CandidateService {
             candidate.setProfilePicFileName(profilePicResult.fileName);
             candidate.setProfilePicSize(profilePicResult.fileSize);
         }
+    }
+
+    // === ROUND-BASED STATUS MANAGEMENT ===
+    
+    @Override
+    @Transactional
+    public void updateCandidateOverallStatus(Long candidateId) {
+        log.debug("Updating overall status for candidate: {}", candidateId);
+        
+        if (candidateId == null || candidateId <= 0) {
+            throw new IllegalArgumentException("Invalid candidate ID: " + candidateId);
+        }
+        
+        // Delegate to InterviewRoundService if available
+        interviewRoundService.ifPresentOrElse(
+            service -> {
+                String overallStatus = service.computeOverallCandidateStatus(candidateId);
+                candidateRepository.findById(candidateId).ifPresent(candidate -> {
+                    candidate.setOverallStatus(overallStatus);
+                    candidateRepository.save(candidate);
+                    log.debug("Updated candidate {} overall status to {}", candidateId, overallStatus);
+                });
+            },
+            () -> log.warn("InterviewRoundService not available for status computation")
+        );
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public String computeOverallCandidateStatus(Long candidateId) {
+        log.debug("Computing overall status for candidate: {}", candidateId);
+        
+        if (candidateId == null || candidateId <= 0) {
+            throw new IllegalArgumentException("Invalid candidate ID: " + candidateId);
+        }
+        
+        // Delegate to InterviewRoundService if available
+        return interviewRoundService
+            .map(service -> service.computeOverallCandidateStatus(candidateId))
+            .orElseGet(() -> {
+                log.warn("InterviewRoundService not available, returning default status");
+                return "Status Unknown";
+            });
+    }
+    
+    @Override
+    @Transactional
+    public void initializeInterviewRoundsForCandidate(Long candidateId) {
+        log.info("Initializing interview rounds for candidate: {}", candidateId);
+        
+        if (candidateId == null || candidateId <= 0) {
+            throw new IllegalArgumentException("Invalid candidate ID: " + candidateId);
+        }
+        
+        // Validate candidate exists
+        if (!candidateRepository.existsById(candidateId)) {
+            throw new IllegalArgumentException("Candidate with ID " + candidateId + " not found");
+        }
+        
+        // Delegate to InterviewRoundService if available
+        interviewRoundService.ifPresentOrElse(
+            service -> {
+                try {
+                    service.initializeStandardRounds(candidateId);
+                    log.info("Successfully initialized interview rounds for candidate: {}", candidateId);
+                } catch (Exception e) {
+                    log.error("Error initializing interview rounds for candidate {}: {}", candidateId, e.getMessage());
+                    throw new RuntimeException("Failed to initialize interview rounds: " + e.getMessage(), e);
+                }
+            },
+            () -> log.warn("InterviewRoundService not available for round initialization")
+        );
     }
 
     // === HELPER CLASSES ===

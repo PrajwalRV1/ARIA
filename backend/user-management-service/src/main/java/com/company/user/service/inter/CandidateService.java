@@ -99,4 +99,21 @@ public interface CandidateService {
      * Upload audio file for a candidate
      */
     AudioUploadResponse uploadAudioFile(Long candidateId, MultipartFile audioFile) throws IOException;
+
+    // === ROUND-BASED STATUS MANAGEMENT ===
+    
+    /**
+     * Update candidate's overall status based on interview rounds
+     */
+    void updateCandidateOverallStatus(Long candidateId);
+    
+    /**
+     * Compute overall candidate status from interview rounds
+     */
+    String computeOverallCandidateStatus(Long candidateId);
+    
+    /**
+     * Initialize interview rounds for existing candidates
+     */
+    void initializeInterviewRoundsForCandidate(Long candidateId);
 }

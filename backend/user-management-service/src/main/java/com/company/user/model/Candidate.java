@@ -168,6 +168,12 @@ public class Candidate {
     @Column(name = "recruiter_id", length = 100)
     private String recruiterId; // who added the candidate
 
+    // === INTERVIEW ROUND STATUS ===
+    
+    @Length(max = 100, message = "Overall status must not exceed 100 characters")
+    @Column(name = "overall_status", length = 100)
+    private String overallStatus; // computed from interview rounds
+
     // === AUDIT FIELDS ===
     
     @CreationTimestamp

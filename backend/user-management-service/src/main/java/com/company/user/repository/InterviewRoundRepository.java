@@ -49,7 +49,7 @@ public interface InterviewRoundRepository extends JpaRepository<InterviewRound, 
     /**
      * Find interview rounds scheduled between given dates
      */
-    @Query("SELECT ir FROM InterviewRound ir WHERE ir.scheduledDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT ir FROM InterviewRound ir WHERE ir.scheduledAt BETWEEN :startDate AND :endDate")
     List<InterviewRound> findByScheduledDateBetween(@Param("startDate") LocalDateTime startDate, 
                                                    @Param("endDate") LocalDateTime endDate);
 
@@ -61,14 +61,14 @@ public interface InterviewRoundRepository extends JpaRepository<InterviewRound, 
     /**
      * Find upcoming scheduled interviews (status = INTERVIEW_SCHEDULED and scheduled date in future)
      */
-    @Query("SELECT ir FROM InterviewRound ir WHERE ir.status = :status AND ir.scheduledDate > :now")
+    @Query("SELECT ir FROM InterviewRound ir WHERE ir.status = :status AND ir.scheduledAt > :now")
     List<InterviewRound> findUpcomingScheduledInterviews(@Param("status") InterviewRoundStatus status, 
                                                         @Param("now") LocalDateTime now);
 
     /**
      * Find overdue interviews (status = INTERVIEW_SCHEDULED and scheduled date in past)
      */
-    @Query("SELECT ir FROM InterviewRound ir WHERE ir.status = :status AND ir.scheduledDate < :now")
+    @Query("SELECT ir FROM InterviewRound ir WHERE ir.status = :status AND ir.scheduledAt < :now")
     List<InterviewRound> findOverdueInterviews(@Param("status") InterviewRoundStatus status, 
                                              @Param("now") LocalDateTime now);
 
@@ -92,8 +92,8 @@ public interface InterviewRoundRepository extends JpaRepository<InterviewRound, 
      * Find the next scheduled interview round for a candidate
      */
     @Query("SELECT ir FROM InterviewRound ir WHERE ir.candidate.id = :candidateId " +
-           "AND ir.status = :status AND ir.scheduledDate > :now " +
-           "ORDER BY ir.scheduledDate ASC")
+           "AND ir.status = :status AND ir.scheduledAt > :now " +
+           "ORDER BY ir.scheduledAt ASC")
     Optional<InterviewRound> findNextScheduledRound(@Param("candidateId") Long candidateId,
                                                   @Param("status") InterviewRoundStatus status,
                                                   @Param("now") LocalDateTime now);

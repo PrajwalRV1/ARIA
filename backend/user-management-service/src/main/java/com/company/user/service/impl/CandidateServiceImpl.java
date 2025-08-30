@@ -181,32 +181,25 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional(readOnly = true)
     public List<CandidateResponse> getAllCandidates() {
-        log.info("🔍 DEBUG: Fetching all candidates with tenant isolation");
+        log.debug("Fetching all candidates with tenant isolation");
         
         // ✅ SECURITY: Extract tenant and recruiter context
         String tenantId = tenantContextUtil.getCurrentTenantId();
         String recruiterId = tenantContextUtil.getCurrentRecruiterId();
         
-        // 🚨 CRITICAL DEBUG LOGGING
-        log.error("🚨 DEBUG VALUES: tenantId='{}', recruiterId='{}'", tenantId, recruiterId);
-        log.error("🚨 DEBUG: recruiterId is null? {}, empty? {}", recruiterId == null, 
-                 recruiterId != null ? recruiterId.trim().isEmpty() : "null");
+        log.debug("Fetching candidates for tenant: {} and recruiter: {}", tenantId, recruiterId);
         
         // Use tenant-aware repository method
         List<Candidate> candidates;
         if (recruiterId != null && !recruiterId.trim().isEmpty()) {
-            log.error("🚨 DEBUG: Using recruiter-specific query with tenantId='{}', recruiterId='{}'", tenantId, recruiterId);
             // Recruiter-specific view: see only their candidates within their tenant
             candidates = candidateRepository.findByTenantIdAndRecruiterIdOrderByCreatedAtDesc(tenantId, recruiterId);
-            log.error("🚨 DEBUG: Query returned {} candidates", candidates.size());
         } else {
-            log.error("🚨 DEBUG: Using admin query with tenantId='{}' (recruiterId was null/empty)", tenantId);
             // Admin view: see all candidates within their tenant
             candidates = candidateRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
-            log.error("🚨 DEBUG: Admin query returned {} candidates", candidates.size());
         }
         
-        log.error("🚨 DEBUG: Final result - Found {} candidates for tenant: '{}'", candidates.size(), tenantId);
+        log.debug("Found {} candidates for tenant: {}", candidates.size(), tenantId);
         
         return candidates.stream()
                 .map(CandidateResponse::from)

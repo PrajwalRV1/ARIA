@@ -89,6 +89,30 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
      * ✅ SECURE: Check existence with tenant validation (admin access)
      */
     boolean existsByEmailAndRequisitionIdAndTenantId(String email, String requisitionId, String tenantId);
+    
+    /**
+     * ✅ SECURE: Find candidates by tenant and recruiter (service layer method)
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.tenantId = :tenantId AND c.recruiterId = :recruiterId ORDER BY c.createdAt DESC")
+    List<Candidate> findByTenantIdAndRecruiterIdOrderByCreatedAtDesc(@Param("tenantId") String tenantId, @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Find candidates by tenant only (admin access)
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.tenantId = :tenantId ORDER BY c.createdAt DESC")
+    List<Candidate> findByTenantIdOrderByCreatedAtDesc(@Param("tenantId") String tenantId);
+    
+    /**
+     * ✅ SECURE: Find candidate by ID and tenant with recruiter validation
+     */
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.skills WHERE c.id = :id AND c.tenantId = :tenantId AND c.recruiterId = :recruiterId")
+    Optional<Candidate> findByIdAndTenantIdAndRecruiterId(@Param("id") Long id, @Param("tenantId") String tenantId, @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Find candidate by ID and tenant (admin access)
+     */
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.skills WHERE c.id = :id AND c.tenantId = :tenantId")
+    Optional<Candidate> findByIdAndTenantId(@Param("id") Long id, @Param("tenantId") String tenantId);
 
     // === LIST QUERIES ===
     

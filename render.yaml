@@ -1,11 +1,11 @@
 services:
-  # Frontend Service (Angular) - KEEP INTACT
+  # Frontend Service (Angular) - Fixed to serve browser directory
   - type: web
     name: aria-frontend
     env: node
     plan: free
     buildCommand: cd frontend && npm ci && npm install -g serve && npm run build
-    startCommand: cd frontend && npx serve -s dist/frontend -l $PORT
+    startCommand: cd frontend && npx serve -s dist/frontend/browser -l $PORT
     envVars:
       - key: NODE_ENV
         value: production

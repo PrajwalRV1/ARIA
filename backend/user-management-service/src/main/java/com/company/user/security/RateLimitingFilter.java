@@ -8,8 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -18,7 +16,6 @@ import java.time.Instant;
  * ✅ SECURITY: Rate limiting filter to prevent DoS attacks
  * Uses Redis-based sliding window algorithm for distributed rate limiting
  */
-@Component
 @Slf4j
 public class RateLimitingFilter implements Filter {
     

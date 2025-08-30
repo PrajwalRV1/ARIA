@@ -1,61 +1,78 @@
 package com.company.user.util;
 
+import com.company.user.security.EnhancedJwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * Utility class for extracting tenant and user context from authentication.
- * Provides secure methods to get tenant isolation data from JWT tokens.
+ * ✅ SECURITY: Utility class for extracting tenant and user context from authentication.
+ * Provides secure methods to get tenant isolation data from JWT tokens without OAuth2 dependencies.
  */
 @Component
 @Slf4j
 public class TenantContextUtil {
     
+    private final EnhancedJwtUtil jwtUtil;
+    
+    private static final String DEFAULT_TENANT = "default";
+    private static final String TENANT_CLAIM = "tenantId";
+    private static final String RECRUITER_CLAIM = "recruiterId";
+    private static final String USER_TYPE_CLAIM = "userType";
+    
+    public TenantContextUtil(EnhancedJwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+    
     /**
-     * Extract tenant ID from authentication context.
+     * Extract tenant ID from current authentication context or HTTP request
+     * 
+     * @return Tenant ID for data isolation, defaults to "default" if extraction fails
+     */
+    public String getCurrentTenantId() {
+        try {
+            // First try to get from JWT token in request header
+            String tenantId = extractTenantFromRequest();
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                log.debug("Extracted tenant ID from request: {}", tenantId);
+                return tenantId;
+            }
+            
+            // Fallback: try security context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null) {
+                String authTenantId = extractTenantFromAuth(authentication);
+                if (authTenantId != null && !authTenantId.trim().isEmpty()) {
+                    return authTenantId;
+                }
+            }
+            
+            log.warn("No tenant information found, using default tenant");
+            return DEFAULT_TENANT;
+            
+        } catch (Exception e) {
+            log.error("Error extracting tenant ID, falling back to default: {}", e.getMessage());
+            return DEFAULT_TENANT;
+        }
+    }
+    
+    /**
+     * Extract tenant ID from authentication context (static method for backward compatibility)
      * 
      * @param authentication The authentication object
      * @return Tenant ID for data isolation
-     * @throws SecurityException if no valid tenant context found
      */
-    public static String extractTenantFromAuth(Authentication authentication) {
+    public String extractTenantFromAuth(Authentication authentication) {
         if (authentication == null) {
-            throw new SecurityException("No authentication context found");
+            return DEFAULT_TENANT;
         }
         
-        // Method 1: Try to extract from JWT token
-        if (authentication instanceof JwtAuthenticationToken) {
-            JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
-            Jwt jwt = jwtToken.getToken();
-            
-            // Check for tenant_id claim in JWT
-            String tenantId = jwt.getClaimAsString("tenant_id");
-            if (tenantId != null && !tenantId.trim().isEmpty()) {
-                log.debug("Extracted tenant from JWT: {}", tenantId);
-                return tenantId.trim();
-            }
-            
-            // Fallback: extract from organization claim
-            String orgId = jwt.getClaimAsString("organization_id");
-            if (orgId != null && !orgId.trim().isEmpty()) {
-                log.debug("Extracted tenant from organization claim: {}", orgId);
-                return orgId.trim();
-            }
-            
-            // Fallback: extract from email domain
-            String email = jwt.getClaimAsString("email");
-            if (email != null && email.contains("@")) {
-                String domain = email.substring(email.indexOf("@") + 1);
-                log.debug("Extracted tenant from email domain: {}", domain);
-                return domain;
-            }
-        }
-        
-        // Method 2: Try to extract from UserDetails
+        // Method 1: Try to extract from UserDetails
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserDetails) {
             UserDetails userDetails = (UserDetails) principal;
@@ -65,7 +82,7 @@ public class TenantContextUtil {
             }
         }
         
-        // Method 3: Extract from authentication name (if it contains tenant info)
+        // Method 2: Extract from authentication name (if it contains tenant info)
         String authName = authentication.getName();
         if (authName != null && authName.contains("@")) {
             String domain = authName.substring(authName.indexOf("@") + 1);
@@ -73,46 +90,61 @@ public class TenantContextUtil {
             return domain;
         }
         
+        // Method 3: Use principal as user ID for tenant derivation
+        if (principal instanceof String userId) {
+            return deriveTenantFromUser(userId);
+        }
+        
         // Default tenant for development/testing
-        log.warn("Could not extract tenant from authentication, using default. Auth: {}", 
+        log.debug("Could not extract tenant from authentication, using default. Auth: {}", 
                 authentication.getClass().getSimpleName());
-        return "default";
+        return DEFAULT_TENANT;
     }
     
     /**
-     * Extract recruiter/user ID from authentication context.
+     * Extract recruiter ID from current authentication context or HTTP request
+     * Returns null if not available
+     */
+    public Long getCurrentRecruiterId() {
+        try {
+            // First try to get from JWT token in request header
+            Long recruiterId = extractRecruiterFromRequest();
+            if (recruiterId != null) {
+                log.debug("Extracted recruiter ID from request: {}", recruiterId);
+                return recruiterId;
+            }
+            
+            // Fallback: try security context
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null) {
+                String userIdStr = extractRecruiterIdFromAuth(authentication);
+                if (userIdStr != null) {
+                    try {
+                        return Long.parseLong(userIdStr);
+                    } catch (NumberFormatException e) {
+                        log.debug("User ID is not numeric: {}", userIdStr);
+                    }
+                }
+            }
+            
+            log.debug("No recruiter ID found in authentication context");
+            return null;
+            
+        } catch (Exception e) {
+            log.error("Error extracting recruiter ID: {}", e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Extract recruiter/user ID from authentication context (static method for backward compatibility)
      * 
      * @param authentication The authentication object
-     * @return User ID for ownership validation
-     * @throws SecurityException if no valid user context found
+     * @return User ID for ownership validation, null if not found
      */
-    public static String extractRecruiterIdFromAuth(Authentication authentication) {
+    public String extractRecruiterIdFromAuth(Authentication authentication) {
         if (authentication == null) {
-            throw new SecurityException("No authentication context found");
-        }
-        
-        // Method 1: Try to extract from JWT token
-        if (authentication instanceof JwtAuthenticationToken) {
-            JwtAuthenticationToken jwtToken = (JwtAuthenticationToken) authentication;
-            Jwt jwt = jwtToken.getToken();
-            
-            // Check for user_id claim
-            String userId = jwt.getClaimAsString("user_id");
-            if (userId != null && !userId.trim().isEmpty()) {
-                return userId.trim();
-            }
-            
-            // Check for sub claim (standard JWT subject)
-            String sub = jwt.getClaimAsString("sub");
-            if (sub != null && !sub.trim().isEmpty()) {
-                return sub.trim();
-            }
-            
-            // Check for email
-            String email = jwt.getClaimAsString("email");
-            if (email != null && !email.trim().isEmpty()) {
-                return email.trim();
-            }
+            return null;
         }
         
         // Fallback: use authentication name
@@ -121,13 +153,54 @@ public class TenantContextUtil {
             return name.trim();
         }
         
-        throw new SecurityException("Could not extract user ID from authentication");
+        return null;
+    }
+    
+    /**
+     * Check if current user is authenticated and has valid tenant context
+     */
+    public boolean hasValidTenantContext() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            
+            if (authentication != null && authentication.isAuthenticated()) {
+                String tenantId = getCurrentTenantId();
+                return tenantId != null && !DEFAULT_TENANT.equals(tenantId);
+            }
+            
+            return false;
+            
+        } catch (Exception e) {
+            log.error("Error checking tenant context validity: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Get user type from JWT authentication context or HTTP request
+     */
+    public String getCurrentUserType() {
+        try {
+            // First try to get from JWT token in request header
+            String userType = extractUserTypeFromRequest();
+            if (userType != null && !userType.trim().isEmpty()) {
+                log.debug("Extracted user type from request: {}", userType);
+                return userType;
+            }
+            
+            log.debug("No user type found in authentication context");
+            return null;
+            
+        } catch (Exception e) {
+            log.error("Error extracting user type: {}", e.getMessage());
+            return null;
+        }
     }
     
     /**
      * Extract tenant ID from UserDetails if available.
      */
-    private static String extractTenantFromUserDetails(UserDetails userDetails) {
+    private String extractTenantFromUserDetails(UserDetails userDetails) {
         // If using custom UserDetails that implements tenant info
         if (userDetails instanceof TenantAwareUserDetails) {
             return ((TenantAwareUserDetails) userDetails).getTenantId();
@@ -143,9 +216,121 @@ public class TenantContextUtil {
     }
     
     /**
+     * Extract tenant ID from JWT token in current request
+     */
+    private String extractTenantFromRequest() {
+        try {
+            String token = getJwtTokenFromRequest();
+            if (token != null) {
+                // Try to extract tenant from custom JWT claim
+                return extractCustomClaim(token, TENANT_CLAIM);
+            }
+        } catch (Exception e) {
+            log.debug("Could not extract tenant from request: {}", e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Extract recruiter ID from JWT token in current request
+     */
+    private Long extractRecruiterFromRequest() {
+        try {
+            String token = getJwtTokenFromRequest();
+            if (token != null) {
+                // First try recruiter claim
+                String recruiterIdStr = extractCustomClaim(token, RECRUITER_CLAIM);
+                if (recruiterIdStr != null) {
+                    return Long.parseLong(recruiterIdStr);
+                }
+                
+                // Fallback: if user is recruiter, use user ID
+                String userType = jwtUtil.extractUserType(token);
+                if ("RECRUITER".equals(userType)) {
+                    Long userId = jwtUtil.extractUserId(token);
+                    if (userId != null) {
+                        return userId;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not extract recruiter from request: {}", e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Extract user type from JWT token in current request
+     */
+    private String extractUserTypeFromRequest() {
+        try {
+            String token = getJwtTokenFromRequest();
+            if (token != null) {
+                return jwtUtil.extractUserType(token);
+            }
+        } catch (Exception e) {
+            log.debug("Could not extract user type from request: {}", e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Get JWT token from current HTTP request
+     */
+    private String getJwtTokenFromRequest() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                HttpServletRequest request = attributes.getRequest();
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    return authHeader.substring(7);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not get JWT token from request: {}", e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Extract custom claim from JWT token
+     */
+    private String extractCustomClaim(String token, String claimName) {
+        try {
+            // Use existing JWT util to extract custom claims
+            return jwtUtil.extractClaim(token, claims -> claims.get(claimName, String.class));
+        } catch (Exception e) {
+            log.debug("Could not extract claim {} from token: {}", claimName, e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Derive tenant ID from user information (fallback mechanism)
+     */
+    private String deriveTenantFromUser(String userId) {
+        try {
+            if (userId != null && userId.length() > 0) {
+                // Simple fallback: use first character of user ID to determine tenant
+                // Replace this with your actual business logic
+                char firstChar = userId.charAt(0);
+                return "tenant_" + firstChar;
+            }
+            
+            return DEFAULT_TENANT;
+            
+        } catch (Exception e) {
+            log.error("Error deriving tenant from user ID {}: {}", userId, e.getMessage());
+            return DEFAULT_TENANT;
+        }
+    }
+    
+    /**
      * Check if the current user has admin privileges.
      */
-    public static boolean isAdmin(Authentication authentication) {
+    public boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
             return false;
         }

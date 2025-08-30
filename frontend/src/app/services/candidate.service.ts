@@ -118,16 +118,32 @@ export class CandidateService {
     return {};
   }
 
-  addCandidate(candidate: Candidate, resumeFile: File, profilePicture?: File): Observable<any> {
+  addCandidate(candidate: Candidate, resumeFile?: File, profilePicture?: File): Observable<any> {
     try {
       const formData = new FormData();
-      formData.append('data', new Blob([JSON.stringify(candidate)], { type: 'application/json' }));
-      formData.append('resume', resumeFile);
-      if (profilePicture) {
-        formData.append('profilePic', profilePicture);
+      
+      // Append JSON data as a proper JSON part (backend expects @RequestPart("data"))
+      const jsonBlob = new Blob([JSON.stringify(candidate)], { type: 'application/json' });
+      formData.append('data', jsonBlob);
+      
+      // Add required files with correct parameter names matching backend
+      if (resumeFile) {
+        formData.append('resume', resumeFile);
+        console.log('Resume file added:', resumeFile.name, 'Size:', resumeFile.size);
+      } else {
+        console.warn('No resume file provided - this will likely cause validation error');
       }
       
-      console.log('Adding candidate:', candidate.name);
+      if (profilePicture) {
+        formData.append('profilePic', profilePicture);
+        console.log('Profile picture added:', profilePicture.name, 'Size:', profilePicture.size);
+      }
+      
+      // Log form data contents for debugging
+      console.log('Adding candidate with FormData contents:');
+      console.log('- Candidate data:', candidate);
+      console.log('- Resume file:', resumeFile ? `${resumeFile.name} (${resumeFile.size} bytes)` : 'None');
+      console.log('- Profile pic:', profilePicture ? `${profilePicture.name} (${profilePicture.size} bytes)` : 'None');
       
       return this.http.post(`${this.baseUrl}`, formData, {
         headers: this.getAuthHeaders()

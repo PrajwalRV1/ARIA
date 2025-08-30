@@ -230,15 +230,44 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       // Create new candidate
       this.candidateService.addCandidate(candidateData, resumeFile, profilePic).subscribe({
         next: (response) => {
+          console.log('✅ Candidate created successfully:', response);
           this.loadDashboardData();  // Refresh using existing method
           this.closeAddCandidatePopup(); // Close popup after successful save
           this.addActivity(`Added new candidate ${candidateData.name}`, 'fas fa-user-plus');
         },
         error: (err) => {
-          console.error('Error saving candidate:', err);
+          console.error('❌ Error saving candidate:', err);
+          console.error('Error details:', {
+            status: err.status,
+            technical: err.technical,
+            user: err.user,
+            originalError: err.originalError
+          });
           
+          // Enhanced error messaging for 400 Bad Request errors
           let errorMessage = 'Failed to save candidate.';
-          if (err.status === 500) {
+          if (err.status === 400) {
+            errorMessage = `Validation Error: ${err.user || 'Please check all required fields and file uploads.'}\n\nTechnical Details: ${err.technical || 'Invalid request data'}`;
+            
+            // Log specific validation details for debugging
+            console.error('400 Bad Request Details:');
+            console.error('- Candidate data sent:', candidateData);
+            console.error('- Resume file:', resumeFile ? `${resumeFile.name} (${resumeFile.size} bytes, ${resumeFile.type})` : 'None');
+            console.error('- Profile pic:', profilePic ? `${profilePic.name} (${profilePic.size} bytes, ${profilePic.type})` : 'None');
+            
+            // Check for common issues
+            if (!resumeFile) {
+              errorMessage += '\n\n⚠️ Missing resume file - this is required for candidate creation.';
+            }
+            if (!candidateData.applicationDate) {
+              errorMessage += '\n\n⚠️ Missing application date - this is required.';
+            }
+            if (!candidateData.phone || candidateData.phone.length < 10) {
+              errorMessage += '\n\n⚠️ Invalid phone number format - ensure it has at least 10 digits.';
+            }
+          } else if (err.status === 415) {
+            errorMessage = 'Media Type Error: The request format is not supported by the server. This is likely a configuration issue.';
+          } else if (err.status === 500) {
             errorMessage = 'Server error: There may be a backend issue. Please try again or contact support.';
           } else if (err.status === 403) {
             errorMessage = 'Authentication error: Please log in again.';

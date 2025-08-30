@@ -30,17 +30,17 @@ public class InterviewRoundMapper {
         dto.setRoundName(entity.getRoundName());
         dto.setRoundOrder(entity.getRoundOrder());
         dto.setStatus(entity.getStatus());
-        dto.setScheduledDate(entity.getScheduledDate());
-        dto.setStartTime(entity.getStartTime());
-        dto.setEndTime(entity.getEndTime());
-        dto.setDurationMinutes(entity.getDurationMinutes());
+        dto.setScheduledDate(entity.getScheduledAt());
+        dto.setStartTime(entity.getStartedAt());
+        dto.setEndTime(entity.getCompletedAt());
+        dto.setDurationMinutes(entity.getDurationMinutes() != null ? entity.getDurationMinutes().intValue() : null);
         dto.setInterviewerName(entity.getInterviewerName());
         dto.setInterviewerEmail(entity.getInterviewerEmail());
         dto.setMeetingLink(entity.getMeetingLink());
         dto.setNotes(entity.getNotes());
         dto.setFeedback(entity.getFeedback());
         dto.setScore(entity.getScore());
-        dto.setMaxScore(entity.getMaxScore());
+        dto.setMaxScore(null); // No maxScore field in entity
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
 
@@ -62,17 +62,17 @@ public class InterviewRoundMapper {
         entity.setRoundName(dto.getRoundName());
         entity.setRoundOrder(dto.getRoundOrder());
         entity.setStatus(dto.getStatus());
-        entity.setScheduledDate(dto.getScheduledDate());
-        entity.setStartTime(dto.getStartTime());
-        entity.setEndTime(dto.getEndTime());
-        entity.setDurationMinutes(dto.getDurationMinutes());
+        entity.setScheduledAt(dto.getScheduledDate());
+        entity.setStartedAt(dto.getStartTime());
+        entity.setCompletedAt(dto.getEndTime());
+        // Duration is calculated, not set directly
         entity.setInterviewerName(dto.getInterviewerName());
         entity.setInterviewerEmail(dto.getInterviewerEmail());
         entity.setMeetingLink(dto.getMeetingLink());
         entity.setNotes(dto.getNotes());
         entity.setFeedback(dto.getFeedback());
         entity.setScore(dto.getScore());
-        entity.setMaxScore(dto.getMaxScore());
+        // MaxScore not available in entity
 
         return entity;
     }
@@ -110,17 +110,15 @@ public class InterviewRoundMapper {
             entity.setStatus(dto.getStatus());
         }
         if (dto.getScheduledDate() != null) {
-            entity.setScheduledDate(dto.getScheduledDate());
+            entity.setScheduledAt(dto.getScheduledDate());
         }
         if (dto.getStartTime() != null) {
-            entity.setStartTime(dto.getStartTime());
+            entity.setStartedAt(dto.getStartTime());
         }
         if (dto.getEndTime() != null) {
-            entity.setEndTime(dto.getEndTime());
+            entity.setCompletedAt(dto.getEndTime());
         }
-        if (dto.getDurationMinutes() != null) {
-            entity.setDurationMinutes(dto.getDurationMinutes());
-        }
+        // Duration is calculated, not set directly
         if (dto.getInterviewerName() != null) {
             entity.setInterviewerName(dto.getInterviewerName());
         }
@@ -139,9 +137,7 @@ public class InterviewRoundMapper {
         if (dto.getScore() != null) {
             entity.setScore(dto.getScore());
         }
-        if (dto.getMaxScore() != null) {
-            entity.setMaxScore(dto.getMaxScore());
-        }
+        // MaxScore not available in entity
     }
 
     /**
@@ -185,10 +181,10 @@ public class InterviewRoundMapper {
         dto.setRoundName(entity.getRoundName());
         dto.setRoundOrder(entity.getRoundOrder());
         dto.setStatus(entity.getStatus());
-        dto.setScheduledDate(entity.getScheduledDate());
+        dto.setScheduledDate(entity.getScheduledAt());
         dto.setInterviewerName(entity.getInterviewerName());
         dto.setScore(entity.getScore());
-        dto.setMaxScore(entity.getMaxScore());
+        dto.setMaxScore(null); // No maxScore field in entity
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
 

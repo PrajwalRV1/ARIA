@@ -65,7 +65,7 @@ public class InterviewRoundDto {
         this.candidateId = candidateId;
         this.roundType = roundType;
         this.roundName = roundType.getDisplayName();
-        this.roundOrder = roundType.getOrder();
+        this.roundOrder = roundType.getDefaultOrder();
     }
 
     // Getters and Setters

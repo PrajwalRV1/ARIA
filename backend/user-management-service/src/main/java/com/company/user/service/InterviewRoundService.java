@@ -69,7 +69,7 @@ public class InterviewRoundService {
             round.setRoundName(round.getRoundType().getDisplayName());
         }
         if (round.getRoundOrder() == null) {
-            round.setRoundOrder(round.getRoundType().getOrder());
+            round.setRoundOrder(round.getRoundType().getDefaultOrder());
         }
         
         InterviewRound savedRound = interviewRoundRepository.save(round);
@@ -365,19 +365,16 @@ public class InterviewRoundService {
         
         switch (status) {
             case IN_PROGRESS:
-                if (round.getStartTime() == null) {
-                    round.setStartTime(now);
+                if (round.getStartedAt() == null) {
+                    round.setStartedAt(now);
                 }
                 break;
             case COMPLETED:
             case REJECTED:
-                if (round.getEndTime() == null) {
-                    round.setEndTime(now);
+                if (round.getCompletedAt() == null) {
+                    round.setCompletedAt(now);
                 }
-                if (round.getStartTime() != null && round.getDurationMinutes() == null) {
-                    long duration = java.time.Duration.between(round.getStartTime(), round.getEndTime()).toMinutes();
-                    round.setDurationMinutes((int) duration);
-                }
+                // Duration is calculated automatically by entity method
                 break;
         }
     }
@@ -393,17 +390,15 @@ public class InterviewRoundService {
             round.setStatus(dto.getStatus());
         }
         if (dto.getScheduledDate() != null) {
-            round.setScheduledDate(dto.getScheduledDate());
+            round.setScheduledAt(dto.getScheduledDate());
         }
         if (dto.getStartTime() != null) {
-            round.setStartTime(dto.getStartTime());
+            round.setStartedAt(dto.getStartTime());
         }
         if (dto.getEndTime() != null) {
-            round.setEndTime(dto.getEndTime());
+            round.setCompletedAt(dto.getEndTime());
         }
-        if (dto.getDurationMinutes() != null) {
-            round.setDurationMinutes(dto.getDurationMinutes());
-        }
+        // Duration is calculated, not set directly
         if (dto.getInterviewerName() != null) {
             round.setInterviewerName(dto.getInterviewerName());
         }
@@ -422,9 +417,7 @@ public class InterviewRoundService {
         if (dto.getScore() != null) {
             round.setScore(dto.getScore());
         }
-        if (dto.getMaxScore() != null) {
-            round.setMaxScore(dto.getMaxScore());
-        }
+        // MaxScore not available in entity
     }
 
     /**
@@ -438,17 +431,17 @@ public class InterviewRoundService {
         dto.setRoundName(round.getRoundName());
         dto.setRoundOrder(round.getRoundOrder());
         dto.setStatus(round.getStatus());
-        dto.setScheduledDate(round.getScheduledDate());
-        dto.setStartTime(round.getStartTime());
-        dto.setEndTime(round.getEndTime());
-        dto.setDurationMinutes(round.getDurationMinutes());
+        dto.setScheduledDate(round.getScheduledAt());
+        dto.setStartTime(round.getStartedAt());
+        dto.setEndTime(round.getCompletedAt());
+        dto.setDurationMinutes(round.getDurationMinutes() != null ? round.getDurationMinutes().intValue() : null);
         dto.setInterviewerName(round.getInterviewerName());
         dto.setInterviewerEmail(round.getInterviewerEmail());
         dto.setMeetingLink(round.getMeetingLink());
         dto.setNotes(round.getNotes());
         dto.setFeedback(round.getFeedback());
         dto.setScore(round.getScore());
-        dto.setMaxScore(round.getMaxScore());
+        dto.setMaxScore(null); // No maxScore field in entity
         dto.setCreatedAt(round.getCreatedAt());
         dto.setUpdatedAt(round.getUpdatedAt());
         return dto;
@@ -463,17 +456,17 @@ public class InterviewRoundService {
         round.setRoundName(dto.getRoundName());
         round.setRoundOrder(dto.getRoundOrder());
         round.setStatus(dto.getStatus());
-        round.setScheduledDate(dto.getScheduledDate());
-        round.setStartTime(dto.getStartTime());
-        round.setEndTime(dto.getEndTime());
-        round.setDurationMinutes(dto.getDurationMinutes());
+        round.setScheduledAt(dto.getScheduledDate());
+        round.setStartedAt(dto.getStartTime());
+        round.setCompletedAt(dto.getEndTime());
+        // Duration is calculated, not set directly
         round.setInterviewerName(dto.getInterviewerName());
         round.setInterviewerEmail(dto.getInterviewerEmail());
         round.setMeetingLink(dto.getMeetingLink());
         round.setNotes(dto.getNotes());
         round.setFeedback(dto.getFeedback());
         round.setScore(dto.getScore());
-        round.setMaxScore(dto.getMaxScore());
+        // MaxScore not available in entity
         return round;
     }
 }

@@ -28,11 +28,12 @@ WORKDIR /app
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/server-simple.js ./
 
 # Create proper index.html from index.csr.html for static serving
 RUN cp dist/frontend/browser/index.csr.html dist/frontend/browser/index.html || echo "No index.csr.html found"
 
-# Install only production dependencies needed for SSR
+# Install only production dependencies (Express)
 RUN npm ci --only=production && npm cache clean --force
 
 # Create non-root user
@@ -54,5 +55,5 @@ EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:10000/ || exit 1
 
-# Start the Angular SSR server directly
-CMD ["node", "dist/frontend/server/server.mjs"]
+# Start the simple Express server
+CMD ["node", "server-simple.js"]

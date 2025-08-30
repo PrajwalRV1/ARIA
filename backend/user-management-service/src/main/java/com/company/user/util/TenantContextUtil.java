@@ -103,35 +103,32 @@ public class TenantContextUtil {
     
     /**
      * Extract recruiter ID from current authentication context or HTTP request
-     * Returns null if not available
+     * Returns recruiter email as String (not Long) since recruiters are identified by email
      */
-    public Long getCurrentRecruiterId() {
+    public String getCurrentRecruiterId() {
         try {
             // First try to get from JWT token in request header
-            Long recruiterId = extractRecruiterFromRequest();
-            if (recruiterId != null) {
-                log.debug("Extracted recruiter ID from request: {}", recruiterId);
-                return recruiterId;
+            String recruiterId = extractRecruiterEmailFromRequest();
+            if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+                log.debug("Extracted recruiter email from request: {}", recruiterId);
+                return recruiterId.trim();
             }
             
             // Fallback: try security context
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null) {
-                String userIdStr = extractRecruiterIdFromAuth(authentication);
-                if (userIdStr != null) {
-                    try {
-                        return Long.parseLong(userIdStr);
-                    } catch (NumberFormatException e) {
-                        log.debug("User ID is not numeric: {}", userIdStr);
-                    }
+                String userEmail = extractRecruiterIdFromAuth(authentication);
+                if (userEmail != null && !userEmail.trim().isEmpty()) {
+                    log.debug("Extracted recruiter email from auth context: {}", userEmail);
+                    return userEmail.trim();
                 }
             }
             
-            log.debug("No recruiter ID found in authentication context");
+            log.debug("No recruiter email found in authentication context");
             return null;
             
         } catch (Exception e) {
-            log.error("Error extracting recruiter ID: {}", e.getMessage());
+            log.error("Error extracting recruiter email: {}", e.getMessage());
             return null;
         }
     }
@@ -232,8 +229,45 @@ public class TenantContextUtil {
     }
     
     /**
-     * Extract recruiter ID from JWT token in current request
+     * Extract recruiter email from JWT token in current request
      */
+    private String extractRecruiterEmailFromRequest() {
+        try {
+            String token = getJwtTokenFromRequest();
+            if (token != null) {
+                // First try email claim (most direct approach)
+                String email = jwtUtil.extractClaim(token, claims -> claims.get("email", String.class));
+                if (email != null && !email.trim().isEmpty()) {
+                    log.debug("Extracted email from JWT: {}", email);
+                    return email.trim();
+                }
+                
+                // Fallback: try recruiter claim if it contains email
+                String recruiterIdStr = extractCustomClaim(token, RECRUITER_CLAIM);
+                if (recruiterIdStr != null && recruiterIdStr.contains("@")) {
+                    return recruiterIdStr;
+                }
+                
+                // Another fallback: if user is recruiter, try to get email from subject if it's email format
+                String userType = jwtUtil.extractUserType(token);
+                if ("RECRUITER".equals(userType)) {
+                    String subject = jwtUtil.extractUsername(token); // This gets the 'sub' claim
+                    if (subject != null && subject.contains("@")) {
+                        return subject;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not extract recruiter email from request: {}", e.getMessage());
+        }
+        return null;
+    }
+    
+    /**
+     * Extract recruiter ID from JWT token in current request (Legacy method - keeping for backward compatibility)
+     * @deprecated Use extractRecruiterEmailFromRequest() instead
+     */
+    @Deprecated
     private Long extractRecruiterFromRequest() {
         try {
             String token = getJwtTokenFromRequest();

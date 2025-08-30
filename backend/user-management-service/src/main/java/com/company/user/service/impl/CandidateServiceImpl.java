@@ -185,15 +185,15 @@ public class CandidateServiceImpl implements CandidateService {
         
         // ✅ SECURITY: Extract tenant and recruiter context
         String tenantId = tenantContextUtil.getCurrentTenantId();
-        Long recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
         
         log.debug("Fetching candidates for tenant: {} and recruiter: {}", tenantId, recruiterId);
         
         // Use tenant-aware repository method
         List<Candidate> candidates;
-        if (recruiterId != null) {
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
             // Recruiter-specific view: see only their candidates within their tenant
-            candidates = candidateRepository.findByTenantIdAndRecruiterIdOrderByCreatedAtDesc(tenantId, recruiterId.toString());
+            candidates = candidateRepository.findByTenantIdAndRecruiterIdOrderByCreatedAtDesc(tenantId, recruiterId);
         } else {
             // Admin view: see all candidates within their tenant
             candidates = candidateRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
@@ -224,13 +224,13 @@ public class CandidateServiceImpl implements CandidateService {
         
         // ✅ SECURITY: Extract tenant and recruiter context
         String tenantId = tenantContextUtil.getCurrentTenantId();
-        Long recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
         
         // Use tenant-aware repository method
         Optional<Candidate> candidate;
-        if (recruiterId != null) {
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
             // Recruiter can only access their own candidates within their tenant
-            candidate = candidateRepository.findByIdAndTenantIdAndRecruiterId(id, tenantId, recruiterId.toString());
+            candidate = candidateRepository.findByIdAndTenantIdAndRecruiterId(id, tenantId, recruiterId);
         } else {
             // Admin can access any candidate within their tenant
             candidate = candidateRepository.findByIdAndTenantId(id, tenantId);
@@ -644,12 +644,12 @@ public class CandidateServiceImpl implements CandidateService {
         
         // ✅ SECURITY: Extract tenant context for data isolation
         String tenantId = tenantContextUtil.getCurrentTenantId();
-        Long currentUserId = tenantContextUtil.getCurrentRecruiterId();
+        String currentUserEmail = tenantContextUtil.getCurrentRecruiterId();
         
-        // Use recruiter from request or fall back to current user
+        // Use recruiter from request or fall back to current user email
         String recruiterId = StringUtils.hasText(request.getRecruiterId()) 
             ? request.getRecruiterId() 
-            : (currentUserId != null ? currentUserId.toString() : null);
+            : currentUserEmail;
         
         log.debug("Creating candidate for tenant: {} with recruiter: {}", tenantId, recruiterId);
         
@@ -679,8 +679,8 @@ public class CandidateServiceImpl implements CandidateService {
                 .recruiterId(recruiterId)
                 // ✅ SECURITY: Set tenant isolation fields
                 .tenantId(tenantId)
-                .createdBy(currentUserId != null ? currentUserId.toString() : "system")
-                .updatedBy(currentUserId != null ? currentUserId.toString() : "system")
+                .createdBy(currentUserEmail != null ? currentUserEmail : "system")
+                .updatedBy(currentUserEmail != null ? currentUserEmail : "system")
                 .build();
     }
     

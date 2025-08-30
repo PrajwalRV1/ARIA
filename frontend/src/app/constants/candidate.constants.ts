@@ -12,27 +12,23 @@ export const INTERVIEW_ROUNDS = [
 
 // Candidate status enum values - MUST match backend CandidateStatus enum exactly
 export const CANDIDATE_STATUS = [
-  'PENDING',        // Initial status when candidate is added
-  'APPLIED',        // When candidate has applied but not yet screened
-  'SCREENING',      // During initial screening phase
-  'INTERVIEW',      // During interview process
-  'SCHEDULED',      // When interview is scheduled
-  'IN_PROGRESS',    // Interview in progress
-  'COMPLETED',      // When interview is completed
-  'UNDER_REVIEW',   // Under review by hiring team
-  'SELECTED',       // When candidate is selected
-  'REJECTED',       // When candidate is rejected
-  'ON_HOLD',        // When candidate is put on hold
-  'WITHDRAWN'       // When candidate withdraws
+  'PENDING',            // Initial status when candidate is added
+  'APPLIED',            // When candidate has applied but not yet screened
+  'INTERVIEW_SCHEDULED', // When interview is scheduled
+  'IN_PROGRESS',        // Interview in progress
+  'COMPLETED',          // When interview is completed
+  'UNDER_REVIEW',       // Under review by hiring team
+  'SELECTED',           // When candidate is selected
+  'REJECTED',           // When candidate is rejected
+  'ON_HOLD',            // When candidate is put on hold
+  'WITHDRAWN'           // When candidate withdraws
 ];
 
 // Display labels for status (for better UX)
 export const STATUS_LABELS: { [key: string]: string } = {
   'PENDING': 'Pending',
   'APPLIED': 'Applied',
-  'SCREENING': 'Screening',
-  'INTERVIEW': 'Interview',
-  'SCHEDULED': 'Scheduled',
+  'INTERVIEW_SCHEDULED': 'Interview Scheduled',
   'IN_PROGRESS': 'In Progress',
   'COMPLETED': 'Completed',
   'UNDER_REVIEW': 'Under Review',
@@ -46,9 +42,7 @@ export const STATUS_LABELS: { [key: string]: string } = {
 export const STATUS_CLASSES: { [key: string]: string } = {
   'PENDING': 'status-pending',
   'APPLIED': 'status-applied',
-  'SCREENING': 'status-screening',
-  'INTERVIEW': 'status-interview',
-  'SCHEDULED': 'status-scheduled',
+  'INTERVIEW_SCHEDULED': 'status-interview-scheduled',
   'IN_PROGRESS': 'status-in-progress',
   'COMPLETED': 'status-completed',
   'UNDER_REVIEW': 'status-under-review',

@@ -54,9 +54,13 @@ app.use('/**', (req, res, next) => {
  * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
  */
 if (isMainModule(import.meta.url)) {
-  const port = process.env['PORT'] || 4000;
-  app.listen(port, () => {
-    console.log(`Node Express server listening on http://localhost:${port}`);
+  const port = parseInt(process.env['PORT'] || '4000', 10);
+  const host = process.env['NODE_ENV'] === 'production' ? '0.0.0.0' : 'localhost';
+  
+  app.listen(port, host, () => {
+    console.log(`Node Express server listening on http://${host}:${port}`);
+    console.log(`Environment: ${process.env['NODE_ENV']}`);
+    console.log(`Static files served from: ${browserDistFolder}`);
   });
 }
 

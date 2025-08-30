@@ -48,6 +48,47 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
      */
     @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.skills WHERE c.id = :id")
     Optional<Candidate> findByIdWithSkills(@Param("id") Long id);
+    
+    // === TENANT-AWARE QUERIES (CRITICAL SECURITY) ===
+    
+    /**
+     * ✅ SECURE: Find candidate by ID with tenant and ownership validation
+     * Prevents BOLA (Broken Object Level Authorization) attacks
+     */
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.skills WHERE c.id = :id AND c.tenantId = :tenantId AND c.recruiterId = :recruiterId")
+    Optional<Candidate> findByIdAndTenantAndRecruiter(@Param("id") Long id, 
+                                                     @Param("tenantId") String tenantId, 
+                                                     @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Find candidate by ID with tenant validation (admin access)
+     * Allows admins to access all candidates within their tenant
+     */
+    @Query("SELECT c FROM Candidate c LEFT JOIN FETCH c.skills WHERE c.id = :id AND c.tenantId = :tenantId")
+    Optional<Candidate> findByIdAndTenant(@Param("id") Long id, @Param("tenantId") String tenantId);
+    
+    /**
+     * ✅ SECURE: Find all candidates with tenant isolation
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.tenantId = :tenantId AND c.recruiterId = :recruiterId ORDER BY c.createdAt DESC")
+    List<Candidate> findAllByTenantAndRecruiter(@Param("tenantId") String tenantId, 
+                                               @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Find all candidates with tenant isolation (admin access)
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.tenantId = :tenantId ORDER BY c.createdAt DESC")
+    List<Candidate> findAllByTenant(@Param("tenantId") String tenantId);
+    
+    /**
+     * ✅ SECURE: Check existence with tenant and recruiter validation
+     */
+    boolean existsByEmailAndRequisitionIdAndTenantIdAndRecruiterId(String email, String requisitionId, String tenantId, String recruiterId);
+    
+    /**
+     * ✅ SECURE: Check existence with tenant validation (admin access)
+     */
+    boolean existsByEmailAndRequisitionIdAndTenantId(String email, String requisitionId, String tenantId);
 
     // === LIST QUERIES ===
     
@@ -63,6 +104,20 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
     List<Candidate> findByStatusOrderByCreatedAtDesc(CandidateStatus status);
     
     /**
+     * ✅ SECURE: Find candidates by status with tenant isolation
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.status = :status AND c.tenantId = :tenantId AND c.recruiterId = :recruiterId ORDER BY c.createdAt DESC")
+    List<Candidate> findByStatusAndTenantAndRecruiter(@Param("status") CandidateStatus status, 
+                                                     @Param("tenantId") String tenantId, 
+                                                     @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Find candidates by status with tenant isolation (admin access)
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.status = :status AND c.tenantId = :tenantId ORDER BY c.createdAt DESC")
+    List<Candidate> findByStatusAndTenant(@Param("status") CandidateStatus status, @Param("tenantId") String tenantId);
+    
+    /**
      * Find candidates by multiple statuses
      */
     @Query("SELECT c FROM Candidate c WHERE c.status IN :statuses ORDER BY c.createdAt DESC")
@@ -72,6 +127,20 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
      * Find candidates by requisition ID
      */
     List<Candidate> findByRequisitionIdOrderByCreatedAtDesc(String requisitionId);
+    
+    /**
+     * ✅ SECURE: Find candidates by requisition with tenant isolation
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.requisitionId = :requisitionId AND c.tenantId = :tenantId AND c.recruiterId = :recruiterId ORDER BY c.createdAt DESC")
+    List<Candidate> findByRequisitionIdAndTenantAndRecruiter(@Param("requisitionId") String requisitionId, 
+                                                            @Param("tenantId") String tenantId, 
+                                                            @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Find candidates by requisition with tenant isolation (admin access)
+     */
+    @Query("SELECT c FROM Candidate c WHERE c.requisitionId = :requisitionId AND c.tenantId = :tenantId ORDER BY c.createdAt DESC")
+    List<Candidate> findByRequisitionIdAndTenant(@Param("requisitionId") String requisitionId, @Param("tenantId") String tenantId);
     
     /**
      * Find candidates by recruiter ID
@@ -115,6 +184,48 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
            "LOWER(c.tags) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
            "ORDER BY c.createdAt DESC")
     List<Candidate> globalSearch(@Param("searchTerm") String searchTerm);
+    
+    /**
+     * ✅ SECURE: Search by name with tenant isolation
+     */
+    @Query("SELECT c FROM Candidate c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')) AND c.tenantId = :tenantId AND c.recruiterId = :recruiterId ORDER BY c.createdAt DESC")
+    List<Candidate> findByNameContainingIgnoreCaseAndTenantAndRecruiter(@Param("name") String name, 
+                                                                       @Param("tenantId") String tenantId, 
+                                                                       @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Search by name with tenant isolation (admin access)
+     */
+    @Query("SELECT c FROM Candidate c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')) AND c.tenantId = :tenantId ORDER BY c.createdAt DESC")
+    List<Candidate> findByNameContainingIgnoreCaseAndTenant(@Param("name") String name, @Param("tenantId") String tenantId);
+    
+    /**
+     * ✅ SECURE: Global search with tenant isolation
+     */
+    @Query("SELECT c FROM Candidate c WHERE (" +
+           "LOWER(c.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.appliedRole) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.requisitionId) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.tags) LIKE LOWER(CONCAT('%', :searchTerm, '%'))" +
+           ") AND c.tenantId = :tenantId AND c.recruiterId = :recruiterId " +
+           "ORDER BY c.createdAt DESC")
+    List<Candidate> globalSearchWithTenantAndRecruiter(@Param("searchTerm") String searchTerm, 
+                                                       @Param("tenantId") String tenantId, 
+                                                       @Param("recruiterId") String recruiterId);
+    
+    /**
+     * ✅ SECURE: Global search with tenant isolation (admin access)
+     */
+    @Query("SELECT c FROM Candidate c WHERE (" +
+           "LOWER(c.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.appliedRole) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.requisitionId) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(c.tags) LIKE LOWER(CONCAT('%', :searchTerm, '%'))" +
+           ") AND c.tenantId = :tenantId " +
+           "ORDER BY c.createdAt DESC")
+    List<Candidate> globalSearchWithTenant(@Param("searchTerm") String searchTerm, @Param("tenantId") String tenantId);
     
     /**
      * Search candidates with pagination

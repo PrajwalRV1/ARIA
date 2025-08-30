@@ -171,6 +171,21 @@ public class Candidate {
     @Column(name = "recruiter_id", length = 100)
     private String recruiterId; // who added the candidate
 
+    // === TENANT ISOLATION (CRITICAL SECURITY) ===
+    
+    @NotBlank(message = "Tenant ID is required for data isolation")
+    @Length(max = 255, message = "Tenant ID must not exceed 255 characters")
+    @Column(name = "tenant_id", nullable = false, length = 255)
+    private String tenantId; // Tenant isolation for multi-tenancy
+    
+    @Length(max = 255, message = "Created by must not exceed 255 characters")
+    @Column(name = "created_by", length = 255)
+    private String createdBy; // User who created this record
+    
+    @Length(max = 255, message = "Updated by must not exceed 255 characters")
+    @Column(name = "updated_by", length = 255)
+    private String updatedBy; // User who last updated this record
+
     // === INTERVIEW ROUND STATUS ===
     
     @Length(max = 100, message = "Overall status must not exceed 100 characters")

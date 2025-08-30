@@ -189,25 +189,47 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
     const raw = this.form.getRawValue();
     console.log('Form raw values:', raw);
   
-    // Validate and format phone number
+    // Validate and format phone number to match backend pattern ^[+]?[0-9]{10,15}$
     let formattedPhone = raw.candidatePhone;
-    if (formattedPhone && !formattedPhone.startsWith('+')) {
-      // If phone doesn't start with +, assume it's Indian number and add +91
-      formattedPhone = formattedPhone.replace(/^0+/, ''); // Remove leading zeros
-      if (formattedPhone.length === 10) {
-        formattedPhone = '+91' + formattedPhone;
-      } else if (!formattedPhone.startsWith('+')) {
-        formattedPhone = '+' + formattedPhone;
+    if (formattedPhone) {
+      // Remove all non-numeric characters except +
+      formattedPhone = formattedPhone.replace(/[^+0-9]/g, '');
+      
+      if (!formattedPhone.startsWith('+')) {
+        // Remove leading zeros
+        formattedPhone = formattedPhone.replace(/^0+/, '');
+        
+        // If it's exactly 10 digits, assume Indian number
+        if (formattedPhone.length === 10) {
+          formattedPhone = '+91' + formattedPhone;
+        } else if (formattedPhone.length > 0) {
+          formattedPhone = '+' + formattedPhone;
+        }
+      }
+      
+      // Ensure it matches the backend pattern: +[0-9]{10,15}
+      if (!/^\+[0-9]{10,15}$/.test(formattedPhone)) {
+        console.warn('⚠️ Phone number does not match backend pattern:', formattedPhone);
+        // Try to fix it by keeping only + and digits
+        formattedPhone = formattedPhone.replace(/[^+0-9]/g, '');
       }
     }
     
-    // Validate application date format (should be YYYY-MM-DD)
+    // Validate application date format (should be YYYY-MM-DD and not in future)
     let applicationDate = raw.applicationDate;
     if (applicationDate) {
       const date = new Date(applicationDate);
+      const today = new Date();
+      
       if (!isNaN(date.getTime())) {
-        // Ensure date is in YYYY-MM-DD format
-        applicationDate = date.toISOString().split('T')[0];
+        // Check if date is in the future
+        if (date > today) {
+          console.warn('⚠️ Application date is in the future, setting to today:', applicationDate);
+          applicationDate = today.toISOString().split('T')[0];
+        } else {
+          // Ensure date is in YYYY-MM-DD format
+          applicationDate = date.toISOString().split('T')[0];
+        }
       }
     }
     
@@ -223,8 +245,8 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
       phone: formattedPhone,
       appliedRole: raw.appliedRole?.trim(),
       applicationDate: applicationDate,
-      totalExperience: parseInt(raw.totalExperience) || 0,
-      relevantExperience: parseInt(raw.relevantExperience) || 0,
+      totalExperience: parseFloat(raw.totalExperience) || 0.0,
+      relevantExperience: parseFloat(raw.relevantExperience) || 0.0,
       interviewRound: raw.interviewRound?.trim(),
       status: raw.status || 'PENDING', // Ensure valid status
       jobDescription: raw.jobDescription?.trim(),
@@ -253,5 +275,10 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
   // Helper method to get user-friendly status labels
   getStatusLabel(status: string): string {
     return STATUS_LABELS[status] || status;
+  }
+
+  // Helper method to get today's date in YYYY-MM-DD format for date input max attribute
+  getTodayDate(): string {
+    return new Date().toISOString().split('T')[0];
   }
 }

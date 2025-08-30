@@ -66,8 +66,8 @@
 
           <div class="field">
             <label>Application date <span class="req">*</span></label>
-            <input formControlName="applicationDate" type="date" />
-            <div class="error" *ngIf="f['applicationDate'].touched && f['applicationDate'].invalid">Required</div>
+            <input formControlName="applicationDate" type="date" [max]="getTodayDate()" />
+            <div class="error" *ngIf="f['applicationDate'].touched && f['applicationDate'].invalid">Required (cannot be future date)</div>
           </div>
 
           <div class="field">

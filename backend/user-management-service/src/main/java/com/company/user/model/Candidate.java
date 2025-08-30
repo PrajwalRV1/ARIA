@@ -1,95 +1,271 @@
 package com.company.user.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.validator.constraints.Length;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
+/**
+ * Candidate entity representing interview candidates in the system.
+ * Includes comprehensive validation, audit fields, and proper constraints.
+ */
 @Entity
-@Table(name = "candidates")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "candidates", 
+       uniqueConstraints = {
+           @UniqueConstraint(name = "uk_candidate_email_requisition", 
+                           columnNames = {"email", "requisition_id"})
+       },
+       indexes = {
+           @Index(name = "idx_candidate_status", columnList = "status"),
+           @Index(name = "idx_candidate_email", columnList = "email"),
+           @Index(name = "idx_candidate_requisition", columnList = "requisition_id"),
+           @Index(name = "idx_candidate_recruiter", columnList = "recruiter_id"),
+           @Index(name = "idx_candidate_created", columnList = "created_at")
+       })
+@Getter 
+@Setter 
+@NoArgsConstructor 
+@AllArgsConstructor 
+@Builder
+@ToString(exclude = {"skills"}) // Avoid lazy loading in toString
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Candidate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
-    // business fields
-    @Column(nullable = false)
+    // === CORE BUSINESS FIELDS ===
+    
+    @NotBlank(message = "Requisition ID is required")
+    @Length(max = 255, message = "Requisition ID must not exceed 255 characters")
+    @Column(name = "requisition_id", nullable = false, length = 255)
     private String requisitionId;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Candidate name is required")
+    @Length(min = 2, max = 255, message = "Name must be between 2 and 255 characters")
+    @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Email is required")
+    @Email(message = "Email must be valid")
+    @Length(max = 255, message = "Email must not exceed 255 characters")
+    @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^[+]?[0-9]{10,15}$", message = "Phone number must be 10-15 digits")
+    @Column(nullable = false, length = 20)
     private String phone;
 
-    private String appliedRole;  // Made nullable to match DB schema
+    @Length(max = 255, message = "Applied role must not exceed 255 characters")
+    @Column(name = "applied_role", length = 255)
+    private String appliedRole;
 
+    @PastOrPresent(message = "Application date cannot be in the future")
+    @Column(name = "application_date")
     private LocalDate applicationDate;
 
+    @DecimalMin(value = "0.0", message = "Total experience cannot be negative")
+    @DecimalMax(value = "50.0", message = "Total experience cannot exceed 50 years")
+    @Column(name = "total_experience", precision = 4, scale = 2)
     private Double totalExperience;
+
+    @DecimalMin(value = "0.0", message = "Relevant experience cannot be negative")
+    @DecimalMax(value = "50.0", message = "Relevant experience cannot exceed 50 years")
+    @Column(name = "relevant_experience", precision = 4, scale = 2)
     private Double relevantExperience;
 
+    @Length(max = 100, message = "Interview round must not exceed 100 characters")
+    @Column(name = "interview_round", length = 100)
     private String interviewRound;
 
+    @NotNull(message = "Candidate status is required")
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private CandidateStatus status;
 
-    @Column(columnDefinition = "TEXT")
+    // === JOB DETAILS ===
+    
+    @Column(name = "job_description", columnDefinition = "TEXT")
     private String jobDescription;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "key_responsibilities", columnDefinition = "TEXT")
     private String keyResponsibilities;
 
-    // normalized skills storage
-    @ElementCollection
-    @CollectionTable(name = "candidate_skills", joinColumns = @JoinColumn(name = "candidate_id"))
-    @Column(name = "skill")
-    private List<String> skills;
+    // === SKILLS (Normalized) ===
+    
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "candidate_skills", 
+                     joinColumns = @JoinColumn(name = "candidate_id"),
+                     foreignKey = @ForeignKey(name = "fk_candidate_skills_candidate"))
+    @Column(name = "skill", length = 100)
+    @Size(max = 20, message = "Maximum 20 skills allowed")
+    private List<@NotBlank @Length(max = 100) String> skills;
 
-    // file metadata (store URLs / paths, not bytes)
+    // === FILE METADATA ===
+    
+    @Length(max = 255, message = "Resume filename too long")
+    @Column(name = "resume_file_name", length = 255)
     private String resumeFileName;
+
+    @Length(max = 500, message = "Resume URL too long")
+    @Column(name = "resume_url", length = 500)
     private String resumeUrl;
+
+    @Positive(message = "Resume size must be positive")
+    @Column(name = "resume_size")
     private Long resumeSize;
 
+    @Length(max = 255, message = "Profile picture filename too long")
+    @Column(name = "profile_pic_file_name", length = 255)
     private String profilePicFileName;
+
+    @Length(max = 500, message = "Profile picture URL too long")
+    @Column(name = "profile_pic_url", length = 500)
     private String profilePicUrl;
+
+    @Positive(message = "Profile picture size must be positive")
+    @Column(name = "profile_pic_size")
     private Long profilePicSize;
 
-    // optional meta
-    private String source; // e.g., LinkedIn, Referral
-    private String notes;
-    private String tags; // comma separated for quick search
-    private String recruiterId; // who added the candidate
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
-
-    @Column(name = "audio_filename")
+    // === AUDIO FILE METADATA ===
+    
+    @Length(max = 255, message = "Audio filename too long")
+    @Column(name = "audio_filename", length = 255)
     private String audioFilename;
 
-    @Column(name = "audio_url")
+    @Length(max = 500, message = "Audio URL too long")
+    @Column(name = "audio_url", length = 500)
     private String audioUrl;
 
+    @Positive(message = "Audio size must be positive")
     @Column(name = "audio_size")
     private Long audioSize;
 
+    // === METADATA ===
+    
+    @Length(max = 100, message = "Source must not exceed 100 characters")
+    @Column(length = 100)
+    private String source; // e.g., LinkedIn, Referral
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @Length(max = 500, message = "Tags must not exceed 500 characters")
+    @Column(length = 500)
+    private String tags; // comma separated for quick search
+
+    @Length(max = 100, message = "Recruiter ID too long")
+    @Column(name = "recruiter_id", length = 100)
+    private String recruiterId; // who added the candidate
+
+    // === AUDIT FIELDS ===
+    
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    // === LIFECYCLE CALLBACKS ===
+    
     @PrePersist
     public void prePersist() {
-        createdAt = LocalDateTime.now();
-        updatedAt = createdAt;
-        if (applicationDate == null) applicationDate = LocalDate.now();
+        if (applicationDate == null) {
+            applicationDate = LocalDate.now();
+        }
+        if (status == null) {
+            status = CandidateStatus.PENDING;
+        }
+        // CreationTimestamp and UpdateTimestamp handle the timestamps
     }
 
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        // UpdateTimestamp handles the updatedAt field
+    }
+
+    // === BUSINESS METHODS ===
+    
+    /**
+     * Check if the candidate has a resume uploaded
+     */
+    public boolean hasResume() {
+        return resumeUrl != null && !resumeUrl.trim().isEmpty();
+    }
+
+    /**
+     * Check if the candidate has a profile picture uploaded
+     */
+    public boolean hasProfilePicture() {
+        return profilePicUrl != null && !profilePicUrl.trim().isEmpty();
+    }
+
+    /**
+     * Check if the candidate has an audio file uploaded
+     */
+    public boolean hasAudioFile() {
+        return audioUrl != null && !audioUrl.trim().isEmpty();
+    }
+
+    /**
+     * Get display name (name + email for uniqueness)
+     */
+    public String getDisplayName() {
+        return name + " (" + email + ")";
+    }
+
+    /**
+     * Check if status can be transitioned to the target status
+     */
+    public boolean canTransitionTo(CandidateStatus targetStatus) {
+        if (targetStatus == null) {
+            return false;
+        }
+        
+        // Define valid status transitions
+        return switch (this.status) {
+            case PENDING -> targetStatus == CandidateStatus.APPLIED || 
+                           targetStatus == CandidateStatus.REJECTED ||
+                           targetStatus == CandidateStatus.WITHDRAWN;
+                           
+            case APPLIED -> targetStatus == CandidateStatus.INTERVIEW_SCHEDULED ||
+                           targetStatus == CandidateStatus.REJECTED ||
+                           targetStatus == CandidateStatus.ON_HOLD ||
+                           targetStatus == CandidateStatus.WITHDRAWN;
+                           
+            case INTERVIEW_SCHEDULED -> targetStatus == CandidateStatus.IN_PROGRESS ||
+                                      targetStatus == CandidateStatus.REJECTED ||
+                                      targetStatus == CandidateStatus.ON_HOLD ||
+                                      targetStatus == CandidateStatus.WITHDRAWN;
+                                      
+            case IN_PROGRESS -> targetStatus == CandidateStatus.COMPLETED ||
+                              targetStatus == CandidateStatus.REJECTED ||
+                              targetStatus == CandidateStatus.ON_HOLD;
+                              
+            case COMPLETED -> targetStatus == CandidateStatus.UNDER_REVIEW;
+            
+            case UNDER_REVIEW -> targetStatus == CandidateStatus.SELECTED ||
+                               targetStatus == CandidateStatus.REJECTED ||
+                               targetStatus == CandidateStatus.ON_HOLD;
+                               
+            case ON_HOLD -> targetStatus == CandidateStatus.APPLIED ||
+                          targetStatus == CandidateStatus.INTERVIEW_SCHEDULED ||
+                          targetStatus == CandidateStatus.REJECTED ||
+                          targetStatus == CandidateStatus.WITHDRAWN;
+                          
+            case SELECTED, REJECTED, WITHDRAWN -> false; // Terminal states
+        };
     }
 }

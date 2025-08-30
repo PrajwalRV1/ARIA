@@ -38,13 +38,19 @@ public class LocalFileStorageService implements FileStorageService {
 
     private String save(MultipartFile file, String sub) {
         if (file == null || file.isEmpty()) return null;
-        String original = StringUtils.cleanPath(file.getOriginalFilename());
-        String ext = "";
-        int i = original.lastIndexOf('.');
-        if (i >= 0) ext = original.substring(i);
+        
+        // Secure filename handling to prevent path traversal attacks
+        String ext = sanitizeAndExtractExtension(file.getOriginalFilename());
         String name = UUID.randomUUID().toString() + ext;
+        
         Path dir = ensureDir(sub);
         Path target = dir.resolve(name);
+        
+        // Additional security: ensure target path is within expected directory
+        if (!target.normalize().startsWith(dir.normalize())) {
+            throw new FileStorageException("Invalid file path detected - potential security risk");
+        }
+        
         try {
             Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -52,6 +58,38 @@ public class LocalFileStorageService implements FileStorageService {
         }
         // Return full public URL (consistent with resume/profilePic behavior)
         return baseUrl + "/" + storageRoot + "/" + sub + "/" + name;
+    }
+    
+    /**
+     * Securely sanitizes filename and extracts extension to prevent path traversal attacks
+     */
+    private String sanitizeAndExtractExtension(String originalFilename) {
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            return ".file"; // Default extension for files without names
+        }
+        
+        // Remove dangerous characters and path traversal attempts
+        String cleaned = originalFilename.trim()
+            .replaceAll("[^a-zA-Z0-9._-]", "_")  // Allow only safe characters
+            .replaceAll("\\.\\.", "_")              // Remove .. sequences
+            .replaceAll("/+", "_")               // Remove forward slashes
+            .replaceAll("\\\\+", "_")              // Remove backslashes
+            .replaceAll("\\x00", "_");             // Remove null bytes
+        
+        // Extract extension safely
+        int lastDot = cleaned.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < cleaned.length() - 1) {
+            String extension = cleaned.substring(lastDot).toLowerCase();
+            
+            // Validate extension length and characters
+            if (extension.length() > 10 || !extension.matches("\\.[a-zA-Z0-9]{1,9}")) {
+                return ".file"; // Default for invalid extensions
+            }
+            
+            return extension;
+        }
+        
+        return ".file"; // Default extension if none found
     }
 
     @Override

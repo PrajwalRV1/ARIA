@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,6 +54,17 @@ public class CandidateServiceImpl implements CandidateService {
     private static final long MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
     private static final long MAX_RESUME_SIZE = 25 * 1024 * 1024; // 25MB
+    
+    // File signature validation constants (magic bytes)
+    private static final Map<String, byte[]> FILE_SIGNATURES = Map.of(
+        "application/pdf", new byte[]{0x25, 0x50, 0x44, 0x46}, // %PDF
+        "application/msword", new byte[]{(byte)0xD0, (byte)0xCF, 0x11, (byte)0xE0}, // DOC
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", new byte[]{0x50, 0x4B, 0x03, 0x04}, // DOCX (ZIP)
+        "image/jpeg", new byte[]{(byte)0xFF, (byte)0xD8, (byte)0xFF}, // JPEG
+        "image/png", new byte[]{(byte)0x89, 0x50, 0x4E, 0x47}, // PNG
+        "audio/mpeg", new byte[]{(byte)0xFF, (byte)0xFB}, // MP3
+        "audio/wav", new byte[]{0x52, 0x49, 0x46, 0x46} // WAV
+    );
 
     // === CREATE OPERATIONS ===
     
@@ -82,8 +94,8 @@ public class CandidateServiceImpl implements CandidateService {
             // Build candidate entity
             Candidate candidate = buildCandidateFromRequest(request, resumeResult, profilePicResult);
             
-            // Save candidate
-            Candidate savedCandidate = candidateRepository.save(candidate);
+            // Save candidate with PostgreSQL enum casting
+            Candidate savedCandidate = candidateRepository.saveWithEnumCasting(candidate);
             log.info("Successfully created candidate with ID: {}", savedCandidate.getId());
             
             return CandidateResponse.from(savedCandidate);
@@ -114,12 +126,14 @@ public class CandidateServiceImpl implements CandidateService {
                         String.format("Candidate with ID %d not found", request.getId())
                     ));
             
-            // Validate status transition
-            if (!existingCandidate.canTransitionTo(request.getStatus())) {
-                throw new BadRequestException(
-                    String.format("Invalid status transition from %s to %s", 
-                                existingCandidate.getStatus(), request.getStatus())
-                );
+            // Validate status transition (only if status is actually changing)
+            if (!existingCandidate.getStatus().equals(request.getStatus())) {
+                if (!existingCandidate.canTransitionTo(request.getStatus())) {
+                    throw new BadRequestException(
+                        String.format("Invalid status transition from %s to %s", 
+                                    existingCandidate.getStatus(), request.getStatus())
+                    );
+                }
             }
             
             // Check for email conflicts (excluding current candidate)
@@ -139,8 +153,8 @@ public class CandidateServiceImpl implements CandidateService {
             // Update candidate
             updateCandidateFromRequest(existingCandidate, request, resumeResult, profilePicResult);
             
-            // Save updated candidate
-            Candidate savedCandidate = candidateRepository.save(existingCandidate);
+            // Save updated candidate with PostgreSQL enum casting
+            Candidate savedCandidate = candidateRepository.updateWithEnumCasting(existingCandidate);
             log.info("Successfully updated candidate with ID: {}", savedCandidate.getId());
             
             return CandidateResponse.from(savedCandidate);
@@ -293,7 +307,8 @@ public class CandidateServiceImpl implements CandidateService {
         }
         
         try {
-            int updatedCount = candidateRepository.bulkUpdateStatus(candidateIds, newStatus);
+            Long[] idsArray = candidateIds.toArray(new Long[0]);
+            int updatedCount = candidateRepository.bulkUpdateStatus(idsArray, newStatus.name());
             log.info("Successfully updated status for {} candidates", updatedCount);
             return updatedCount;
         } catch (Exception e) {
@@ -358,6 +373,36 @@ public class CandidateServiceImpl implements CandidateService {
         
         if (resumeFile == null || resumeFile.isEmpty()) {
             return ParsedResumeResponse.builder().build();
+        }
+        
+        // Security validation before parsing
+        try {
+            // Validate file size
+            if (resumeFile.getSize() > MAX_RESUME_SIZE) {
+                throw new IllegalArgumentException(
+                    String.format("Resume file size exceeds limit: %d bytes (max: %d bytes)", 
+                                resumeFile.getSize(), MAX_RESUME_SIZE)
+                );
+            }
+            
+            // Validate content type
+            String contentType = resumeFile.getContentType();
+            if (contentType == null || !ALLOWED_RESUME_TYPES.contains(contentType)) {
+                throw new IllegalArgumentException(
+                    String.format("Invalid resume file type: %s. Allowed types: %s", 
+                                contentType, ALLOWED_RESUME_TYPES)
+                );
+            }
+            
+            // Validate file signature to prevent malicious file uploads
+            validateFileSignature(resumeFile);
+            
+        } catch (IOException e) {
+            log.warn("Resume file validation failed: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid resume file: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.warn("Resume file validation failed: {}", e.getMessage());
+            throw e;
         }
         
         return resumeParsingService
@@ -428,6 +473,52 @@ public class CandidateServiceImpl implements CandidateService {
                             audioFile.getSize(), MAX_AUDIO_SIZE)
             );
         }
+        
+        // Validate file signature to prevent MIME type spoofing
+        try {
+            validateFileSignature(audioFile);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to validate audio file signature: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Validates file signature (magic bytes) to prevent MIME type spoofing attacks
+     */
+    private void validateFileSignature(MultipartFile file) throws IOException {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+        
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            throw new IllegalArgumentException("File content type is required");
+        }
+        
+        byte[] expectedSignature = FILE_SIGNATURES.get(contentType);
+        if (expectedSignature == null) {
+            // If no signature defined, skip validation (but content type was already validated)
+            return;
+        }
+        
+        byte[] header = new byte[Math.max(8, expectedSignature.length)];
+        try (InputStream is = file.getInputStream()) {
+            int bytesRead = is.read(header);
+            if (bytesRead < expectedSignature.length) {
+                throw new IllegalArgumentException("File is too small or corrupted");
+            }
+        }
+        
+        // Check if file signature matches expected signature
+        for (int i = 0; i < expectedSignature.length; i++) {
+            if (header[i] != expectedSignature[i]) {
+                throw new IllegalArgumentException(
+                    String.format("File content does not match declared type '%s'. Potential security risk detected.", contentType)
+                );
+            }
+        }
+        
+        log.debug("File signature validation passed for content type: {}", contentType);
     }
 
     // === FILE PROCESSING METHODS ===
@@ -451,6 +542,13 @@ public class CandidateServiceImpl implements CandidateService {
                 String.format("Resume file size exceeds limit: %d bytes (max: %d bytes)", 
                             resume.getSize(), MAX_RESUME_SIZE)
             );
+        }
+        
+        // Validate file signature to prevent MIME type spoofing
+        try {
+            validateFileSignature(resume);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to validate resume file signature: " + e.getMessage());
         }
         
         try {
@@ -477,6 +575,13 @@ public class CandidateServiceImpl implements CandidateService {
                 String.format("Profile picture size exceeds limit: %d bytes (max: %d bytes)", 
                             profilePic.getSize(), MAX_IMAGE_SIZE)
             );
+        }
+        
+        // Validate file signature to prevent MIME type spoofing
+        try {
+            validateFileSignature(profilePic);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to validate profile picture signature: " + e.getMessage());
         }
         
         try {

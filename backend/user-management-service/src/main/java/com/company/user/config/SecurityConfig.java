@@ -20,6 +20,7 @@ import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
+@org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     @Value("${CORS_ORIGINS:https://aria-frontend-tc4z.onrender.com}")
@@ -115,11 +116,8 @@ public class SecurityConfig {
                                 "/swagger-ui/**",  // /api/auth/swagger-ui/**
                                 "/v3/api-docs/**"  // /api/auth/v3/api-docs/**
                         ).permitAll()
-                        // TEMPORARY: Allow access to candidates for testing (including POST/PUT for debugging)
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/candidates").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/candidates/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/candidates").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/candidates/**").permitAll()
+                        // SECURE: All candidate operations require authentication
+                        .requestMatchers("/candidates/**").authenticated()
                         // Email service endpoints (accessible by internal services and authenticated users)
                         .requestMatchers("/api/email/**").hasAnyRole("INTERNAL_SERVICE", "USER", "ADMIN")
                         // Authenticated endpoints (require valid JWT token)

@@ -22,7 +22,7 @@ import java.util.Set;
  * Includes custom queries for better performance and specific business requirements.
  */
 @Repository
-public interface CandidateRepository extends JpaRepository<Candidate, Long> {
+public interface CandidateRepository extends JpaRepository<Candidate, Long>, CandidateRepositoryCustom {
 
     // === EXISTENCE CHECKS ===
     
@@ -194,20 +194,20 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long> {
     // === UPDATE OPERATIONS ===
     
     /**
-     * Bulk update status for multiple candidates
+     * Bulk update status for multiple candidates using explicit PostgreSQL enum casting
      */
     @Modifying
     @Transactional
-    @Query("UPDATE Candidate c SET c.status = :newStatus, c.updatedAt = CURRENT_TIMESTAMP WHERE c.id IN :ids")
-    int bulkUpdateStatus(@Param("ids") List<Long> candidateIds, @Param("newStatus") CandidateStatus newStatus);
+    @Query(value = "UPDATE candidates SET status = CAST(:newStatus AS candidate_status), updated_at = CURRENT_TIMESTAMP WHERE id = ANY(:ids)", nativeQuery = true)
+    int bulkUpdateStatus(@Param("ids") Long[] candidateIds, @Param("newStatus") String newStatus);
     
     /**
-     * Update candidate status by ID
+     * Update candidate status by ID using explicit PostgreSQL enum casting
      */
     @Modifying
     @Transactional
-    @Query("UPDATE Candidate c SET c.status = :status, c.updatedAt = CURRENT_TIMESTAMP WHERE c.id = :id")
-    int updateStatusById(@Param("id") Long id, @Param("status") CandidateStatus status);
+    @Query(value = "UPDATE candidates SET status = CAST(:status AS candidate_status), updated_at = CURRENT_TIMESTAMP WHERE id = :id", nativeQuery = true)
+    int updateStatusById(@Param("id") Long id, @Param("status") String status);
 
     // === DELETE OPERATIONS ===
     

@@ -5,7 +5,10 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.validator.constraints.Length;
+import com.company.user.config.CandidateStatusConverter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -89,8 +92,8 @@ public class Candidate {
     private String interviewRound;
 
     @NotNull(message = "Candidate status is required")
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Convert(converter = CandidateStatusConverter.class)
+    @Column(nullable = false, columnDefinition = "candidate_status DEFAULT 'PENDING'")
     private CandidateStatus status;
 
     // === JOB DETAILS ===

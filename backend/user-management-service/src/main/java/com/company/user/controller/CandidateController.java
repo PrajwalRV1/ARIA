@@ -2,12 +2,16 @@ package com.company.user.controller;
 
 import com.company.user.dto.*;
 import com.company.user.model.CandidateStatus;
+import com.company.user.model.InterviewRoundType;
 import com.company.user.service.inter.CandidateService;
+
+import java.util.Arrays;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +34,7 @@ public class CandidateController {
      * - resume : file (optional)
      * - profilePic : file (optional)
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public CandidateResponse createCandidate(
@@ -42,6 +47,7 @@ public class CandidateController {
     /**
      * Upload resume only and attempt to parse key fields for prefill
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @PostMapping(value = "/upload-resume", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ParsedResumeResponse uploadResume(@RequestPart("resume") MultipartFile resume) {
         return candidateService.parseResume(resume);
@@ -50,6 +56,7 @@ public class CandidateController {
     /**
      * Update candidate - supports both JSON and multipart
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @RequestMapping(value = "/{id}", 
                    method = RequestMethod.PUT,
                    consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
@@ -95,6 +102,7 @@ public class CandidateController {
     /**
      * Fetch all candidates for recruiter dashboard
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CandidateResponse> getAllCandidates() {
         return candidateService.getAllCandidates();
@@ -103,6 +111,7 @@ public class CandidateController {
     /**
      * Fetch a single candidate by ID
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CandidateResponse> getCandidateById(@PathVariable Long id) {
         return candidateService.getCandidateById(id)
@@ -113,6 +122,7 @@ public class CandidateController {
     /**
      * Search candidates by name (partial match)
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CandidateResponse> searchCandidatesByName(@RequestParam(required = false) String name) {
         return candidateService.searchCandidatesByName(name);
@@ -121,6 +131,7 @@ public class CandidateController {
     /**
      * Get candidates filtered by status
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @GetMapping(value = "/by-status/{status}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CandidateResponse> getCandidatesByStatus(@PathVariable CandidateStatus status) {
         return candidateService.getCandidatesByStatus(status);
@@ -129,14 +140,27 @@ public class CandidateController {
     /**
      * Get candidates linked to a specific requisition
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @GetMapping(value = "/by-requisition/{reqId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CandidateResponse> getCandidatesByRequisitionId(@PathVariable String reqId) {
         return candidateService.getCandidatesByRequisitionId(reqId);
     }
 
     /**
+     * Get available interview round options for frontend dropdowns
+     */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
+    @GetMapping(value = "/interview-round-options", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<String> getInterviewRoundOptions() {
+        return Arrays.stream(InterviewRoundType.values())
+                .map(InterviewRoundType::getDisplayName)
+                .toList();
+    }
+
+    /**
      * Upload audio file for a candidate
      */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
     @PostMapping("/{id}/upload-audio")
     public ResponseEntity<AudioUploadResponse> uploadAudio(
             @PathVariable Long id,

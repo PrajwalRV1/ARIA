@@ -76,12 +76,12 @@ public class Candidate {
 
     @DecimalMin(value = "0.0", message = "Total experience cannot be negative")
     @DecimalMax(value = "50.0", message = "Total experience cannot exceed 50 years")
-    @Column(name = "total_experience", precision = 4, scale = 2)
+    @Column(name = "total_experience")
     private Double totalExperience;
 
     @DecimalMin(value = "0.0", message = "Relevant experience cannot be negative")
     @DecimalMax(value = "50.0", message = "Relevant experience cannot exceed 50 years")
-    @Column(name = "relevant_experience", precision = 4, scale = 2)
+    @Column(name = "relevant_experience")
     private Double relevantExperience;
 
     @Length(max = 100, message = "Interview round must not exceed 100 characters")

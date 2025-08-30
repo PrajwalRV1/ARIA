@@ -8,11 +8,13 @@ import com.company.user.repository.CandidateRepository;
 import com.company.user.service.inter.CandidateService;
 import com.company.user.service.inter.FileStorageService;
 import com.company.user.service.inter.ResumeParsingService;
+import com.company.user.util.TenantContextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -25,8 +27,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Comprehensive CandidateService implementation with robust business logic,
- * validation, error handling, and status transition management.
+ * ✅ SECURITY: Comprehensive CandidateService implementation with tenant isolation,
+ * robust business logic, validation, error handling, and status transition management.
+ * 
+ * CRITICAL SECURITY FEATURES:
+ * - Tenant-aware data access (prevents BOLA attacks)
+ * - User context validation and authorization
+ * - Secure data isolation between organizations
  */
 @Service
 @RequiredArgsConstructor
@@ -37,6 +44,7 @@ public class CandidateServiceImpl implements CandidateService {
     private final FileStorageService fileStorageService;
     private final Optional<ResumeParsingService> resumeParsingService;
     private final Optional<com.company.user.service.InterviewRoundService> interviewRoundService;
+    private final TenantContextUtil tenantContextUtil;
 
     // File type constants
     private static final Set<String> ALLOWED_RESUME_TYPES = Set.of(
@@ -91,7 +99,7 @@ public class CandidateServiceImpl implements CandidateService {
             FileUploadResult resumeResult = processResumeFile(resume);
             FileUploadResult profilePicResult = processProfilePicFile(profilePic);
             
-            // Build candidate entity
+            // ✅ SECURITY: Build candidate entity with tenant isolation
             Candidate candidate = buildCandidateFromRequest(request, resumeResult, profilePicResult);
             
             // Save candidate with PostgreSQL enum casting
@@ -173,8 +181,26 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional(readOnly = true)
     public List<CandidateResponse> getAllCandidates() {
-        log.debug("Fetching all candidates");
-        List<Candidate> candidates = candidateRepository.findAll();
+        log.debug("Fetching all candidates with tenant isolation");
+        
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        Long recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        log.debug("Fetching candidates for tenant: {} and recruiter: {}", tenantId, recruiterId);
+        
+        // Use tenant-aware repository method
+        List<Candidate> candidates;
+        if (recruiterId != null) {
+            // Recruiter-specific view: see only their candidates within their tenant
+            candidates = candidateRepository.findByTenantIdAndRecruiterIdOrderByCreatedAtDesc(tenantId, recruiterId.toString());
+        } else {
+            // Admin view: see all candidates within their tenant
+            candidates = candidateRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
+        }
+        
+        log.debug("Found {} candidates for tenant: {}", candidates.size(), tenantId);
+        
         return candidates.stream()
                 .map(CandidateResponse::from)
                 .collect(Collectors.toList());
@@ -191,13 +217,31 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional(readOnly = true)
     public Optional<CandidateResponse> getCandidateById(Long id) {
-        log.debug("Fetching candidate by ID: {}", id);
+        log.debug("Fetching candidate by ID: {} with tenant isolation", id);
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid candidate ID: " + id);
         }
         
-        return candidateRepository.findByIdWithSkills(id)
-                .map(CandidateResponse::from);
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        Long recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        // Use tenant-aware repository method
+        Optional<Candidate> candidate;
+        if (recruiterId != null) {
+            // Recruiter can only access their own candidates within their tenant
+            candidate = candidateRepository.findByIdAndTenantIdAndRecruiterId(id, tenantId, recruiterId.toString());
+        } else {
+            // Admin can access any candidate within their tenant
+            candidate = candidateRepository.findByIdAndTenantId(id, tenantId);
+        }
+        
+        if (candidate.isEmpty()) {
+            log.warn("Candidate ID: {} not found or access denied for tenant: {} and recruiter: {}", 
+                    id, tenantId, recruiterId);
+        }
+        
+        return candidate.map(CandidateResponse::from);
     }
 
     @Override
@@ -597,6 +641,18 @@ public class CandidateServiceImpl implements CandidateService {
     private Candidate buildCandidateFromRequest(CandidateCreateRequest request, 
                                                FileUploadResult resumeResult, 
                                                FileUploadResult profilePicResult) {
+        
+        // ✅ SECURITY: Extract tenant context for data isolation
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        Long currentUserId = tenantContextUtil.getCurrentRecruiterId();
+        
+        // Use recruiter from request or fall back to current user
+        String recruiterId = StringUtils.hasText(request.getRecruiterId()) 
+            ? request.getRecruiterId() 
+            : (currentUserId != null ? currentUserId.toString() : null);
+        
+        log.debug("Creating candidate for tenant: {} with recruiter: {}", tenantId, recruiterId);
+        
         return Candidate.builder()
                 .requisitionId(request.getRequisitionId())
                 .name(request.getName())
@@ -620,7 +676,11 @@ public class CandidateServiceImpl implements CandidateService {
                 .source(request.getSource())
                 .notes(request.getNotes())
                 .tags(request.getTags())
-                .recruiterId(request.getRecruiterId())
+                .recruiterId(recruiterId)
+                // ✅ SECURITY: Set tenant isolation fields
+                .tenantId(tenantId)
+                .createdBy(currentUserId != null ? currentUserId.toString() : "system")
+                .updatedBy(currentUserId != null ? currentUserId.toString() : "system")
                 .build();
     }
     

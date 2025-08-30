@@ -29,6 +29,9 @@ WORKDIR /app
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
+# Create proper index.html from index.csr.html for static serving
+RUN cp dist/frontend/browser/index.csr.html dist/frontend/browser/index.html || echo "No index.csr.html found"
+
 # Install only production dependencies needed for SSR
 RUN npm ci --only=production && npm cache clean --force
 

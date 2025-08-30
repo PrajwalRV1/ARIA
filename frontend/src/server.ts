@@ -38,6 +38,18 @@ app.use(
 );
 
 /**
+ * Handle root path specifically to serve the Angular app
+ */
+app.get('/', (req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) =>
+      response ? writeResponseToNodeResponse(response, res) : next(),
+    )
+    .catch(next);
+});
+
+/**
  * Handle all other requests by rendering the Angular application.
  */
 app.use('/**', (req, res, next) => {

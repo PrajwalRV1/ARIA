@@ -183,5 +183,29 @@ export class AuthService {
       payload
     );
   }
+
+  // Get current user's ID from JWT token for recruiter-specific operations
+  getCurrentUserId(): string | null {
+    if (isPlatformBrowser(this.platformId)) {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        const payload = this.decodeToken(token);
+        // Check common JWT fields for user ID
+        return payload?.sub || payload?.userId || payload?.id || payload?.recruiterId || null;
+      }
+    }
+    return null;
+  }
+
+  // Get current user info from JWT token
+  getCurrentUser(): any {
+    if (isPlatformBrowser(this.platformId)) {
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        return this.decodeToken(token);
+      }
+    }
+    return null;
+  }
 }
 

@@ -9,6 +9,7 @@ import { CandidateService } from '../../services/candidate.service';
 import { InterviewService, InterviewScheduleRequest } from '../../services/interview.service';
 import { SessionService } from '../../services/session.service';
 import { ToastService } from '../../services/toast.service';
+import { AuthService } from '../../services/auth.service';
 import { INTERVIEW_ROUNDS, CANDIDATE_STATUS, STATUS_LABELS, STATUS_CLASSES } from '../../constants/candidate.constants';
 
 interface CandidateCard {
@@ -52,7 +53,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     private candidateService: CandidateService,
     private interviewService: InterviewService,
     private sessionService: SessionService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private authService: AuthService
   ) { }
 
   ngOnInit() {
@@ -266,6 +268,10 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     
     console.log('Files - Resume:', resumeFile, 'ProfilePic:', profilePic);
 
+    // Get current recruiter ID from JWT token
+    const currentRecruiterId = this.authService.getCurrentUserId();
+    console.log('🔑 Current recruiter ID from token:', currentRecruiterId);
+    
     const candidateData = {
       id: this.popupMode === 'edit' && this.selectedCandidate ? this.selectedCandidate.id : null, // Include ID for updates
       requisitionId: payload.requisitionId,
@@ -285,7 +291,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       source: payload.source || null,
       notes: payload.notes || null,
       tags: payload.tags || null,
-      recruiterId: payload.recruiterId || null
+      recruiterId: currentRecruiterId || payload.recruiterId || null  // Use JWT recruiterId first
     };
     
     console.log('Prepared candidate data:', candidateData);

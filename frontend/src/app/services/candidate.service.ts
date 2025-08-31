@@ -154,9 +154,6 @@ export class CandidateService {
     console.log('  - Resume file:', resumeFile ? `${resumeFile.name} (${resumeFile.size} bytes, ${resumeFile.type})` : 'None');
     console.log('  - Profile pic:', profilePicture ? `${profilePicture.name} (${profilePicture.size} bytes, ${profilePicture.type})` : 'None');
     
-    // Clear cache after successful creation
-    this.invalidateCache();
-    
     try {
       const formData = new FormData();
       

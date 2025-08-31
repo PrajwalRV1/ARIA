@@ -5,7 +5,6 @@ import { Observable, throwError, of, BehaviorSubject } from 'rxjs';
 import { catchError, retry, tap, debounceTime, distinctUntilChanged, switchMap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { VALIDATION_MESSAGES } from '../constants/candidate.constants';
-import { PerformanceInterceptor } from '../interceptors/performance.interceptor';
 
 export interface Candidate {
   id?: number;
@@ -39,8 +38,7 @@ export class CandidateService {
 
   constructor(
     private http: HttpClient, 
-    @Inject(PLATFORM_ID) private platformId: Object,
-    private performanceInterceptor: PerformanceInterceptor
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   // Comprehensive error handling method
@@ -203,8 +201,6 @@ export class CandidateService {
         tap({
           next: (response) => {
             console.log('✅ HTTP POST successful! Response:', response);
-            // Clear performance cache after successful creation
-            this.performanceInterceptor.clearCache('/candidates');
           },
           error: (error) => {
             console.error('❌ HTTP POST failed! Error:', error);
@@ -361,7 +357,6 @@ export class CandidateService {
         tap(response => {
           // Clear cache after successful update
           this.invalidateCache();
-          this.performanceInterceptor.clearCache('/candidates');
           console.log('[PERFORMANCE] Cache cleared after candidate update');
         }),
         retry(1),
@@ -505,7 +500,6 @@ export class CandidateService {
 
   public clearAllCache(): void {
     this.invalidateCache();
-    this.performanceInterceptor.clearCache();
     console.log('[PERFORMANCE] All caches cleared');
   }
 }

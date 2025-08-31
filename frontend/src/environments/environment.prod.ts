@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://aria-user-management-v2.onrender.com/api/auth',
+  apiBaseUrl: 'https://aria-user-management-v2-uq1g.onrender.com/api/auth',
   
   // Performance optimizations for production
   performance: {

@@ -8,7 +8,6 @@ import {
   AbstractControl,
   ValidatorFn,
 } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { LoginRequest, RegisterRequest } from '../../models/auth.model';
@@ -17,7 +16,7 @@ import { LoginRequest, RegisterRequest } from '../../models/auth.model';
 @Component({
   selector: 'app-recruiter-register-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './recruiter-register-login.component.html',
   styleUrls: ['./recruiter-register-login.component.scss'],
 })

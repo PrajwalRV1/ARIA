@@ -9,7 +9,7 @@
     "build": "ng build --configuration production",
     "build:dev": "ng build --configuration development",
     "build:analyze": "ng build --configuration production --stats-json && npx webpack-bundle-analyzer dist/frontend/stats.json",
-    "build:optimized": "ng build --configuration production --aot --build-optimizer --vendor-chunk --common-chunk --optimization",
+    "build:optimized": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadless",

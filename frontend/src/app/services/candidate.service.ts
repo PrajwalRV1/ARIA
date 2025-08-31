@@ -426,6 +426,76 @@ export class CandidateService {
     return null; // No validation errors
   }
 
+  // Backend filtering endpoints for better performance
+  searchCandidatesByName(name: string): Observable<Candidate[]> {
+    if (!name || name.trim().length === 0) {
+      return this.getAllCandidates(); // Return all if no search term
+    }
+    
+    console.log('Searching candidates by name:', name);
+    
+    return this.http.get<Candidate[]>(`${this.baseUrl}/search`, {
+      headers: this.getAuthHeaders(),
+      params: { name: name.trim() }
+    }).pipe(
+      retry(1),
+      shareReplay(1),
+      catchError(this.handleError)
+    );
+  }
+  
+  getCandidatesByStatus(status: string): Observable<Candidate[]> {
+    if (!status || status.trim().length === 0) {
+      return this.getAllCandidates(); // Return all if no status filter
+    }
+    
+    console.log('Fetching candidates by status:', status);
+    
+    return this.http.get<Candidate[]>(`${this.baseUrl}/by-status/${encodeURIComponent(status)}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      retry(1),
+      shareReplay(1),
+      catchError(this.handleError)
+    );
+  }
+  
+  getCandidatesByRequisitionId(requisitionId: string): Observable<Candidate[]> {
+    if (!requisitionId || requisitionId.trim().length === 0) {
+      return this.getAllCandidates(); // Return all if no requisition filter
+    }
+    
+    console.log('Fetching candidates by requisition ID:', requisitionId);
+    
+    return this.http.get<Candidate[]>(`${this.baseUrl}/by-requisition/${encodeURIComponent(requisitionId)}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      retry(1),
+      shareReplay(1),
+      catchError(this.handleError)
+    );
+  }
+  
+  // Combined filtering method for advanced search
+  filterCandidates(filters: {
+    name?: string;
+    status?: string;
+    requisitionId?: string;
+  }): Observable<Candidate[]> {
+    // If multiple filters are provided, prioritize in this order: name > status > requisition
+    // For complex filtering, we could create a new backend endpoint, but for now use the most specific filter
+    
+    if (filters.name && filters.name.trim().length > 0) {
+      return this.searchCandidatesByName(filters.name);
+    } else if (filters.status && filters.status.trim().length > 0) {
+      return this.getCandidatesByStatus(filters.status);
+    } else if (filters.requisitionId && filters.requisitionId.trim().length > 0) {
+      return this.getCandidatesByRequisitionId(filters.requisitionId);
+    } else {
+      return this.getAllCandidates();
+    }
+  }
+
   // Performance optimization methods
   private invalidateCache(): void {
     this.candidatesCache$.next(null);

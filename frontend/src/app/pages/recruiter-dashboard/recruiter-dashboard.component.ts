@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AddCandidatePopupComponent } from '../../components/add-candidate-popup/add-candidate-popup.component';
 import { AudioUploadModalComponent } from '../../components/audio-upload-modal/audio-upload-modal.component';
+import { ToastComponent } from '../../components/toast/toast.component';
 import { Router } from '@angular/router';
 import { CandidateService } from '../../services/candidate.service';
 import { InterviewService, InterviewScheduleRequest } from '../../services/interview.service';
 import { SessionService } from '../../services/session.service';
+import { ToastService } from '../../services/toast.service';
 import { INTERVIEW_ROUNDS, CANDIDATE_STATUS, STATUS_LABELS, STATUS_CLASSES } from '../../constants/candidate.constants';
 
 interface CandidateCard {
@@ -40,7 +42,7 @@ export interface CandidateNavInfo {
 @Component({
   selector: 'app-recruiter-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, AddCandidatePopupComponent, AudioUploadModalComponent],
+  imports: [CommonModule, FormsModule, AddCandidatePopupComponent, AudioUploadModalComponent, ToastComponent],
   templateUrl: './recruiter-dashboard.component.html',
   styleUrls: ['./recruiter-dashboard.component.scss'],
 })
@@ -49,7 +51,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     private router: Router, 
     private candidateService: CandidateService,
     private interviewService: InterviewService,
-    private sessionService: SessionService
+    private sessionService: SessionService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit() {
@@ -67,73 +70,127 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   isLoading = false;
   isProcessing = false;
 
-  private loadDashboardData() {
+  private loadDashboardData(forceRefresh: boolean = false) {
     console.log('🔄 Starting loadDashboardData() - Dashboard refresh initiated');
     this.isLoading = true;
+    
+    // Clear cache if force refresh is requested
+    if (forceRefresh) {
+      console.log('📋 Force refresh requested - clearing all caches');
+      this.candidateService.clearAllCache();
+    }
+    
+    // Store current candidates for comparison
+    const previousCandidates = [...this.candidates];
+    const previousCount = previousCandidates.length;
     
     this.candidateService.getAllCandidates().subscribe({
       next: (candidates) => {
         console.log('📊 Backend response received - Raw candidates data:', candidates);
         console.log('📊 Number of candidates returned:', candidates.length);
         
-        // Log each candidate for detailed debugging
-        candidates.forEach((c, index) => {
-          console.log(`📋 Candidate ${index + 1}:`, {
-            id: c.id,
-            name: c.name,
-            appliedRole: c.appliedRole,
-            status: c.status,
-            email: c.email,
-            phone: c.phone
-          });
-        });
-        
-        // Store previous candidates count for comparison
-        const previousCount = this.candidates.length;
-        
         // Map backend candidates to card format with proper field mapping
-        this.candidates = candidates.map(c => ({
+        const newCandidates = candidates.map(c => ({
           id: c.id || 0,
           name: c.name || 'Unknown',
           jobTitle: c.appliedRole || 'N/A',
           experience: `${c.totalExperience || 0} yrs`,
           email: c.email || '',
-          phone: c.phone || '', // Properly mapped from backend
-          status: c.status || 'PENDING', // Ensure valid status
-          interviewRound: c.interviewRound || '', // Properly mapped interview round
+          phone: c.phone || '',
+          status: c.status || 'PENDING',
+          interviewRound: c.interviewRound || '',
           requisitionId: c.requisitionId || '',
           profilePictureUrl: c.profilePicUrl || '/assets/images/default-avatar.png',
           resumeUrl: c.resumeUrl || '',
-          active: false // Default to inactive
+          active: false // Reset selection state for all
         })) as CandidateCard[];
         
-        console.log('🎯 Mapped candidates to UI cards:', this.candidates);
-        console.log('📈 Candidate count: Previous =', previousCount, ', Current =', this.candidates.length);
+        // Preserve selection state if candidate still exists
+        const currentlySelected = previousCandidates.find(c => c.active);
+        if (currentlySelected) {
+          const stillExists = newCandidates.find(c => c.id === currentlySelected.id);
+          if (stillExists) {
+            stillExists.active = true;
+            this.selectedCandidateForInterview = stillExists;
+            console.log('🎯 Preserved selection for candidate:', stillExists.name);
+          } else {
+            this.selectedCandidateForInterview = null;
+            console.log('🚫 Previously selected candidate no longer exists - clearing selection');
+          }
+        }
         
-        if (this.candidates.length > previousCount) {
-          console.log('✅ NEW CANDIDATES DETECTED! Dashboard should refresh with new data.');
-        } else if (this.candidates.length === previousCount) {
-          console.log('📊 Same number of candidates - checking for updates in existing records.');
-        } else {
-          console.log('📉 Fewer candidates than before - some may have been removed.');
+        // Update the candidates array
+        this.candidates = newCandidates;
+        
+        // Analyze changes
+        const changeAnalysis = this.analyzeDataChanges(previousCandidates, newCandidates);
+        console.log('🔍 Change analysis:', changeAnalysis);
+        
+        // Show appropriate notifications for significant changes
+        if (changeAnalysis.newCandidates.length > 0 && !forceRefresh) {
+          this.toastService.showInfo('New Candidates', `${changeAnalysis.newCandidates.length} new candidate(s) added.`);
+        }
+        
+        if (changeAnalysis.updatedCandidates.length > 0 && !forceRefresh) {
+          console.log('🔄 Updated candidates detected:', changeAnalysis.updatedCandidates);
         }
         
         this.isLoading = false;
         console.log('🏁 Dashboard loading completed successfully');
         
-        // Force UI update to ensure dropdowns reflect latest values
+        // Update UI components after a short delay to ensure DOM is ready
         setTimeout(() => {
-          console.log('🔄 Updating dropdown values after dashboard refresh');
           this.updateDropdownValues();
+          this.applyCurrentFilters(); // Reapply any active filters
           console.log('✅ Dashboard refresh cycle completed - UI should now show latest data');
-        }, 100);
+        }, 50);
       },
       error: (err) => {
         console.error('❌ Error loading candidates in loadDashboardData():', err);
-        this.showErrorNotification('Failed to load candidates. Please refresh the page.');
         this.isLoading = false;
+        
+        // Provide more specific error messages based on error type
+        if (err.status === 0) {
+          this.toastService.showError('Network Error', 'Unable to connect to server. Please check your internet connection.', true);
+        } else if (err.status === 401) {
+          this.toastService.showError('Authentication Required', 'Please log in again to access candidates.', true);
+        } else if (err.status >= 500) {
+          this.toastService.showError('Server Error', 'Server is experiencing issues. Please try again later.', true);
+        } else {
+          this.toastService.showError('Failed to Load Candidates', err.user || 'Unable to fetch candidates. Please refresh the page.', true);
+        }
       }
     });
+  }
+  
+  // Method to analyze changes between old and new candidate data
+  private analyzeDataChanges(oldCandidates: CandidateCard[], newCandidates: CandidateCard[]) {
+    const newCandidateIds = new Set(newCandidates.map(c => c.id));
+    const oldCandidateIds = new Set(oldCandidates.map(c => c.id));
+    
+    return {
+      newCandidates: newCandidates.filter(c => !oldCandidateIds.has(c.id)),
+      removedCandidates: oldCandidates.filter(c => !newCandidateIds.has(c.id)),
+      updatedCandidates: newCandidates.filter(newCandidate => {
+        const oldCandidate = oldCandidates.find(c => c.id === newCandidate.id);
+        return oldCandidate && this.hasCandidateChanged(oldCandidate, newCandidate);
+      }),
+      totalBefore: oldCandidates.length,
+      totalAfter: newCandidates.length
+    };
+  }
+  
+  // Helper method to detect if a candidate has changed
+  private hasCandidateChanged(oldCandidate: CandidateCard, newCandidate: CandidateCard): boolean {
+    const fieldsToCompare = ['name', 'status', 'interviewRound', 'jobTitle', 'experience', 'requisitionId'];
+    return fieldsToCompare.some(field => oldCandidate[field] !== newCandidate[field]);
+  }
+  
+  // Method to refresh data with proper cache busting
+  public refreshDashboard(): void {
+    console.log('🔄 Manual refresh triggered');
+    this.toastService.showInfo('Refreshing...', 'Loading latest candidate data.');
+    this.loadDashboardData(true); // Force refresh
   }
 
   // Helper method to ensure dropdown values are synchronized with data
@@ -237,7 +294,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       // Update existing candidate
       this.candidateService.updateCandidate(this.selectedCandidate.id, candidateData, resumeFile, profilePic).subscribe({
         next: (response) => {
-          this.loadDashboardData();  // Refresh data
+          this.loadDashboardData(true);  // Force refresh after update
           this.closeAddCandidatePopup(); // Close popup after successful save
           this.addActivity(`Updated candidate ${candidateData.name}`, 'fas fa-user-edit');
         },
@@ -253,7 +310,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
             errorMessage = err.user;
           }
           
-          this.showErrorNotification(errorMessage);
+          this.toastService.showError('Update Failed', errorMessage, true);
           // Don't close popup on error so user can retry
         }
       });
@@ -271,16 +328,16 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           this.closeAddCandidatePopup();
           
           // Show success message
-          this.showSuccessNotification(`Candidate ${candidateData.name} added successfully!`);
+          this.toastService.showSuccess('Candidate Added!', `${candidateData.name} has been successfully added to the system.`);
           
           // Add activity log
           this.addActivity(`Added new candidate ${candidateData.name}`, 'fas fa-user-plus');
           
-          // Refresh dashboard data with a slight delay to ensure backend consistency
+          // Refresh dashboard data with proper cache invalidation
           console.log('🔄 Refreshing dashboard data after candidate creation...');
           setTimeout(() => {
-            this.loadDashboardData();
-          }, 500); // 500ms delay to ensure backend database is updated
+            this.loadDashboardData(true); // Force refresh after creation
+          }, 300); // Reduced delay for better UX
         },
         error: (err) => {
           console.error('❌ Error saving candidate:', err);
@@ -322,7 +379,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
             errorMessage = err.user;
           }
           
-          this.showErrorNotification(errorMessage);
+          this.toastService.showError('Creation Failed', errorMessage, true);
           // Don't close popup on error so user can retry
         }
       });
@@ -399,7 +456,27 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   }
 
   // ---------- Filter and Search ----------
-  // Removed duplicate filterCandidates at line 353, keeping the implementation at line 426
+  // Current active filters
+  private currentFilters = {
+    searchTerm: '',
+    statusFilter: '',
+    requisitionFilter: ''
+  };
+  
+  // Method to apply current filters (used after data refresh)
+  private applyCurrentFilters(): void {
+    // This method ensures filters remain active after data refresh
+    // Implementation would depend on how filtering UI is implemented
+    console.log('Applying current filters:', this.currentFilters);
+    
+    // If search term exists, filter the displayed candidates
+    if (this.currentFilters.searchTerm) {
+      this.filteredCandidates = this.filterCandidates(this.currentFilters.searchTerm);
+    } else {
+      this.filteredCandidates = [...this.candidates];
+    }
+  }
+  
   filterCandidates(searchTerm: string): CandidateCard[] {
     if (!searchTerm) return this.candidates;
 
@@ -410,6 +487,83 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       candidate.requisitionId?.toLowerCase().includes(term) ||
       candidate.status.toLowerCase().includes(term)
     );
+  }
+  
+  // Method to update search term and apply filter
+  onSearchChanged(searchTerm: string): void {
+    this.currentFilters.searchTerm = searchTerm;
+    this.searchTerm = searchTerm;
+    this.applyCurrentFilters();
+  }
+  
+  // Method to filter by status using backend API
+  onStatusFilterChanged(status: string): void {
+    this.currentFilters.statusFilter = status;
+    if (status && status !== 'ALL') {
+      this.isLoading = true;
+      this.candidateService.getCandidatesByStatus(status).subscribe({
+        next: (candidates) => {
+          this.candidates = candidates.map(c => ({
+            id: c.id || 0,
+            name: c.name || 'Unknown',
+            jobTitle: c.appliedRole || 'N/A',
+            experience: `${c.totalExperience || 0} yrs`,
+            email: c.email || '',
+            phone: c.phone || '',
+            status: c.status || 'PENDING',
+            interviewRound: c.interviewRound || '',
+            requisitionId: c.requisitionId || '',
+            profilePictureUrl: c.profilePicUrl || '/assets/images/default-avatar.png',
+            resumeUrl: c.resumeUrl || '',
+            active: false
+          })) as CandidateCard[];
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error filtering by status:', err);
+          this.toastService.showError('Filter Failed', 'Unable to filter candidates by status.');
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Reset to show all candidates
+      this.loadDashboardData();
+    }
+  }
+  
+  // Method to filter by requisition using backend API
+  onRequisitionFilterChanged(requisitionId: string): void {
+    this.currentFilters.requisitionFilter = requisitionId;
+    if (requisitionId && requisitionId !== 'ALL') {
+      this.isLoading = true;
+      this.candidateService.getCandidatesByRequisitionId(requisitionId).subscribe({
+        next: (candidates) => {
+          this.candidates = candidates.map(c => ({
+            id: c.id || 0,
+            name: c.name || 'Unknown',
+            jobTitle: c.appliedRole || 'N/A',
+            experience: `${c.totalExperience || 0} yrs`,
+            email: c.email || '',
+            phone: c.phone || '',
+            status: c.status || 'PENDING',
+            interviewRound: c.interviewRound || '',
+            requisitionId: c.requisitionId || '',
+            profilePictureUrl: c.profilePicUrl || '/assets/images/default-avatar.png',
+            resumeUrl: c.resumeUrl || '',
+            active: false
+          })) as CandidateCard[];
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error filtering by requisition:', err);
+          this.toastService.showError('Filter Failed', 'Unable to filter candidates by requisition ID.');
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Reset to show all candidates
+      this.loadDashboardData();
+    }
   }
 
   // ---------- Bulk Upload Simulation ----------
@@ -527,7 +681,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   // ---------- Schedule Interview Implementation ----------
   public scheduleInterview() {
     if (!this.selectedCandidateForInterview) {
-      this.showErrorNotification('Please select a candidate first before scheduling an interview.');
+      this.toastService.showWarning('No Candidate Selected', 'Please select a candidate first before scheduling an interview.');
       return;
     }
 
@@ -575,7 +729,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
 
   confirmScheduleForLater() {
     if (!this.selectedScheduleTime) {
-      this.showErrorNotification('Please select a date and time for the interview.');
+      this.toastService.showWarning('Missing Schedule Time', 'Please select a date and time for the interview.');
       return;
     }
 
@@ -586,7 +740,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     // Check if selected time is at least 5 minutes in the future
     const minimumFutureTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes from now
     if (scheduleDate <= minimumFutureTime) {
-      this.showErrorNotification('Please select a time at least 5 minutes in the future.');
+      this.toastService.showWarning('Invalid Schedule Time', 'Please select a time at least 5 minutes in the future.');
       return;
     }
 
@@ -630,7 +784,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     
     // Validate that we have a selected candidate
     if (!this.selectedCandidateForInterview) {
-      this.showErrorNotification('No candidate selected for interview scheduling.');
+      this.toastService.showError('No Candidate Selected', 'No candidate selected for interview scheduling.');
       this.isProcessing = false;
       return;
     }
@@ -707,7 +861,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('❌ Error scheduling interview:', err);
         this.isProcessing = false;
-        this.showErrorNotification('Failed to schedule interview. Please try again.');
+        this.toastService.showError('Scheduling Failed', 'Failed to schedule interview. Please try again.');
       }
     });
   }
@@ -796,7 +950,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       this.sendInterviewInvitations(sessionId, meetingLink, tokens);
     }).catch((error) => {
       console.error('❌ Failed to generate session tokens:', error);
-      this.showErrorNotification('Failed to send interview invitations. Please try again.');
+      this.toastService.showError('Token Generation Failed', 'Failed to generate session tokens. Please try again.', true);
     });
   }
 
@@ -904,8 +1058,9 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           `🎯 Interview invitations sent to ${candidate.name} and recruiter with secure access tokens`, 
           'fas fa-envelope-open-text'
         );
-        this.showSuccessNotification(
-          `Interview invitations sent! ${candidate.name} will receive an email with secure access link.`
+        this.toastService.showSuccess(
+          'Invitations Sent!', 
+          `Interview invitations sent to ${candidate.name} with secure access links.`
         );
       },
       error: (err) => {
@@ -914,8 +1069,10 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           'Failed to send interview invitations - manual sharing required', 
           'fas fa-exclamation-triangle'
         );
-        this.showErrorNotification(
-          'Failed to send email invitations. Please share the meeting links manually.'
+        this.toastService.showError(
+          'Invitation Failed',
+          'Failed to send email invitations. Please share the meeting links manually.',
+          true
         );
       }
     });
@@ -944,7 +1101,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   // Method to navigate to question bank with selected candidate details
   goToQuestionBank() {
     if (!this.selectedCandidateForInterview) {
-      this.showErrorNotification('Please select a candidate first before scheduling an interview.');
+      this.toastService.showWarning('No Candidate Selected', 'Please select a candidate first before scheduling an interview.');
       return;
     }
 
@@ -987,7 +1144,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     console.log('Selected candidate for interview:', card.name);
     
     // Show a brief success notification to confirm selection
-    this.showSuccessNotification(`${card.name} selected for interview scheduling`);
+    this.toastService.showInfo('Candidate Selected', `${card.name} selected for interview scheduling`);
   }
 
   getInitials(name: string): string {  // Stub for template
@@ -1092,7 +1249,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
             this.pendingUpdates.delete(card.id);
             
             // Show success feedback
-            this.showSuccessNotification(`${this.getFieldDisplayName(field)} updated successfully!`);
+            this.toastService.showSuccess('Updated!', `${this.getFieldDisplayName(field)} updated successfully for ${card.name}.`);
           },
           error: (err) => {
             console.error(`❌ Error updating ${field} for ${card.name}:`, err);
@@ -1102,7 +1259,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
             
             // Show user-friendly error message
             const errorMessage = this.getErrorMessage(err, field);
-            this.showErrorNotification(errorMessage);
+            this.toastService.showError('Update Failed', errorMessage);
             
             // Cleanup pending state
             this.pendingUpdates.delete(card.id);
@@ -1115,7 +1272,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         // Revert optimistic UI change on fetch error
         this.revertFieldChange(card, field, oldValue);
         
-        this.showErrorNotification('Failed to fetch latest candidate data. Please refresh and try again.');
+        this.toastService.showError('Fetch Failed', 'Failed to fetch latest candidate data. Please refresh and try again.');
         this.pendingUpdates.delete(card.id);
       }
     });
@@ -1180,41 +1337,6 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     return this.pendingUpdates.has(candidateId);
   }
   
-  // Simple error notification method (could be replaced with a proper toast/notification service)
-  private showErrorNotification(message: string) {
-    // For now, show in console and could be enhanced with a proper notification system
-    console.error('Error notification:', message);
-    alert(`❌ ${message}`); // Temporary solution - replace with proper toast notification
-  }
-
-  // Simple success notification method (could be replaced with a proper toast/notification service)
-  private showSuccessNotification(message: string) {
-    console.log('Success notification:', message);
-    // Show a brief success message - in a real app, this would be a toast notification
-    // For now, using a temporary approach
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #4CAF50;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 4px;
-      z-index: 10000;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      font-family: Arial, sans-serif;
-    `;
-    notification.innerHTML = `✅ ${message}`;
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 3 seconds
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification);
-      }
-    }, 3000);
-  }
 
   editDetails(card: CandidateCard) {  // Stub for template
     console.log('Editing details for:', card);
@@ -1294,7 +1416,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         }
         
         // Show success notification
-        this.showSuccessNotification('Phone screening audio uploaded successfully!');
+        this.toastService.showSuccess('Audio Uploaded!', `Phone screening audio for ${candidate.name} uploaded successfully!`);
         
         // Close the modal
         this.closeAudioUpload();
@@ -1303,7 +1425,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         console.error('❌ Error uploading audio:', err);
         
         // Show error notification
-        this.showErrorNotification('Failed to upload audio. Please try again.');
+        this.toastService.showError('Upload Failed', 'Failed to upload audio. Please try again.');
         
         // Reset upload state in the modal component (if it has this method)
         // Note: We'll need to add a reference to the modal component for this

@@ -52,12 +52,24 @@ export const environment = {
     mozillaTtsServiceBaseUrl: 'https://mozilla-tts-service-production.up.railway.app',
     mozillaTtsServiceWsUrl: 'wss://mozilla-tts-service-production.up.railway.app/ws',
     
+    // Voice Synthesis Service (Railway)
+    voiceSynthesisBaseUrl: 'https://voice-synthesis-service-production.up.railway.app',
+    voiceSynthesisWsUrl: 'wss://voice-synthesis-service-production.up.railway.app/ws',
+    
+    // Voice Isolation Service (Railway)
+    voiceIsolationBaseUrl: 'https://voice-isolation-service-production.up.railway.app',
+    voiceIsolationWsUrl: 'wss://voice-isolation-service-production.up.railway.app/ws',
+    
     // AI Avatar Configuration (Open-source)
     avatarConfig: {
       enableSpeechSynthesis: true,
       speechRate: 1.0,
       speechVolume: 0.9,
       preferredVoices: ['mozilla_tacotron2', 'mozilla_fast', 'pyttsx3'],
+      // Voice selection preferences
+      voiceGender: 'female', // preferred gender
+      voiceLanguage: 'en-US', // preferred language
+      voiceFallbackLanguage: 'en', // fallback language
       fallbackToSpeechAPI: true,
       enableVisualFeedback: true,
       sttEngine: 'vosk_large_en',

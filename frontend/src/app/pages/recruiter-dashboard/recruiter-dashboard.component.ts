@@ -1416,7 +1416,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         }
         
         // Show success notification
-        this.toastService.showSuccess('Audio Uploaded!', `Phone screening audio for ${candidate.name} uploaded successfully!`);
+        this.toastService.showSuccess('Audio Uploaded!', `Phone screening audio for ${candidate?.name ?? 'Unknown Candidate'} uploaded successfully!`);
         
         // Close the modal
         this.closeAudioUpload();

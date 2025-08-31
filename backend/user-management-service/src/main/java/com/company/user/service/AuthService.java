@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.time.Instant;
 import java.util.Map;
@@ -43,6 +45,7 @@ EnhancedJwtUtil jwtUtil,
     }
 
     @Transactional
+    @CacheEvict(value = "users", key = "#req.email", condition = "#req.email != null")
     public AuthResponse register(RegisterRequest req) {
         if (recruiterRepository.existsByEmail(req.email)) {
             throw new IllegalArgumentException("Email already registered");
@@ -72,7 +75,7 @@ EnhancedJwtUtil jwtUtil,
     }
 
     public AuthResponse login(LoginRequest req) {
-        var recruiter = recruiterRepository.findByEmail(req.email)
+        var recruiter = findRecruiterByEmailCached(req.email)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
 
         if (!passwordEncoder.matches(req.password, recruiter.getPasswordHash())) {
@@ -159,5 +162,13 @@ EnhancedJwtUtil jwtUtil,
         // This can be customized based on business requirements
         String domain = email.contains("@") ? email.substring(email.indexOf("@") + 1) : "default";
         return "tenant_" + Math.abs(domain.hashCode() % 1000);
+    }
+    
+    /**
+     * Cached method to find recruiter by email - improves login performance
+     */
+    @Cacheable(value = "users", key = "#email")
+    public java.util.Optional<Recruiter> findRecruiterByEmailCached(String email) {
+        return recruiterRepository.findByEmail(email);
     }
 }

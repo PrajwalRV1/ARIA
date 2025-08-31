@@ -1,10 +1,11 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError, retry, tap } from 'rxjs/operators';
+import { Observable, throwError, of, BehaviorSubject } from 'rxjs';
+import { catchError, retry, tap, debounceTime, distinctUntilChanged, switchMap, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { VALIDATION_MESSAGES } from '../constants/candidate.constants';
+import { PerformanceInterceptor } from '../interceptors/performance.interceptor';
 
 export interface Candidate {
   id?: number;
@@ -30,8 +31,17 @@ export interface Candidate {
 })
 export class CandidateService {
   private baseUrl = `${environment.apiBaseUrl}/candidates`; // Fixed: Removed duplicate /api
+  
+  // Performance optimization: Cache observables for frequent requests
+  private candidatesCache$ = new BehaviorSubject<Candidate[] | null>(null);
+  private cacheTimestamp = 0;
+  private readonly CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
-  constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(
+    private http: HttpClient, 
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private performanceInterceptor: PerformanceInterceptor
+  ) {}
 
   // Comprehensive error handling method
   private handleError = (error: HttpErrorResponse) => {
@@ -146,6 +156,9 @@ export class CandidateService {
     console.log('  - Resume file:', resumeFile ? `${resumeFile.name} (${resumeFile.size} bytes, ${resumeFile.type})` : 'None');
     console.log('  - Profile pic:', profilePicture ? `${profilePicture.name} (${profilePicture.size} bytes, ${profilePicture.type})` : 'None');
     
+    // Clear cache after successful creation
+    this.invalidateCache();
+    
     try {
       const formData = new FormData();
       
@@ -184,12 +197,14 @@ export class CandidateService {
         catchError(this.handleError)
       );
       
-      // Add tap operators to log request progress
+      // Add tap operators to log request progress and handle cache invalidation
       return request$.pipe(
         // Log when request starts
         tap({
           next: (response) => {
             console.log('✅ HTTP POST successful! Response:', response);
+            // Clear performance cache after successful creation
+            this.performanceInterceptor.clearCache('/candidates');
           },
           error: (error) => {
             console.error('❌ HTTP POST failed! Error:', error);
@@ -262,17 +277,37 @@ export class CandidateService {
 
   getAllCandidates(): Observable<Candidate[]> {
     if (isPlatformBrowser(this.platformId)) {
-      console.log('Fetching all candidates');
+      console.log('Fetching all candidates with performance optimization');
       
-      return this.http.get<Candidate[]>(`${this.baseUrl}`, {
-        headers: this.getAuthHeaders()
-      }).pipe(
-        retry(2), // Retry twice for GET requests
-        catchError(this.handleError)
-      );
+      // Check if cache is still valid
+      const now = Date.now();
+      if (this.candidatesCache$.value && (now - this.cacheTimestamp) < this.CACHE_DURATION) {
+        console.log('[PERFORMANCE] Using cached candidates data');
+        return this.candidatesCache$.asObservable().pipe(
+          switchMap(cached => cached ? of(cached) : this.fetchCandidates())
+        );
+      }
+      
+      return this.fetchCandidates();
     } else {
       return of([]);
     }
+  }
+  
+  private fetchCandidates(): Observable<Candidate[]> {
+    return this.http.get<Candidate[]>(`${this.baseUrl}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      tap(candidates => {
+        // Update cache
+        this.candidatesCache$.next(candidates);
+        this.cacheTimestamp = Date.now();
+        console.log('[PERFORMANCE] Updated candidates cache with', candidates.length, 'items');
+      }),
+      retry(2), // Retry twice for GET requests
+      shareReplay(1), // Share response among multiple subscribers
+      catchError(this.handleError)
+    );
   }
 
   getCandidateById(id: number): Observable<Candidate> {
@@ -323,6 +358,12 @@ export class CandidateService {
       return this.http.put(`${this.baseUrl}/${id}`, formData, {
         headers: this.getAuthHeaders()
       }).pipe(
+        tap(response => {
+          // Clear cache after successful update
+          this.invalidateCache();
+          this.performanceInterceptor.clearCache('/candidates');
+          console.log('[PERFORMANCE] Cache cleared after candidate update');
+        }),
         retry(1),
         catchError(this.handleError)
       );
@@ -383,5 +424,18 @@ export class CandidateService {
     }
     
     return null; // No validation errors
+  }
+
+  // Performance optimization methods
+  private invalidateCache(): void {
+    this.candidatesCache$.next(null);
+    this.cacheTimestamp = 0;
+    console.log('[PERFORMANCE] Local cache invalidated');
+  }
+
+  public clearAllCache(): void {
+    this.invalidateCache();
+    this.performanceInterceptor.clearCache();
+    console.log('[PERFORMANCE] All caches cleared');
   }
 }

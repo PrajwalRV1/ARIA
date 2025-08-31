@@ -1,6 +1,27 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://aria-user-management-v2-uq1g.onrender.com/api/auth',
+  apiBaseUrl: 'https://aria-user-management-v2.onrender.com/api/auth',
+  
+  // Performance optimizations for production
+  performance: {
+    enableCaching: true,
+    cacheMaxAge: 300000, // 5 minutes
+    enableCompression: true,
+    enableServiceWorker: false,
+    lazyLoadingEnabled: true,
+    preloadStrategy: 'NoPreloading', // Minimize initial bundle size
+    enableRequestDeduplication: true,
+    maxConcurrentRequests: 6
+  },
+  
+  // Feature flags for production
+  features: {
+    enableAnalytics: true,
+    enableErrorReporting: true,
+    enablePerformanceMonitoring: true,
+    debugMode: false,
+    enableConsoleLogging: false
+  },
   
   // Session Service Configuration (User Management Service)
   sessionServiceBaseUrl: 'https://aria-user-management-v2-uq1g.onrender.com/api/auth/api/user/sessions',
@@ -82,10 +103,20 @@ export const environment = {
     enableSecureCookies: true
   },
   
-  // Logging Configuration
+  // Logging Configuration - Optimized for production
   logging: {
     enableConsoleLogging: false,
     enableRemoteLogging: true,
-    logLevel: 'warn'
+    logLevel: 'error', // Only errors in production
+    enablePerformanceTiming: true,
+    maxLogEntries: 100 // Prevent memory leaks
+  },
+  
+  // CDN and Asset Optimization
+  assets: {
+    enableCDN: true,
+    cdnBaseUrl: 'https://cdn.aria.com',
+    staticAssetCaching: true,
+    compressionEnabled: true
   }
 };

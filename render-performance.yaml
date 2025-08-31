@@ -1,0 +1,224 @@
+# Render deployment configuration with performance optimizations
+services:
+  # Frontend service with optimized static serving
+  - type: static_site
+    name: aria-frontend-optimized
+    env: node
+    buildCommand: cd frontend && npm ci && npm run build:optimized
+    staticPublishPath: frontend/dist/frontend/browser
+    headers:
+      - path: "/*"
+        name: X-Frame-Options
+        value: DENY
+      - path: "/*"
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: "/*"
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: "/*"
+        name: Permissions-Policy
+        value: geolocation=(), microphone=(), camera=()
+      # Enable compression and caching for assets
+      - path: "/assets/*"
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: "/assets/*"
+        name: Content-Encoding
+        value: gzip
+      # Enable caching for JS and CSS files
+      - path: "/*.js"
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: "/*.css"
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      # Enable compression for main content
+      - path: "/index.html"
+        name: Cache-Control
+        value: no-cache, must-revalidate
+      - path: "/*"
+        name: Content-Encoding
+        value: gzip
+    routes:
+      - type: rewrite
+        source: "/*"
+        destination: /index.html
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BUILD_COMMAND
+        value: npm run build:optimized
+
+  # User Management Service - Optimized
+  - type: web
+    name: aria-user-management-v3
+    env: java
+    buildCommand: cd backend/user-management-service && mvn clean package -DskipTests -Dmaven.compiler.debug=false
+    startCommand: cd backend/user-management-service && java -Xms512m -Xmx1g -XX:+UseG1GC -XX:+UseStringDeduplication -Dspring.profiles.active=supabase -jar target/*.jar
+    healthCheckPath: /api/auth/actuator/health
+    disk:
+      name: user-mgmt-disk
+      size: 2GB
+      mountPath: /opt/render/project/temp
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: JAVA_OPTS
+        value: -Xms512m -Xmx1g -XX:+UseG1GC -XX:+UseStringDeduplication -Dserver.compression.enabled=true -Dserver.http2.enabled=true
+      - key: SPRING_PROFILES_ACTIVE
+        value: supabase
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false  
+      - key: DB_PASSWORD
+        sync: false
+      - key: SPRING_REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://aria-frontend-optimized.onrender.com
+
+  # Interview Orchestrator Service - Optimized  
+  - type: web
+    name: aria-interview-orchestrator-v3
+    env: java
+    buildCommand: cd backend/interview-orchestrator-service && mvn clean package -DskipTests -Dmaven.compiler.debug=false
+    startCommand: cd backend/interview-orchestrator-service && java -Xms512m -Xmx1g -XX:+UseG1GC -XX:+UseStringDeduplication -Dspring.profiles.active=supabase -jar target/*.jar
+    healthCheckPath: /api/interview/actuator/health
+    disk:
+      name: orchestrator-disk
+      size: 2GB
+      mountPath: /opt/render/project/temp
+    envVars:
+      - key: PORT
+        value: 10001
+      - key: JAVA_OPTS
+        value: -Xms512m -Xmx1g -XX:+UseG1GC -XX:+UseStringDeduplication -Dserver.compression.enabled=true -Dserver.http2.enabled=true
+      - key: SPRING_PROFILES_ACTIVE
+        value: supabase
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: UPSTASH_REDIS_HOST
+        sync: false
+      - key: UPSTASH_REDIS_PORT
+        sync: false
+      - key: UPSTASH_REDIS_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: USER_MGMT_URL
+        value: https://aria-user-management-v3.onrender.com
+      - key: CORS_ORIGINS
+        value: https://aria-frontend-optimized.onrender.com
+
+  # AI Analytics Service (Python/FastAPI) - Optimized
+  - type: web
+    name: aria-analytics-service-v2  
+    env: python
+    buildCommand: cd ai-services/analytics-service && pip install -r requirements.txt
+    startCommand: cd ai-services/analytics-service && gunicorn -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:10002 --timeout 120 --keep-alive 5 --max-requests 1000 --preload main:app
+    healthCheckPath: /health
+    disk:
+      name: analytics-disk
+      size: 1GB
+      mountPath: /opt/render/project/temp
+    envVars:
+      - key: PORT
+        value: 10002
+      - key: PYTHONPATH
+        value: /opt/render/project/src/ai-services/analytics-service
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: TIMEOUT
+        value: 120
+
+  # Speech Service (Python/FastAPI) - Optimized
+  - type: web
+    name: aria-speech-service-v2
+    env: python  
+    buildCommand: cd speech-service && pip install -r requirements.txt
+    startCommand: cd speech-service && gunicorn -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:10003 --timeout 120 --keep-alive 5 --max-requests 1000 --preload main_simple:app
+    healthCheckPath: /health
+    disk:
+      name: speech-disk
+      size: 2GB
+      mountPath: /opt/render/project/temp
+    envVars:
+      - key: PORT
+        value: 10003
+      - key: PYTHONPATH
+        value: /opt/render/project/src/speech-service
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: TIMEOUT
+        value: 120
+
+  # Adaptive Engine Service (Python/FastAPI) - Optimized
+  - type: web
+    name: aria-adaptive-engine-v2
+    env: python
+    buildCommand: cd adaptive-engine && pip install -r requirements.txt  
+    startCommand: cd adaptive-engine && gunicorn -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:10004 --timeout 120 --keep-alive 5 --max-requests 1000 --preload main:app
+    healthCheckPath: /health
+    disk:
+      name: adaptive-disk
+      size: 1GB
+      mountPath: /opt/render/project/temp
+    envVars:
+      - key: PORT
+        value: 10004
+      - key: PYTHONPATH
+        value: /opt/render/project/src/adaptive-engine
+      - key: WEB_CONCURRENCY
+        value: 2
+      - key: TIMEOUT
+        value: 120
+
+# Database configuration
+databases:
+  - name: aria-postgres
+    databaseName: aria_production
+    user: aria_user
+    plan: free
+
+# Environment groups for shared configuration
+envVarGroups:
+  - name: database-config
+    envVars:
+      - key: DATABASE_URL
+        generateValue: true
+      - key: DB_USERNAME  
+        generateValue: true
+      - key: DB_PASSWORD
+        generateValue: true
+
+  - name: redis-config
+    envVars:
+      - key: SPRING_REDIS_URL
+        value: rediss://default:password@host:6379
+      - key: UPSTASH_REDIS_HOST
+        sync: false
+      - key: UPSTASH_REDIS_PORT
+        value: 6379
+      - key: UPSTASH_REDIS_PASSWORD
+        sync: false
+
+  - name: security-config
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false

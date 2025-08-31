@@ -11,6 +11,7 @@ import com.company.user.service.inter.ResumeParsingService;
 import com.company.user.util.TenantContextUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -106,6 +107,9 @@ public class CandidateServiceImpl implements CandidateService {
             Candidate savedCandidate = candidateRepository.saveWithEnumCasting(candidate);
             log.info("Successfully created candidate with ID: {}", savedCandidate.getId());
             
+            // Clear related caches after creation
+            clearCandidateCaches(savedCandidate.getTenantId(), savedCandidate.getRecruiterId());
+            
             return CandidateResponse.from(savedCandidate);
             
         } catch (Exception e) {
@@ -165,6 +169,11 @@ public class CandidateServiceImpl implements CandidateService {
             Candidate savedCandidate = candidateRepository.updateWithEnumCasting(existingCandidate);
             log.info("Successfully updated candidate with ID: {}", savedCandidate.getId());
             
+            // Clear related caches after update
+            clearCandidateCaches(savedCandidate.getTenantId(), savedCandidate.getRecruiterId());
+            // Also clear individual candidate cache
+            clearCandidateCache(savedCandidate.getId(), savedCandidate.getTenantId());
+            
             return CandidateResponse.from(savedCandidate);
             
         } catch (Exception e) {
@@ -180,6 +189,7 @@ public class CandidateServiceImpl implements CandidateService {
     
     @Override
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "candidateList", key = "#root.target.tenantContextUtil.getCurrentTenantId() + '_' + #root.target.tenantContextUtil.getCurrentRecruiterId()")
     public List<CandidateResponse> getAllCandidates() {
         log.info("[DEBUG] Fetching all candidates with tenant isolation");
         
@@ -243,6 +253,7 @@ public class CandidateServiceImpl implements CandidateService {
 
     @Override
     @Transactional(readOnly = true)
+    @org.springframework.cache.annotation.Cacheable(value = "candidates", key = "#id + '_' + #root.target.tenantContextUtil.getCurrentTenantId()")
     public Optional<CandidateResponse> getCandidateById(Long id) {
         log.debug("Fetching candidate by ID: {} with tenant isolation", id);
         if (id == null || id <= 0) {
@@ -817,6 +828,24 @@ public class CandidateServiceImpl implements CandidateService {
             },
             () -> log.warn("InterviewRoundService not available for round initialization")
         );
+    }
+
+    // === CACHE MANAGEMENT METHODS ===
+    
+    /**
+     * Clear candidate list caches for a specific tenant and recruiter
+     */
+    @CacheEvict(value = "candidateList", key = "#tenantId + '_' + #recruiterId")
+    private void clearCandidateCaches(String tenantId, String recruiterId) {
+        log.debug("Clearing candidate list cache for tenant: {} and recruiter: {}", tenantId, recruiterId);
+    }
+    
+    /**
+     * Clear individual candidate cache
+     */
+    @CacheEvict(value = "candidates", key = "#candidateId + '_' + #tenantId")
+    private void clearCandidateCache(Long candidateId, String tenantId) {
+        log.debug("Clearing individual candidate cache for ID: {} and tenant: {}", candidateId, tenantId);
     }
 
     // === HELPER CLASSES ===

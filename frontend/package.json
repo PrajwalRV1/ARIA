@@ -6,10 +6,17 @@
     "start": "ng serve --ssl --port 4200 --host 0.0.0.0",
     "start:http": "ng serve --port 4200",
     "start:dev": "ng serve --ssl --port 4200 --host localhost",
-    "build": "ng build",
+    "build": "ng build --configuration production",
+    "build:dev": "ng build --configuration development",
+    "build:analyze": "ng build --configuration production --stats-json && npx webpack-bundle-analyzer dist/frontend/stats.json",
+    "build:optimized": "ng build --configuration production --aot --build-optimizer --vendor-chunk --common-chunk --optimization",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "lint": "ng lint",
+    "serve:ssr:frontend": "node dist/frontend/server/server.mjs",
+    "preload": "ng run frontend:prerender",
+    "analyze": "npm run build:analyze"
   },
   "private": true,
   "dependencies": {

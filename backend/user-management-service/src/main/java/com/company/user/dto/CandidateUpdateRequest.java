@@ -38,14 +38,14 @@ public class CandidateUpdateRequest {
     private String email;
     
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^[+]?[0-9]{10,15}$", message = "Phone number must be 10-15 digits")
+    @Pattern(regexp = "^[+]?[0-9\s\-\(\)]{10,20}$", message = "Phone number must be 10-20 characters with digits, spaces, hyphens, or parentheses")
     private String phone;
     
     @Length(max = 255, message = "Applied role must not exceed 255 characters")
     private String appliedRole;
     
     @PastOrPresent(message = "Application date cannot be in the future")
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd", lenient = true)
     private LocalDate applicationDate;
     
     @DecimalMin(value = "0.0", message = "Total experience cannot be negative")

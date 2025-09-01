@@ -118,13 +118,17 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
     
     /**
      * Find candidates by name (case-insensitive partial match)
+     * @deprecated Use findByNameContainingIgnoreCaseAndTenantAndRecruiter or findByNameContainingIgnoreCaseAndTenant instead
      */
+    @Deprecated
     @Query("SELECT c FROM Candidate c WHERE LOWER(c.name) LIKE LOWER(CONCAT('%', :name, '%')) ORDER BY c.createdAt DESC")
     List<Candidate> findByNameContainingIgnoreCase(@Param("name") String name);
     
     /**
      * Find candidates by status
+     * @deprecated Use findByStatusAndTenantAndRecruiter or findByStatusAndTenant instead
      */
+    @Deprecated
     List<Candidate> findByStatusOrderByCreatedAtDesc(CandidateStatus status);
     
     /**
@@ -149,7 +153,9 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
     
     /**
      * Find candidates by requisition ID
+     * @deprecated Use findByRequisitionIdAndTenantAndRecruiter or findByRequisitionIdAndTenant instead
      */
+    @Deprecated
     List<Candidate> findByRequisitionIdOrderByCreatedAtDesc(String requisitionId);
     
     /**
@@ -168,7 +174,9 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
     
     /**
      * Find candidates by recruiter ID
+     * @deprecated Use findByTenantIdAndRecruiterIdOrderByCreatedAtDesc instead
      */
+    @Deprecated
     List<Candidate> findByRecruiterIdOrderByCreatedAtDesc(String recruiterId);
     
     /**
@@ -199,7 +207,9 @@ public interface CandidateRepository extends JpaRepository<Candidate, Long>, Can
     
     /**
      * Global search across multiple fields
+     * @deprecated Use globalSearchWithTenantAndRecruiter or globalSearchWithTenant instead
      */
+    @Deprecated
     @Query("SELECT c FROM Candidate c WHERE " +
            "LOWER(c.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(c.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +

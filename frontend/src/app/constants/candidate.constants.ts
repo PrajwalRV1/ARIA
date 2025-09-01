@@ -1,12 +1,12 @@
 // Shared constants for candidate-related dropdown options
 // This ensures consistency across the application and backend integration
 
-// Interview rounds as strings (backend uses String field, not enum)
+// Interview rounds as strings - MUST match backend InterviewRoundType.getDisplayName() exactly
 export const INTERVIEW_ROUNDS = [
   'Screening',
   'Technical - T1', 
   'Technical - T2',
-  'HR Round',
+  'HR - Round',        // Fixed: Backend uses 'HR - Round' not 'HR Round'
   'Managerial Round'
 ];
 

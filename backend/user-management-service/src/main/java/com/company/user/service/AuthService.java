@@ -157,10 +157,6 @@ EnhancedJwtUtil jwtUtil,
             return "tenant_" + UUID.randomUUID().toString().substring(0, 8);
         }
         
-        // For the specific recruiter email that has existing data, use tenant_456
-        if ("ciwojeg982@lanipe.com".equals(email.trim())) {
-            return "tenant_456";
-        }
         
         // Generate unique tenant ID based on UUID + email domain
         String domain = email.contains("@") ? email.substring(email.indexOf("@") + 1) : "default";
@@ -179,10 +175,6 @@ EnhancedJwtUtil jwtUtil,
             return "default";
         }
         
-        // For the specific recruiter email that has existing data, use tenant_456
-        if ("ciwojeg982@lanipe.com".equals(email.trim())) {
-            return "tenant_456";
-        }
         
         // For other emails, derive tenant from email domain or use default
         // This can be customized based on business requirements

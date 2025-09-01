@@ -3,6 +3,8 @@ package com.company.user.util;
 import com.company.user.security.EnhancedJwtUtil;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,9 +20,10 @@ import java.util.function.Function;
  * Provides secure methods to get tenant isolation data from JWT tokens without OAuth2 dependencies.
  */
 @Component
-@Slf4j
+// @Slf4j - Temporarily disabled due to compilation issues
 public class TenantContextUtil {
     
+    private static final Logger log = LoggerFactory.getLogger(TenantContextUtil.class);
     private final EnhancedJwtUtil jwtUtil;
     
     private static final String DEFAULT_TENANT = "default";
@@ -50,14 +53,6 @@ public class TenantContextUtil {
                 return tenantId;
             }
             
-            // EMERGENCY FIX: If tenant extraction fails, use recruiter-based mapping
-            String recruiterId = getCurrentRecruiterId();
-            log.info("[DEBUG] Recruiter ID for tenant mapping: '{}'", recruiterId);
-            
-            if ("ciwojeg982@lanipe.com".equals(recruiterId)) {
-                log.info("[EMERGENCY_FIX] Using hardcoded tenant mapping: tenant_456");
-                return "tenant_456";
-            }
             
             // Fallback: try security context
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

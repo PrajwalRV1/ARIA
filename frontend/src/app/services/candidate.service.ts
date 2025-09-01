@@ -11,7 +11,7 @@ export interface Candidate {
   requisitionId: string;
   name: string;
   email: string;
-  phone: string;  // Fixed: Changed from phoneNumber to phone to match backend
+  phone: string;  // Backend expects 'phone' field
   appliedRole: string;
   applicationDate: string;
   totalExperience: number;
@@ -21,7 +21,7 @@ export interface Candidate {
   jobDescription: string;
   keyResponsibilities?: string;
   skills?: string[];
-  profilePicUrl?: string; // Fixed: Match backend field name (removed 'ture' typo)
+  profilePicUrl?: string; // Backend field name
   resumeUrl?: string;
 }
 

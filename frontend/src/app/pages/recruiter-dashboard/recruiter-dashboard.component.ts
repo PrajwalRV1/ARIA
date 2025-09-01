@@ -130,7 +130,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         const newCandidates = candidates.map(c => ({
           id: c.id || 0,
           name: c.name || 'Unknown',
-          jobTitle: c.appliedRole || 'N/A',
+          jobTitle: c.appliedRole || 'N/A', // Frontend uses jobTitle, backend uses appliedRole
+          appliedRole: c.appliedRole || 'N/A', // Keep both for consistency
           experience: `${c.totalExperience || 0} yrs`,
           email: c.email || '',
           phone: c.phone || '',
@@ -550,7 +551,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           this.candidates = candidates.map(c => ({
             id: c.id || 0,
             name: c.name || 'Unknown',
-            jobTitle: c.appliedRole || 'N/A',
+            jobTitle: c.appliedRole || 'N/A', // Frontend uses jobTitle, backend uses appliedRole
+            appliedRole: c.appliedRole || 'N/A', // Keep both for consistency
             experience: `${c.totalExperience || 0} yrs`,
             email: c.email || '',
             phone: c.phone || '',
@@ -585,7 +587,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           this.candidates = candidates.map(c => ({
             id: c.id || 0,
             name: c.name || 'Unknown',
-            jobTitle: c.appliedRole || 'N/A',
+            jobTitle: c.appliedRole || 'N/A', // Frontend uses jobTitle, backend uses appliedRole
+            appliedRole: c.appliedRole || 'N/A', // Keep both for consistency
             experience: `${c.totalExperience || 0} yrs`,
             email: c.email || '',
             phone: c.phone || '',

@@ -209,7 +209,10 @@ public class CandidateServiceImpl implements CandidateService {
     
     @Override
     @Transactional(readOnly = true)
-    @org.springframework.cache.annotation.Cacheable(value = "candidateList", key = "#root.target.tenantContextUtil.getCurrentTenantId() + '_' + #root.target.tenantContextUtil.getCurrentRecruiterId()")
+    @org.springframework.cache.annotation.Cacheable(
+        value = "candidateList", 
+        key = "T{#root.target.tenantContextUtil.getCurrentTenantId()}.concat('_R').concat(T{#root.target.tenantContextUtil.getCurrentRecruiterId()?.toString() ?: 'ADMIN'})"
+    )
     public List<CandidateResponse> getAllCandidates() {
         log.info("[DEBUG] Fetching all candidates with tenant isolation");
         
@@ -273,7 +276,10 @@ public class CandidateServiceImpl implements CandidateService {
 
     @Override
     @Transactional(readOnly = true)
-    @org.springframework.cache.annotation.Cacheable(value = "candidates", key = "#id + '_' + #root.target.tenantContextUtil.getCurrentTenantId()")
+    @org.springframework.cache.annotation.Cacheable(
+        value = "candidates", 
+        key = "'C'.concat(#id.toString()).concat('_T').concat(#root.target.tenantContextUtil.getCurrentTenantId())"
+    )
     public Optional<CandidateResponse> getCandidateById(Long id) {
         log.debug("Fetching candidate by ID: {} with tenant isolation", id);
         if (id == null || id <= 0) {
@@ -310,7 +316,22 @@ public class CandidateServiceImpl implements CandidateService {
             return getAllCandidates();
         }
         
-        List<Candidate> candidates = candidateRepository.findByNameContainingIgnoreCase(name.trim());
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        // Use tenant-aware repository method
+        List<Candidate> candidates;
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+            // Recruiter-specific search within their tenant
+            candidates = candidateRepository.findByNameContainingIgnoreCaseAndTenantAndRecruiter(
+                name.trim(), tenantId, recruiterId);
+        } else {
+            // Admin search within their tenant
+            candidates = candidateRepository.findByNameContainingIgnoreCaseAndTenant(
+                name.trim(), tenantId);
+        }
+        
         return candidates.stream()
                 .map(CandidateResponse::from)
                 .collect(Collectors.toList());
@@ -324,7 +345,22 @@ public class CandidateServiceImpl implements CandidateService {
             return getAllCandidates();
         }
         
-        List<Candidate> candidates = candidateRepository.globalSearch(searchTerm.trim());
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        // Use tenant-aware repository method
+        List<Candidate> candidates;
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+            // Recruiter-specific search within their tenant
+            candidates = candidateRepository.globalSearchWithTenantAndRecruiter(
+                searchTerm.trim(), tenantId, recruiterId);
+        } else {
+            // Admin search within their tenant
+            candidates = candidateRepository.globalSearchWithTenant(
+                searchTerm.trim(), tenantId);
+        }
+        
         return candidates.stream()
                 .map(CandidateResponse::from)
                 .collect(Collectors.toList());
@@ -338,7 +374,22 @@ public class CandidateServiceImpl implements CandidateService {
             return getAllCandidates();
         }
         
-        List<Candidate> candidates = candidateRepository.findByStatusOrderByCreatedAtDesc(status);
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        // Use tenant-aware repository method
+        List<Candidate> candidates;
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+            // Recruiter-specific filtering within their tenant
+            candidates = candidateRepository.findByStatusAndTenantAndRecruiter(
+                status, tenantId, recruiterId);
+        } else {
+            // Admin filtering within their tenant
+            candidates = candidateRepository.findByStatusAndTenant(
+                status, tenantId);
+        }
+        
         return candidates.stream()
                 .map(CandidateResponse::from)
                 .collect(Collectors.toList());
@@ -352,7 +403,22 @@ public class CandidateServiceImpl implements CandidateService {
             return new ArrayList<>();
         }
         
-        List<Candidate> candidates = candidateRepository.findByRequisitionIdOrderByCreatedAtDesc(requisitionId.trim());
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        // Use tenant-aware repository method
+        List<Candidate> candidates;
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+            // Recruiter-specific filtering within their tenant
+            candidates = candidateRepository.findByRequisitionIdAndTenantAndRecruiter(
+                requisitionId.trim(), tenantId, recruiterId);
+        } else {
+            // Admin filtering within their tenant
+            candidates = candidateRepository.findByRequisitionIdAndTenant(
+                requisitionId.trim(), tenantId);
+        }
+        
         return candidates.stream()
                 .map(CandidateResponse::from)
                 .collect(Collectors.toList());
@@ -366,7 +432,22 @@ public class CandidateServiceImpl implements CandidateService {
             return new ArrayList<>();
         }
         
-        List<Candidate> candidates = candidateRepository.findByRecruiterIdOrderByCreatedAtDesc(recruiterId.trim());
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        String currentRecruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        // Security check: ensure current recruiter can only access their own candidates
+        if (currentRecruiterId != null && !currentRecruiterId.trim().isEmpty()) {
+            if (!currentRecruiterId.equals(recruiterId)) {
+                throw new AccessDeniedException(
+                    "Access denied: Recruiters can only access their own candidates");
+            }
+        }
+        
+        // Use tenant-aware repository method
+        List<Candidate> candidates = candidateRepository.findByTenantIdAndRecruiterIdOrderByCreatedAtDesc(
+            tenantId, recruiterId.trim());
+        
         return candidates.stream()
                 .map(CandidateResponse::from)
                 .collect(Collectors.toList());
@@ -458,11 +539,24 @@ public class CandidateServiceImpl implements CandidateService {
             throw new IllegalArgumentException("Audio file cannot be empty");
         }
         
-        // Find candidate
-        Candidate candidate = candidateRepository.findById(candidateId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                    String.format("Candidate with ID %d not found", candidateId)
-                ));
+        // ✅ SECURITY: Find candidate with tenant isolation
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        Candidate candidate;
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+            // Recruiter can only upload audio for their own candidates
+            candidate = candidateRepository.findByIdAndTenantIdAndRecruiterId(candidateId, tenantId, recruiterId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        String.format("Candidate with ID %d not found or access denied", candidateId)
+                    ));
+        } else {
+            // Admin can upload audio for any candidate in their tenant
+            candidate = candidateRepository.findByIdAndTenantId(candidateId, tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        String.format("Candidate with ID %d not found in tenant %s", candidateId, tenantId)
+                    ));
+        }
         
         // Validate audio file
         validateAudioFile(audioFile);
@@ -728,12 +822,31 @@ public class CandidateServiceImpl implements CandidateService {
         String tenantId = tenantContextUtil.getCurrentTenantId();
         String currentUserEmail = tenantContextUtil.getCurrentRecruiterId();
         
-        // Use recruiter from request or fall back to current user email
-        String recruiterId = StringUtils.hasText(request.getRecruiterId()) 
-            ? request.getRecruiterId() 
-            : currentUserEmail;
+        // ✅ SECURITY: Validate tenant context
+        if (tenantId == null || tenantId.trim().isEmpty() || "default".equals(tenantId)) {
+            throw new IllegalArgumentException(
+                "Invalid tenant context. Please ensure you are properly authenticated.");
+        }
         
-        log.debug("Creating candidate for tenant: {} with recruiter: {}", tenantId, recruiterId);
+        // ✅ SECURITY: Validate recruiter context and assignment
+        String recruiterId;
+        if (StringUtils.hasText(request.getRecruiterId())) {
+            // If recruiter ID provided in request, validate it matches current user (prevent privilege escalation)
+            if (currentUserEmail != null && !currentUserEmail.equals(request.getRecruiterId())) {
+                throw new AccessDeniedException(
+                    "Access denied: You can only create candidates under your own recruiter ID");
+            }
+            recruiterId = request.getRecruiterId();
+        } else {
+            // Use current user's email from JWT token
+            if (currentUserEmail == null || currentUserEmail.trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Unable to determine recruiter context. Please ensure you are properly authenticated.");
+            }
+            recruiterId = currentUserEmail;
+        }
+        
+        log.debug("Creating candidate for tenant: {} with validated recruiter: {}", tenantId, recruiterId);
         
         return Candidate.builder()
                 .requisitionId(request.getRequisitionId())
@@ -770,6 +883,19 @@ public class CandidateServiceImpl implements CandidateService {
                                           CandidateUpdateRequest request,
                                           FileUploadResult resumeResult, 
                                           FileUploadResult profilePicResult) {
+        
+        // ✅ SECURITY: Validate recruiter context for updates
+        String currentUserEmail = tenantContextUtil.getCurrentRecruiterId();
+        
+        // If recruiter ID is being changed, validate it
+        if (StringUtils.hasText(request.getRecruiterId()) && 
+            !request.getRecruiterId().equals(candidate.getRecruiterId())) {
+            // Only allow if current user matches the new recruiter ID (prevent unauthorized transfers)
+            if (currentUserEmail == null || !currentUserEmail.equals(request.getRecruiterId())) {
+                throw new AccessDeniedException(
+                    "Access denied: You cannot transfer candidates to another recruiter");
+            }
+        }
         candidate.setRequisitionId(request.getRequisitionId());
         candidate.setName(request.getName());
         candidate.setEmail(request.getEmail());
@@ -786,7 +912,13 @@ public class CandidateServiceImpl implements CandidateService {
         candidate.setSource(request.getSource());
         candidate.setNotes(request.getNotes());
         candidate.setTags(request.getTags());
-        candidate.setRecruiterId(request.getRecruiterId());
+        // Only update recruiter ID if validation passed above
+        if (StringUtils.hasText(request.getRecruiterId())) {
+            candidate.setRecruiterId(request.getRecruiterId());
+        }
+        
+        // Update audit field
+        candidate.setUpdatedBy(currentUserEmail != null ? currentUserEmail : "system");
         
         // Update files if provided
         if (resumeResult.url != null) {
@@ -879,7 +1011,10 @@ public class CandidateServiceImpl implements CandidateService {
     /**
      * Clear candidate list caches for a specific tenant and recruiter
      */
-    @CacheEvict(value = "candidateList", key = "#tenantId + '_' + #recruiterId")
+    @CacheEvict(
+        value = "candidateList", 
+        key = "#tenantId.concat('_R').concat(#recruiterId != null ? #recruiterId : 'ADMIN')"
+    )
     private void clearCandidateCaches(String tenantId, String recruiterId) {
         log.debug("Clearing candidate list cache for tenant: {} and recruiter: {}", tenantId, recruiterId);
     }
@@ -887,7 +1022,10 @@ public class CandidateServiceImpl implements CandidateService {
     /**
      * Clear individual candidate cache
      */
-    @CacheEvict(value = "candidates", key = "#candidateId + '_' + #tenantId")
+    @CacheEvict(
+        value = "candidates", 
+        key = "'C'.concat(#candidateId.toString()).concat('_T').concat(#tenantId)"
+    )
     private void clearCandidateCache(Long candidateId, String tenantId) {
         log.debug("Clearing individual candidate cache for ID: {} and tenant: {}", candidateId, tenantId);
     }

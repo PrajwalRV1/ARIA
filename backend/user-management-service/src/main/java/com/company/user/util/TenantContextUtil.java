@@ -1,6 +1,7 @@
 package com.company.user.util;
 
 import com.company.user.security.EnhancedJwtUtil;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -232,7 +233,26 @@ public class TenantContextUtil {
                 // Try to extract tenant from custom JWT claim
                 String tenantId = extractCustomClaim(token, TENANT_CLAIM);
                 log.info("[DEBUG] Extracted tenant claim '{}': '{}'", TENANT_CLAIM, tenantId);
-                return tenantId;
+                
+                // Additional debugging: try to extract all claims to see what's available
+                try {
+                    Claims claims = jwtUtil.extractClaim(token, claims1 -> claims1);
+                    if (claims != null) {
+                        log.info("[DEBUG] All JWT claims: {}", claims);
+                        // Try alternative claim names
+                        if (tenantId == null) {
+                            tenantId = claims.get("tenantId", String.class);
+                            log.info("[DEBUG] Direct tenantId claim extraction: '{}'", tenantId);
+                        }
+                    }
+                } catch (Exception debugE) {
+                    log.warn("[DEBUG] Could not extract all claims for debugging: {}", debugE.getMessage());
+                }
+                
+                if (tenantId != null && !tenantId.trim().isEmpty()) {
+                    log.info("[DEBUG] Successfully extracted tenant ID: '{}'", tenantId);
+                    return tenantId.trim();
+                }
             }
             
             log.info("[DEBUG] No JWT token available in request");

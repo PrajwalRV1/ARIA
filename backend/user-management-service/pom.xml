@@ -190,6 +190,7 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <release>${java.version}</release>
+                    <encoding>UTF-8</encoding>
 
                     <!-- Ensure Lombok annotation processor runs -->
                     <annotationProcessorPaths>

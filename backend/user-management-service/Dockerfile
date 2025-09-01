@@ -16,8 +16,9 @@ RUN mvn dependency:go-offline -B
 # Copy source code
 COPY src src
 
-# Build the application
-RUN mvn clean package -DskipTests -B
+# Build the application with explicit annotation processing
+RUN mvn clean compile -DskipTests -B
+RUN mvn package -DskipTests -B -Dmaven.main.skip
 
 # Production image
 FROM eclipse-temurin:17-jre-alpine

@@ -5,6 +5,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
  * with explicit enum casting to resolve Hibernate enum type issues.
  */
 @Repository
-@Slf4j
+// @Slf4j - Temporarily disabled due to compilation issues
 public class CandidateRepositoryImpl implements CandidateRepositoryCustom {
 
+    private static final Logger log = LoggerFactory.getLogger(CandidateRepositoryImpl.class);
+    
     @PersistenceContext
     private EntityManager entityManager;
 

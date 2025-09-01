@@ -45,7 +45,7 @@ public class CandidateUpdateRequest {
     private String appliedRole;
     
     @PastOrPresent(message = "Application date cannot be in the future")
-    @JsonFormat(pattern = "yyyy-MM-dd", lenient = true)
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate applicationDate;
     
     @DecimalMin(value = "0.0", message = "Total experience cannot be negative")

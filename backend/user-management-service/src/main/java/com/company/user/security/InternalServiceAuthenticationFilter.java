@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,9 +23,11 @@ import java.util.Collections;
  * Allows requests from internal services with proper headers to bypass JWT authentication
  */
 @Component
-@Slf4j
+// @Slf4j - Temporarily disabled due to compilation issues
 public class InternalServiceAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(InternalServiceAuthenticationFilter.class);
+    
     @Value("${app.services.internal.api-key:ARIA_INTERNAL_SERVICE_KEY_2024}")
     private String expectedApiKey;
 

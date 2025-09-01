@@ -190,8 +190,26 @@ export class AuthService {
       const token = localStorage.getItem('auth_token');
       if (token) {
         const payload = this.decodeToken(token);
+        console.log('🔍 JWT Token Payload for User ID extraction:', payload);
+        
         // Check common JWT fields for user ID
-        return payload?.sub || payload?.userId || payload?.id || payload?.recruiterId || null;
+        const possibleIds = {
+          sub: payload?.sub,
+          userId: payload?.userId,
+          id: payload?.id,
+          recruiterId: payload?.recruiterId,
+          user_id: payload?.user_id,
+          recruiter_id: payload?.recruiter_id
+        };
+        
+        console.log('🔍 Possible ID fields in token:', possibleIds);
+        
+        const foundId = payload?.sub || payload?.userId || payload?.id || payload?.recruiterId || payload?.user_id || payload?.recruiter_id || null;
+        console.log('🔑 Extracted recruiter ID:', foundId);
+        
+        return foundId;
+      } else {
+        console.warn('❌ No auth_token found in localStorage');
       }
     }
     return null;

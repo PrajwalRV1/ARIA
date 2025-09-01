@@ -198,6 +198,10 @@ export class CandidateService {
         tap({
           next: (response) => {
             console.log('✅ HTTP POST successful! Response:', response);
+            console.log('💾 Response indicates candidate created with ID:', (response as any)?.id);
+            // Clear cache after successful creation to ensure fresh data
+            this.invalidateCache();
+            console.log('📋 Cache cleared after successful candidate creation');
           },
           error: (error) => {
             console.error('❌ HTTP POST failed! Error:', error);

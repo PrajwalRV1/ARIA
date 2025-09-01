@@ -270,7 +270,9 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
 
     // Get current recruiter ID from JWT token
     const currentRecruiterId = this.authService.getCurrentUserId();
+    const currentUser = this.authService.getCurrentUser();
     console.log('🔑 Current recruiter ID from token:', currentRecruiterId);
+    console.log('👤 Current user from token:', currentUser);
     
     const candidateData = {
       id: this.popupMode === 'edit' && this.selectedCandidate ? this.selectedCandidate.id : null, // Include ID for updates
@@ -294,7 +296,8 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       recruiterId: currentRecruiterId || payload.recruiterId || null  // Use JWT recruiterId first
     };
     
-    console.log('Prepared candidate data:', candidateData);
+    console.log('📋 Prepared candidate data to be sent to backend:', candidateData);
+    console.log('🔑 Final recruiterId being sent:', candidateData.recruiterId);
 
     if (this.popupMode === 'edit' && this.selectedCandidate && this.selectedCandidate.id) {
       // Update existing candidate

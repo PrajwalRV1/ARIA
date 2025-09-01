@@ -38,7 +38,7 @@ public class CandidateUpdateRequest {
     private String email;
     
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^[+]?[0-9\s\-\(\)]{10,20}$", message = "Phone number must be 10-20 characters with digits, spaces, hyphens, or parentheses")
+    @Pattern(regexp = "^[+]?[0-9\\s\\-\\(\\)]{10,20}$", message = "Phone number must be 10-20 characters with digits, spaces, hyphens, or parentheses")
     private String phone;
     
     @Length(max = 255, message = "Applied role must not exceed 255 characters")

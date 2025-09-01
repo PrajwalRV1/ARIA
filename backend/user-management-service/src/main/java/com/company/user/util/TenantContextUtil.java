@@ -367,9 +367,11 @@ public class TenantContextUtil {
     private String extractCustomClaim(String token, String claimName) {
         try {
             // Use existing JWT util to extract custom claims
-            return jwtUtil.extractClaim(token, claims -> claims.get(claimName, String.class));
+            String claimValue = jwtUtil.extractClaim(token, claims -> claims.get(claimName, String.class));
+            log.debug("[DEBUG] extractCustomClaim('{}') = '{}'", claimName, claimValue);
+            return claimValue;
         } catch (Exception e) {
-            log.debug("Could not extract claim {} from token: {}", claimName, e.getMessage());
+            log.error("[DEBUG] Could not extract claim {} from token: {}", claimName, e.getMessage());
         }
         return null;
     }

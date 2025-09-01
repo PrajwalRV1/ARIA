@@ -58,7 +58,9 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    // Simulate loading data
+    // Load dropdown options from backend first
+    this.loadDropdownOptions();
+    // Load dashboard data
     this.loadDashboardData();
     // Initialize recent activities
     this.initializeActivities();
@@ -71,6 +73,39 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   // ---------- Loading States ----------
   isLoading = false;
   isProcessing = false;
+
+  // Method to load dropdown options from backend
+  private loadDropdownOptions() {
+    console.log('🔄 Loading dropdown options from backend...');
+    
+    // Load interview round options
+    this.candidateService.getInterviewRoundOptions().subscribe({
+      next: (rounds) => {
+        this.interviewRounds = rounds;
+        console.log('✅ Loaded interview rounds:', rounds);
+      },
+      error: (err) => {
+        console.error('❌ Error loading interview rounds:', err);
+        // Fallback to constants if backend fails
+        this.interviewRounds = ['Technical Round 1', 'Technical Round 2', 'HR Round', 'Manager Round'];
+        this.toastService.showWarning('Options Load Failed', 'Using default interview round options.');
+      }
+    });
+    
+    // Load status options
+    this.candidateService.getStatusOptions().subscribe({
+      next: (statuses) => {
+        this.statusOptions = statuses;
+        console.log('✅ Loaded status options:', statuses);
+      },
+      error: (err) => {
+        console.error('❌ Error loading status options:', err);
+        // Fallback to constants if backend fails
+        this.statusOptions = ['PENDING', 'SCREENING', 'TECHNICAL_1', 'TECHNICAL_2', 'HR_ROUND', 'MANAGER_ROUND', 'ON_HOLD', 'REJECTED', 'SELECTED'];
+        this.toastService.showWarning('Options Load Failed', 'Using default status options.');
+      }
+    });
+  }
 
   private loadDashboardData(forceRefresh: boolean = false) {
     console.log('🔄 Starting loadDashboardData() - Dashboard refresh initiated');
@@ -442,9 +477,9 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   }
 
   // ---------- Data ----------
-  // Use shared constants for consistency across the application
-  interviewRounds = INTERVIEW_ROUNDS;
-  statusOptions = CANDIDATE_STATUS;
+  // Dynamic dropdown options loaded from backend
+  interviewRounds: string[] = [];
+  statusOptions: string[] = [];
   statusLabels = STATUS_LABELS;
   statusClasses = STATUS_CLASSES;
   

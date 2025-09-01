@@ -35,6 +35,10 @@ export class CandidateService {
   private candidatesCache$ = new BehaviorSubject<Candidate[] | null>(null);
   private cacheTimestamp = 0;
   private readonly CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
+  
+  // Cache for dropdown options
+  private interviewRoundsCache$: Observable<string[]> | null = null;
+  private statusOptionsCache$: Observable<string[]> | null = null;
 
   constructor(
     private http: HttpClient, 
@@ -501,6 +505,73 @@ export class CandidateService {
 
   public clearAllCache(): void {
     this.invalidateCache();
-    console.log('[PERFORMANCE] All caches cleared');
+    // Clear dropdown caches as well
+    this.interviewRoundsCache$ = null;
+    this.statusOptionsCache$ = null;
+    console.log('[PERFORMANCE] All caches cleared including dropdown options');
+  }
+  
+  // Fetch interview round options dynamically from backend
+  getInterviewRoundOptions(): Observable<string[]> {
+    if (this.interviewRoundsCache$) {
+      console.log('[PERFORMANCE] Using cached interview rounds');
+      return this.interviewRoundsCache$;
+    }
+    
+    console.log('Fetching interview round options from backend');
+    this.interviewRoundsCache$ = this.http.get<string[]>(`${this.baseUrl}/interview-round-options`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      retry(1),
+      shareReplay(1), // Cache the result
+      catchError((error) => {
+        console.warn('Failed to fetch interview rounds from backend, using fallback');
+        // Fallback to hardcoded values if backend is unavailable
+        return of(['Screening', 'Technical - T1', 'Technical - T2', 'HR - Round', 'Managerial Round']);
+      })
+    );
+    
+    return this.interviewRoundsCache$;
+  }
+  
+  // Fetch status options dynamically from backend
+  getStatusOptions(): Observable<string[]> {
+    if (this.statusOptionsCache$) {
+      console.log('[PERFORMANCE] Using cached status options');
+      return this.statusOptionsCache$;
+    }
+    
+    console.log('Fetching candidate status options from backend');
+    this.statusOptionsCache$ = this.http.get<string[]>(`${this.baseUrl}/status-options`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      retry(1),
+      shareReplay(1), // Cache the result
+      catchError((error) => {
+        console.warn('Failed to fetch status options from backend, using fallback');
+        // Fallback to hardcoded values if backend is unavailable
+        return of(['PENDING', 'APPLIED', 'INTERVIEW_SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'UNDER_REVIEW', 'SELECTED', 'REJECTED', 'ON_HOLD', 'WITHDRAWN']);
+      })
+    );
+    
+    return this.statusOptionsCache$;
+  }
+  
+  // Helper method to get display label for status (can be enhanced to fetch from backend)
+  getStatusDisplayLabel(status: string): string {
+    const statusLabels: { [key: string]: string } = {
+      'PENDING': 'Pending',
+      'APPLIED': 'Applied',
+      'INTERVIEW_SCHEDULED': 'Interview Scheduled',
+      'IN_PROGRESS': 'In Progress',
+      'COMPLETED': 'Completed',
+      'UNDER_REVIEW': 'Under Review',
+      'SELECTED': 'Selected',
+      'REJECTED': 'Rejected',
+      'ON_HOLD': 'On Hold',
+      'WITHDRAWN': 'Withdrawn'
+    };
+    
+    return statusLabels[status] || status;
   }
 }

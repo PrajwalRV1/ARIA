@@ -157,6 +157,17 @@ public class CandidateController {
                 .map(InterviewRoundType::getDisplayName)
                 .toList();
     }
+    
+    /**
+     * Get available candidate status options for frontend dropdowns
+     */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
+    @GetMapping(value = "/status-options", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<String> getCandidateStatusOptions() {
+        return Arrays.stream(CandidateStatus.values())
+                .map(Enum::name)
+                .toList();
+    }
 
     /**
      * Upload audio file for a candidate

@@ -293,4 +293,35 @@ public class Candidate {
             case SELECTED, REJECTED, WITHDRAWN -> false; // Terminal states
         };
     }
+    
+    // === EXPLICIT GETTERS FOR COMPILATION FIX ===
+    // These explicit getters resolve Lombok compilation issues in containerized builds
+    
+    public String getAudioFilename() {
+        return audioFilename;
+    }
+    
+    public String getAudioUrl() {
+        return audioUrl;
+    }
+    
+    public Long getAudioSize() {
+        return audioSize;
+    }
+    
+    public String getSource() {
+        return source;
+    }
+    
+    public String getNotes() {
+        return notes;
+    }
+    
+    public String getTags() {
+        return tags;
+    }
+    
+    public String getRecruiterId() {
+        return recruiterId;
+    }
 }

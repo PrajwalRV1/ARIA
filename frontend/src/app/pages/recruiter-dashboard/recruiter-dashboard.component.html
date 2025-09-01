@@ -84,6 +84,9 @@
                   <span class="eye" title="Preview" (click)="openEditCandidate(card); $event.stopPropagation();">
                     <i class="fas fa-eye"></i>
                   </span>
+                  <span class="delete" title="Delete Candidate" (click)="deleteCandidate(card.id); $event.stopPropagation();">
+                    <i class="fas fa-trash"></i>
+                  </span>
                 </div>
               </div>
 

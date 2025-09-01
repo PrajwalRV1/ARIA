@@ -357,18 +357,42 @@ public class CandidateServiceImpl implements CandidateService {
     @Override
     @Transactional
     public void deleteCandidate(Long id) {
-        log.info("Deleting candidate with ID: {}", id);
+        log.info("Deleting candidate with ID: {} with tenant isolation", id);
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("Invalid candidate ID: " + id);
         }
         
-        if (!candidateRepository.existsById(id)) {
-            throw new IllegalArgumentException("Candidate with ID " + id + " not found");
+        // ✅ SECURITY: Extract tenant and recruiter context
+        String tenantId = tenantContextUtil.getCurrentTenantId();
+        String recruiterId = tenantContextUtil.getCurrentRecruiterId();
+        
+        log.info("Delete request context - tenant: '{}', recruiter: '{}', candidateId: {}", tenantId, recruiterId, id);
+        
+        // Find candidate with tenant isolation
+        Candidate candidateToDelete;
+        if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+            // Recruiter can only delete their own candidates within their tenant
+            candidateToDelete = candidateRepository.findByIdAndTenantIdAndRecruiterId(id, tenantId, recruiterId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        "Candidate with ID " + id + " not found or access denied"
+                    ));
+        } else {
+            // Admin can delete any candidate within their tenant
+            candidateToDelete = candidateRepository.findByIdAndTenantId(id, tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        "Candidate with ID " + id + " not found or access denied"
+                    ));
         }
         
         try {
-            candidateRepository.deleteById(id);
-            log.info("Successfully deleted candidate with ID: {}", id);
+            candidateRepository.delete(candidateToDelete);
+            log.info("Successfully deleted candidate '{}' (ID: {}) from tenant: {}", 
+                    candidateToDelete.getName(), id, tenantId);
+            
+            // Clear related caches after deletion
+            clearCandidateCaches(tenantId, recruiterId);
+            clearCandidateCache(id, tenantId);
+            
         } catch (Exception e) {
             log.error("Error deleting candidate with ID {}: {}", id, e.getMessage(), e);
             throw new RuntimeException("Failed to delete candidate: " + e.getMessage(), e);

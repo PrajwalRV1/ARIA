@@ -1787,14 +1787,31 @@ $breakpoint-sm: 576px;
   cursor: pointer;
   transition: all 0.3s ease;
 
-  @media (max-width: $breakpoint-sm) {
-    width: 32px;
-    height: 32px;
-  }
-
   &:hover {
     transform: scale(1.1);
     box-shadow: 0 4px 15px rgba($primary-color, 0.3);
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
+.delete {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, $danger-color, #e57373);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba($danger-color, 0.3);
   }
 
   i {

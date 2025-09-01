@@ -6,7 +6,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "recruiters", indexes = {
-        @Index(name = "idx_recruiter_email", columnList = "email", unique = true)
+        @Index(name = "idx_recruiter_email", columnList = "email", unique = true),
+        @Index(name = "idx_recruiter_tenant", columnList = "tenant_id")
 })
 public class Recruiter {
     @Id
@@ -25,6 +26,9 @@ public class Recruiter {
     @Column(name = "is_otp_verified", nullable = false)
     private boolean otpVerified = false;
 
+    @Column(name = "tenant_id", nullable = false, length = 255)
+    private String tenantId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt = Instant.now();
 
@@ -39,6 +43,8 @@ public class Recruiter {
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
     public boolean isOtpVerified() { return otpVerified; }
     public void setOtpVerified(boolean otpVerified) { this.otpVerified = otpVerified; }
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }

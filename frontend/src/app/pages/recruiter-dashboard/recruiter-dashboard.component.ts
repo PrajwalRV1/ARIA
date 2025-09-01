@@ -644,15 +644,54 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     this.addActivity(`Added new candidate ${candidate.name}`, 'fas fa-user-plus');
   }
 
-  // Method to delete candidate (if needed)
+  // Method to delete candidate with backend integration
   deleteCandidate(candidateId: number) {
     const candidate = this.getCandidateById(candidateId);
     if (candidate) {
       this.showConfirmationDialog(
-        `Are you sure you want to delete ${candidate.name}?`,
+        `Are you sure you want to delete ${candidate.name}? This action cannot be undone.`,
         () => {
-          this.candidates = this.candidates.filter(c => c.id !== candidateId);
-          this.addActivity(`Deleted candidate ${candidate.name}`, 'fas fa-user-minus');
+          this.isProcessing = true;
+          
+          this.candidateService.deleteCandidate(candidateId).subscribe({
+            next: (response) => {
+              console.log('✅ Candidate deleted successfully:', response);
+              
+              // Remove from local candidates array immediately for better UX
+              this.candidates = this.candidates.filter(c => c.id !== candidateId);
+              
+              // Clear selection if the deleted candidate was selected
+              if (this.selectedCandidateForInterview?.id === candidateId) {
+                this.selectedCandidateForInterview = null;
+              }
+              
+              // Add activity and show success message
+              this.addActivity(`Deleted candidate ${candidate.name}`, 'fas fa-user-minus');
+              this.toastService.showSuccess('Deleted!', `${candidate.name} has been successfully removed from the system.`);
+              
+              // Refresh dashboard to sync with backend
+              setTimeout(() => {
+                this.loadDashboardData(true);
+              }, 500);
+              
+              this.isProcessing = false;
+            },
+            error: (err) => {
+              console.error('❌ Error deleting candidate:', err);
+              this.isProcessing = false;
+              
+              let errorMessage = 'Failed to delete candidate.';
+              if (err.status === 404) {
+                errorMessage = 'Candidate not found. It may have already been deleted.';
+              } else if (err.status === 403) {
+                errorMessage = 'You do not have permission to delete this candidate.';
+              } else if (err.user) {
+                errorMessage = err.user;
+              }
+              
+              this.toastService.showError('Delete Failed', errorMessage, true);
+            }
+          });
         }
       );
     }
@@ -860,7 +899,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         this.toastService.showSuccess(
           '🎉 Interview Scheduled Successfully!', 
           `Interview for ${this.selectedCandidateForInterview!.name} has been scheduled. Meeting link sent to all participants.`,
-          true // Keep it longer for user to read
+          8000 // Keep it longer for user to read (8 seconds)
         );
         
         // Show success notification with meeting link

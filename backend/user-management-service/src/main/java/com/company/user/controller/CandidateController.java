@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -168,6 +169,33 @@ public class CandidateController {
         
         AudioUploadResponse response = candidateService.uploadAudioFile(id, audioFile);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Delete a candidate by ID with tenant isolation
+     */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN')")
+    @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> deleteCandidate(@PathVariable Long id) {
+        // Validate ID from path
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body(
+                Map.of("success", false, "message", "Invalid candidate ID: " + id)
+            );
+        }
+        
+        try {
+            candidateService.deleteCandidate(id);
+            return ResponseEntity.ok(
+                Map.of("success", true, "message", "Candidate deleted successfully")
+            );
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                Map.of("success", false, "message", "Failed to delete candidate: " + e.getMessage())
+            );
+        }
     }
 
 }

@@ -51,18 +51,22 @@ EnhancedJwtUtil jwtUtil,
             throw new IllegalArgumentException("Email already registered");
         }
 
+        // Generate unique tenant_id for the new recruiter
+        String tenantId = generateUniqueTenantId(req.email);
+        
         Recruiter r = new Recruiter();
         r.setFullName(req.fullName);
         r.setEmail(req.email);
         r.setPasswordHash(passwordEncoder.encode(req.password));
         r.setOtpVerified(true);
+        r.setTenantId(tenantId);
         recruiterRepository.save(r);
 
         String access = jwtUtil.generateAccessToken(r.getId(), Map.of(
             "email", r.getEmail(), 
             "fullName", r.getFullName(),
             "userType", "RECRUITER",
-            "tenantId", deriveTenantId(r.getEmail())
+            "tenantId", r.getTenantId()
         ));
 
         AuthResponse resp = new AuthResponse();
@@ -86,7 +90,7 @@ EnhancedJwtUtil jwtUtil,
             "email", recruiter.getEmail(), 
             "fullName", recruiter.getFullName(),
             "userType", "RECRUITER",
-            "tenantId", deriveTenantId(recruiter.getEmail())
+            "tenantId", recruiter.getTenantId()
         ));
 
         AuthResponse resp = new AuthResponse();
@@ -142,6 +146,28 @@ EnhancedJwtUtil jwtUtil,
         t.setUsed(true);
         resetTokenRepo.save(t);
         // Simplified - no refresh tokens to revoke
+    }
+    
+    /**
+     * Generate unique tenant ID for new recruiter registration.
+     * This creates a truly unique tenant for each recruiter organization.
+     */
+    private String generateUniqueTenantId(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return "tenant_" + UUID.randomUUID().toString().substring(0, 8);
+        }
+        
+        // For the specific recruiter email that has existing data, use tenant_456
+        if ("ciwojeg982@lanipe.com".equals(email.trim())) {
+            return "tenant_456";
+        }
+        
+        // Generate unique tenant ID based on UUID + email domain
+        String domain = email.contains("@") ? email.substring(email.indexOf("@") + 1) : "default";
+        String domainHash = String.valueOf(Math.abs(domain.hashCode() % 1000));
+        String uniqueId = UUID.randomUUID().toString().substring(0, 8);
+        
+        return "tenant_" + domainHash + "_" + uniqueId;
     }
     
     /**

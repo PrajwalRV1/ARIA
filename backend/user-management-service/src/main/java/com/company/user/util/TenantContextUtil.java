@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * ✅ SECURITY: Utility class for extracting tenant and user context from authentication.
@@ -371,16 +373,53 @@ public class TenantContextUtil {
     }
     
     /**
-     * Extract custom claim from JWT token
+     * Extract custom claim from JWT token with multiple fallback strategies
      */
     private String extractCustomClaim(String token, String claimName) {
         try {
-            // Use existing JWT util to extract custom claims
-            String claimValue = jwtUtil.extractClaim(token, claims -> claims.get(claimName, String.class));
-            log.debug("[DEBUG] extractCustomClaim('{}') = '{}'", claimName, claimValue);
-            return claimValue;
+            log.debug("[JWT] Extracting claim '{}' from token", claimName);
+            
+            // Strategy 1: Direct extraction using jwtUtil
+            try {
+                String claimValue = jwtUtil.extractClaim(token, claims -> claims.get(claimName, String.class));
+                if (claimValue != null && !claimValue.trim().isEmpty()) {
+                    log.info("[JWT] Successfully extracted {} = '{}' (Strategy 1)", claimName, claimValue);
+                    return claimValue.trim();
+                }
+            } catch (Exception e1) {
+                log.warn("[JWT] Strategy 1 failed for claim '{}': {}", claimName, e1.getMessage());
+            }
+            
+            // Strategy 2: Manual JWT parsing
+            try {
+                Claims allClaims = jwtUtil.extractClaim(token, Function.identity());
+                if (allClaims != null) {
+                    log.debug("[JWT] All available claims: {}", allClaims.keySet());
+                    
+                    // Try direct claim access
+                    Object claimObj = allClaims.get(claimName);
+                    if (claimObj != null) {
+                        String claimValue = claimObj.toString();
+                        log.info("[JWT] Successfully extracted {} = '{}' (Strategy 2)", claimName, claimValue);
+                        return claimValue.trim();
+                    }
+                    
+                    // Try case-insensitive search
+                    for (Map.Entry<String, Object> entry : allClaims.entrySet()) {
+                        if (entry.getKey().toLowerCase().equals(claimName.toLowerCase())) {
+                            String claimValue = entry.getValue().toString();
+                            log.info("[JWT] Successfully extracted {} = '{}' (Strategy 2 - case insensitive)", claimName, claimValue);
+                            return claimValue.trim();
+                        }
+                    }
+                }
+            } catch (Exception e2) {
+                log.warn("[JWT] Strategy 2 failed for claim '{}': {}", claimName, e2.getMessage());
+            }
+            
+            log.warn("[JWT] All strategies failed to extract claim '{}'", claimName);
         } catch (Exception e) {
-            log.error("[DEBUG] Could not extract claim {} from token: {}", claimName, e.getMessage());
+            log.error("[JWT] Critical error extracting claim {}: {}", claimName, e.getMessage(), e);
         }
         return null;
     }

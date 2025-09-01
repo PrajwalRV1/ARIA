@@ -856,6 +856,13 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
           'fas fa-calendar-check'
         );
         
+        // Show enhanced success toaster with meeting details
+        this.toastService.showSuccess(
+          '🎉 Interview Scheduled Successfully!', 
+          `Interview for ${this.selectedCandidateForInterview!.name} has been scheduled. Meeting link sent to all participants.`,
+          true // Keep it longer for user to read
+        );
+        
         // Show success notification with meeting link
         this.showMeetingLinkNotification(
           this.selectedCandidateForInterview!.name,
@@ -866,11 +873,56 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
         // Share meeting link with participants
         this.shareMeetingLink(response.sessionId, response.meetingLink);
         
+        // Refresh dashboard to reflect the updated candidate status
+        setTimeout(() => {
+          this.refreshDashboard();
+        }, 1000);
+        
       },
       error: (err) => {
         console.error('❌ Error scheduling interview:', err);
         this.isProcessing = false;
-        this.toastService.showError('Scheduling Failed', 'Failed to schedule interview. Please try again.');
+        
+        // Enhanced error handling with specific messages
+        let errorTitle = 'Interview Scheduling Failed';
+        let errorMessage = 'An unexpected error occurred while scheduling the interview.';
+        
+        if (err.status === 0) {
+          errorTitle = 'Connection Error';
+          errorMessage = 'Unable to connect to the interview scheduling service. Please check your internet connection and try again.';
+        } else if (err.status === 400) {
+          errorTitle = 'Invalid Request';
+          if (err.message && err.message.includes('future')) {
+            errorMessage = 'Interview must be scheduled for a future date and time. Please select a later time.';
+          } else {
+            errorMessage = err.message || 'Please check the interview details and try again.';
+          }
+        } else if (err.status === 401) {
+          errorTitle = 'Authentication Required';
+          errorMessage = 'Your session has expired. Please log in again to schedule interviews.';
+        } else if (err.status === 403) {
+          errorTitle = 'Access Denied';
+          errorMessage = 'You do not have permission to schedule interviews for this candidate.';
+        } else if (err.status === 404) {
+          errorTitle = 'Service Unavailable';
+          errorMessage = 'The interview scheduling service is currently unavailable. Please try again later.';
+        } else if (err.status >= 500) {
+          errorTitle = 'Server Error';
+          errorMessage = 'The server is experiencing issues. Please try again in a few minutes.';
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        this.toastService.showError(errorTitle, errorMessage, true);
+        
+        // Log detailed error for debugging
+        console.error('Detailed error information:', {
+          status: err.status,
+          statusText: err.statusText,
+          error: err.error,
+          message: err.message,
+          url: err.url
+        });
       }
     });
   }

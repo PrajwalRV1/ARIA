@@ -28,9 +28,9 @@ import java.util.Optional;
  * Handles AI-driven adaptive interview sessions with real-time WebRTC integration
  */
 @RestController
-@RequestMapping("/api/interview")
+@RequestMapping("/")
 @Slf4j
-@CrossOrigin(origins = {"http://localhost:4200", "https://localhost:4200", "http://localhost:3000", "https://localhost:3000"}, allowCredentials = "true")
+@CrossOrigin(origins = {"http://localhost:4200", "https://localhost:4200", "http://localhost:3000", "https://localhost:3000", "https://aria-frontend-tc4z.onrender.com"}, allowCredentials = "true")
 public class InterviewOrchestratorController {
 
     @Autowired

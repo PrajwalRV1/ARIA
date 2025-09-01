@@ -98,7 +98,7 @@ export interface NextQuestionResult {
 })
 export class InterviewService {
   private readonly API_BASE = environment.aiServices.orchestratorBaseUrl; // Use environment configuration
-  private readonly INTERVIEW_API = `${this.API_BASE}/interview`; // Fixed: Removed duplicate /api
+  private readonly INTERVIEW_API = this.API_BASE; // Fixed: Remove duplicate /interview since orchestratorBaseUrl already includes it
   
   // AI Avatar Service for structured interview flow
   private readonly AI_AVATAR_API = environment.aiServices.aiAvatarServiceUrl; // Use environment configuration

@@ -132,11 +132,31 @@ public class CandidateServiceImpl implements CandidateService {
             // Validate request
             validateUpdateRequest(request);
             
-            // Find existing candidate
-            Candidate existingCandidate = candidateRepository.findById(request.getId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                        String.format("Candidate with ID %d not found", request.getId())
-                    ));
+            // ✅ SECURITY: Find existing candidate with tenant isolation
+            String tenantId = tenantContextUtil.getCurrentTenantId();
+            String recruiterId = tenantContextUtil.getCurrentRecruiterId();
+            
+            log.debug("[UPDATE] Looking for candidate ID {} with tenant: '{}', recruiter: '{}'", 
+                    request.getId(), tenantId, recruiterId);
+            
+            Candidate existingCandidate;
+            if (recruiterId != null && !recruiterId.trim().isEmpty()) {
+                // Recruiter can only update their own candidates within their tenant
+                existingCandidate = candidateRepository.findByIdAndTenantIdAndRecruiterId(request.getId(), tenantId, recruiterId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                            String.format("Candidate with ID %d not found or access denied", request.getId())
+                        ));
+            } else {
+                // Admin can update any candidate within their tenant
+                existingCandidate = candidateRepository.findByIdAndTenantId(request.getId(), tenantId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                            String.format("Candidate with ID %d not found in tenant %s", request.getId(), tenantId)
+                        ));
+            }
+            
+            log.debug("[UPDATE] Found candidate: id={}, tenant={}, recruiter={}, name={}", 
+                    existingCandidate.getId(), existingCandidate.getTenantId(), 
+                    existingCandidate.getRecruiterId(), existingCandidate.getName());
             
             // Validate status transition (only if status is actually changing)
             if (!existingCandidate.getStatus().equals(request.getStatus())) {

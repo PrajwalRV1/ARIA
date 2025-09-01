@@ -63,6 +63,7 @@ public class CandidateRepositoryImpl implements CandidateRepositoryCustom {
                 notes = :notes,
                 tags = :tags,
                 recruiter_id = :recruiterId,
+                tenant_id = :tenantId,
                 overall_status = :overallStatus,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = :id
@@ -94,14 +95,14 @@ public class CandidateRepositoryImpl implements CandidateRepositoryCustom {
                 job_description, key_responsibilities, resume_file_name, resume_url, resume_size,
                 profile_pic_file_name, profile_pic_url, profile_pic_size,
                 audio_filename, audio_url, audio_size, source, notes, tags,
-                recruiter_id, overall_status, created_at, updated_at
+                recruiter_id, tenant_id, overall_status, created_at, updated_at
             ) VALUES (
                 :requisitionId, :name, :email, :phone, :appliedRole, :applicationDate,
                 :totalExperience, :relevantExperience, :interviewRound, CAST(:status AS candidate_status),
                 :jobDescription, :keyResponsibilities, :resumeFileName, :resumeUrl, :resumeSize,
                 :profilePicFileName, :profilePicUrl, :profilePicSize,
                 :audioFilename, :audioUrl, :audioSize, :source, :notes, :tags,
-                :recruiterId, :overallStatus, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                :recruiterId, :tenantId, :overallStatus, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
             )
             """;
 
@@ -145,6 +146,7 @@ public class CandidateRepositoryImpl implements CandidateRepositoryCustom {
         query.setParameter("notes", candidate.getNotes());
         query.setParameter("tags", candidate.getTags());
         query.setParameter("recruiterId", candidate.getRecruiterId());
+        query.setParameter("tenantId", candidate.getTenantId());
         query.setParameter("overallStatus", candidate.getOverallStatus());
         
         // Set ID for updates

@@ -324,4 +324,16 @@ public class Candidate {
     public String getRecruiterId() {
         return recruiterId;
     }
+    
+    public Long getId() {
+        return id;
+    }
+    
+    public String getOverallStatus() {
+        return overallStatus;
+    }
+    
+    public String getTenantId() {
+        return tenantId;
+    }
 }

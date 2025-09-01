@@ -16,10 +16,8 @@ RUN mvn dependency:go-offline -B
 # Copy source code
 COPY src src
 
-# Build the application with explicit annotation processing and verbose output
-ENV MAVEN_OPTS="-Xmx1024m -XX:MaxMetaspaceSize=256m"
-RUN mvn clean compile -DskipTests -B -Dmaven.compiler.verbose=true -Dmaven.compiler.debug=true
-RUN mvn package -DskipTests -B
+# Build the application
+RUN mvn clean package -DskipTests -B
 
 # Production image
 FROM eclipse-temurin:17-jre-alpine

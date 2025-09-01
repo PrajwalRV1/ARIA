@@ -342,31 +342,58 @@ export class CandidateService {
     try {
       console.log('CandidateService.updateCandidate called with ID:', id);
       console.log('Candidate data:', candidate);
+      console.log('Has files?', { resumeFile: !!resumeFile, profilePicture: !!profilePicture });
       
-      const formData = new FormData();
-      formData.append('data', new Blob([JSON.stringify(candidate)], { type: 'application/json' }));
+      // Determine if we have files to upload
+      const hasFiles = resumeFile || profilePicture;
       
-      if (resumeFile) {
-        formData.append('resume', resumeFile);
-        console.log('Resume file included:', resumeFile.name);
+      if (hasFiles) {
+        // Use multipart/form-data when files are present
+        console.log('Using multipart/form-data for update with files');
+        const formData = new FormData();
+        formData.append('data', new Blob([JSON.stringify(candidate)], { type: 'application/json' }));
+        
+        if (resumeFile) {
+          formData.append('resume', resumeFile);
+          console.log('Resume file included:', resumeFile.name);
+        }
+        
+        if (profilePicture) {
+          formData.append('profilePic', profilePicture);
+          console.log('Profile picture included:', profilePicture.name);
+        }
+        
+        return this.http.put(`${this.baseUrl}/${id}`, formData, {
+          headers: this.getAuthHeaders()
+        }).pipe(
+          tap(response => {
+            // Clear cache after successful update
+            this.invalidateCache();
+            console.log('[PERFORMANCE] Cache cleared after candidate update');
+          }),
+          retry(1),
+          catchError(this.handleError)
+        );
+      } else {
+        // Use application/json for field-only updates
+        console.log('Using application/json for field-only update');
+        const headers = {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'application/json'
+        };
+        
+        return this.http.put(`${this.baseUrl}/${id}`, candidate, {
+          headers: headers
+        }).pipe(
+          tap(response => {
+            // Clear cache after successful update
+            this.invalidateCache();
+            console.log('[PERFORMANCE] Cache cleared after candidate update');
+          }),
+          retry(1),
+          catchError(this.handleError)
+        );
       }
-      
-      if (profilePicture) {
-        formData.append('profilePic', profilePicture);
-        console.log('Profile picture included:', profilePicture.name);
-      }
-      
-      return this.http.put(`${this.baseUrl}/${id}`, formData, {
-        headers: this.getAuthHeaders()
-      }).pipe(
-        tap(response => {
-          // Clear cache after successful update
-          this.invalidateCache();
-          console.log('[PERFORMANCE] Cache cleared after candidate update');
-        }),
-        retry(1),
-        catchError(this.handleError)
-      );
     } catch (error) {
       console.error('Error preparing update data:', error);
       return throwError(() => ({

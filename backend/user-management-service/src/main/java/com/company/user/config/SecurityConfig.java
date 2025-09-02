@@ -110,6 +110,7 @@ public class SecurityConfig {
                                 "/cors-test",      // /api/auth/cors-test
                                 "/test",           // /api/auth/test
                                 "/health",         // /api/auth/health (if exists)
+                                "/candidates/debug-multipart", // /api/auth/candidates/debug-multipart (debugging)
                                 "/actuator/**",    // /api/auth/actuator/**
                                 "/h2-console/**",  // /api/auth/h2-console/**
                                 "/error",          // /api/auth/error

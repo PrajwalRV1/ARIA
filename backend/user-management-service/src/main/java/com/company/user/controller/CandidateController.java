@@ -33,49 +33,17 @@ public class CandidateController {
     private final CandidateService candidateService;
 
     /**
-     * Create candidate - supports both JSON and multipart:
-     * JSON: CandidateCreateRequest as request body
-     * Multipart: data part + optional resume/profilePic files
+     * Create candidate - JSON only
      */
     @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN') or hasRole('INTERNAL_SERVICE')")
-    @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> createCandidate(
-            @RequestPart(value = "data", required = false) @Valid CandidateCreateRequest dataFromPart,
-            @RequestBody(required = false) @Valid CandidateCreateRequest dataFromJson,
-            @RequestPart(value = "resume", required = false) MultipartFile resume,
-            @RequestPart(value = "profilePic", required = false) MultipartFile profilePic,
-            HttpServletRequest request) {
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createCandidate(@RequestBody @Valid CandidateCreateRequest data) {
         
         try {
-            // Determine which data to use based on content type
-            CandidateCreateRequest data;
-            String contentType = request.getContentType();
-            
-            if (contentType != null && contentType.startsWith(MediaType.APPLICATION_JSON_VALUE)) {
-                // JSON request
-                if (dataFromJson == null) {
-                    throw new IllegalArgumentException("Request body is required for JSON content type");
-                }
-                data = dataFromJson;
-            } else if (contentType != null && contentType.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE)) {
-                // Multipart request
-                if (dataFromPart == null) {
-                    throw new IllegalArgumentException("'data' part is required for multipart content type");
-                }
-                data = dataFromPart;
-            } else {
-                throw new IllegalArgumentException("Unsupported content type: " + contentType);
-            }
-            
             log.info("Creating candidate: {} for requisition: {}", data.getEmail(), data.getRequisitionId());
-            log.debug("Request details - Content-Type: {}, Parts: data={}, resume={}, profilePic={}", 
-                     request.getContentType(), 
-                     data != null ? "present" : "missing",
-                     resume != null ? resume.getOriginalFilename() + " (" + resume.getSize() + " bytes)" : "not provided",
-                     profilePic != null ? profilePic.getOriginalFilename() + " (" + profilePic.getSize() + " bytes)" : "not provided");
+            log.debug("Request details - Content-Type: {}, Data: present", MediaType.APPLICATION_JSON_VALUE);
             
-            CandidateResponse response = candidateService.createCandidate(data, resume, profilePic);
+            CandidateResponse response = candidateService.createCandidate(data, null, null);
             log.info("Successfully created candidate with ID: {}", response.getId());
             return ResponseEntity.ok(response);
             
@@ -98,6 +66,53 @@ public class CandidateController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "error", "Internal Server Error",
                 "message", "An unexpected error occurred while creating the candidate",
+                "details", e.getMessage(),
+                "timestamp", java.time.Instant.now().toString()
+            ));
+        }
+    }
+
+    /**
+     * Create candidate with multipart form data (for file uploads)
+     */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN') or hasRole('INTERNAL_SERVICE')")
+    @PostMapping(value = "/with-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createCandidateWithFiles(
+            @RequestPart(value = "data") @Valid CandidateCreateRequest data,
+            @RequestPart(value = "resume", required = false) MultipartFile resume,
+            @RequestPart(value = "profilePic", required = false) MultipartFile profilePic,
+            HttpServletRequest request) {
+        
+        try {
+            log.info("Creating candidate with files: {} for requisition: {}", data.getEmail(), data.getRequisitionId());
+            log.debug("Request details - Content-Type: {}, Parts: data=present, resume={}, profilePic={}", 
+                     request.getContentType(), 
+                     resume != null ? resume.getOriginalFilename() + " (" + resume.getSize() + " bytes)" : "not provided",
+                     profilePic != null ? profilePic.getOriginalFilename() + " (" + profilePic.getSize() + " bytes)" : "not provided");
+            
+            CandidateResponse response = candidateService.createCandidate(data, resume, profilePic);
+            log.info("Successfully created candidate with files, ID: {}", response.getId());
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error creating candidate with files: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Validation Error",
+                "message", e.getMessage(),
+                "timestamp", java.time.Instant.now().toString()
+            ));
+        } catch (BadRequestException e) {
+            log.error("Bad request creating candidate with files: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Bad Request",
+                "message", e.getMessage(),
+                "timestamp", java.time.Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            log.error("Unexpected error creating candidate with files: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Internal Server Error",
+                "message", "An unexpected error occurred while creating the candidate with files",
                 "details", e.getMessage(),
                 "timestamp", java.time.Instant.now().toString()
             ));
@@ -268,55 +283,5 @@ public class CandidateController {
         }
     }
 
-    /**
-     * Debug endpoint to test multipart form data processing without authentication
-     * This helps identify if the issue is with auth or multipart processing
-     */
-    @PostMapping(value = "/debug-multipart", 
-                consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-                produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> debugMultipart(
-            @RequestPart(value = "data", required = false) String jsonData,
-            @RequestPart(value = "resume", required = false) MultipartFile resume,
-            @RequestPart(value = "profilePic", required = false) MultipartFile profilePic,
-            HttpServletRequest request) {
-        
-        try {
-            log.info("Debug multipart endpoint called");
-            log.info("Content-Type: {}", request.getContentType());
-            log.info("JSON Data: {}", jsonData);
-            log.info("Resume: {}", resume != null ? resume.getOriginalFilename() + " (" + resume.getSize() + " bytes)" : "null");
-            log.info("ProfilePic: {}", profilePic != null ? profilePic.getOriginalFilename() + " (" + profilePic.getSize() + " bytes)" : "null");
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Multipart form data processed successfully",
-                "data", Map.of(
-                    "contentType", request.getContentType(),
-                    "jsonData", jsonData != null ? jsonData : "null",
-                    "resumeInfo", resume != null ? Map.of(
-                        "filename", resume.getOriginalFilename(),
-                        "size", resume.getSize(),
-                        "contentType", resume.getContentType()
-                    ) : "null",
-                    "profilePicInfo", profilePic != null ? Map.of(
-                        "filename", profilePic.getOriginalFilename(),
-                        "size", profilePic.getSize(),
-                        "contentType", profilePic.getContentType()
-                    ) : "null"
-                ),
-                "timestamp", java.time.Instant.now().toString()
-            ));
-            
-        } catch (Exception e) {
-            log.error("Error in debug multipart endpoint: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "success", false,
-                "message", "Debug endpoint failed",
-                "error", e.getMessage(),
-                "timestamp", java.time.Instant.now().toString()
-            ));
-        }
-    }
 
 }

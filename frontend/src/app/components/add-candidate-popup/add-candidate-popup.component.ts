@@ -35,11 +35,11 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
       totalExperience: [null, [Validators.required, Validators.min(0)]],
       relevantExperience: [null, [Validators.required, Validators.min(0)]],
       interviewRound: ['', Validators.required],
-      status: ['PENDING'], // Default status for new candidates
+      status: ['APPLIED'], // Default status for new candidates (changed from PENDING)
       jobDescription: ['', Validators.required],
       keyResponsibilities: [''], // Optional field
       uploadPicture: [null], // Optional file
-      uploadResume: [null, Validators.required] // Required file
+      uploadResume: [null] // CHANGED: Made resume optional in form validation
     });
 
     // Ensure mode is set
@@ -71,10 +71,10 @@ export class AddCandidatePopupComponent implements OnInit, OnChanges {
 
     // Reset form when switching back to add mode
     if (changes['mode'] && this.mode === 'add' && !this.candidateData) {
-      this.form.reset({ status: 'PENDING' });
-      // Re-add resume validation for add mode
-      this.form.get('uploadResume')?.setValidators([Validators.required]);
-      this.form.get('uploadResume')?.updateValueAndValidity();
+      this.form.reset({ 
+        status: 'APPLIED' // Use APPLIED as default instead of PENDING
+      });
+      // Resume is optional in form validation, but we'll still show it as recommended
       this.resetFiles();
     }
   }

@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'https://aria-user-management-v2-uq1g.onrender.com/api/auth',
+  // CHANGE THIS: Point to local development server
+  apiBaseUrl: 'http://localhost:10000/api/auth',
   
   // Session Service Configuration (User Management Service)
   sessionServiceBaseUrl: 'https://aria-user-management-v2-uq1g.onrender.com/api/auth/api/user/sessions',

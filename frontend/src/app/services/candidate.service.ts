@@ -158,63 +158,86 @@ export class CandidateService {
     console.log('  - Resume file:', resumeFile ? `${resumeFile.name} (${resumeFile.size} bytes, ${resumeFile.type})` : 'None');
     console.log('  - Profile pic:', profilePicture ? `${profilePicture.name} (${profilePicture.size} bytes, ${profilePicture.type})` : 'None');
     
+    const hasFiles = resumeFile || profilePicture;
+    
+    if (hasFiles) {
+      // Use multipart endpoint when files are present
+      console.log('✅ Using multipart endpoint with files');
+      return this.createCandidateWithFiles(candidate, resumeFile, profilePicture);
+    } else {
+      // Use JSON endpoint when no files
+      console.log('✅ Using JSON endpoint without files');
+      return this.createCandidateJsonOnly(candidate);
+    }
+  }
+
+  private createCandidateJsonOnly(candidate: Candidate): Observable<any> {
+    const headers = {
+      ...this.getAuthHeaders(),
+      'Content-Type': 'application/json'
+    };
+    
+    console.log('🎯 Making JSON POST request to:', this.baseUrl);
+    console.log('📋 Candidate data:', candidate);
+    
+    return this.http.post(`${this.baseUrl}`, candidate, {
+      headers: headers
+    }).pipe(
+      retry(1),
+      tap({
+        next: (response) => {
+          console.log('✅ JSON POST successful! Response:', response);
+          this.invalidateCache();
+        },
+        error: (error) => {
+          console.error('❌ JSON POST failed! Error:', error);
+        }
+      }),
+      catchError(this.handleError)
+    );
+  }
+
+  private createCandidateWithFiles(candidate: Candidate, resumeFile?: File, profilePicture?: File): Observable<any> {
     try {
       const formData = new FormData();
       
-      // Append JSON data as a proper JSON part (backend expects @RequestPart("data"))
+      // Append JSON data as a proper JSON part
       const jsonBlob = new Blob([JSON.stringify(candidate)], { type: 'application/json' });
       formData.append('data', jsonBlob);
       console.log('✅ JSON data blob added to FormData');
       
-      // Add required files with correct parameter names matching backend
+      // Add files
       if (resumeFile) {
         formData.append('resume', resumeFile);
-        console.log('✅ Resume file added to FormData:', resumeFile.name, 'Size:', resumeFile.size);
-      } else {
-        console.warn('⚠️ No resume file provided - this will likely cause validation error');
+        console.log('✅ Resume file added to FormData:', resumeFile.name);
       }
       
       if (profilePicture) {
         formData.append('profilePic', profilePicture);
-        console.log('✅ Profile picture added to FormData:', profilePicture.name, 'Size:', profilePicture.size);
-      }
-      
-      // Log FormData contents for debugging
-      console.log('📦 FormData prepared with parts:');
-      for (let pair of formData.entries()) {
-        console.log(`  - ${pair[0]}: ${pair[1] instanceof File ? `File(${pair[1].name})` : 'Blob/Data'}`); 
+        console.log('✅ Profile picture added to FormData:', profilePicture.name);
       }
       
       const headers = this.getAuthHeaders();
-      console.log('🔑 Request headers prepared:', headers);
-      console.log('🎯 Making POST request to:', this.baseUrl);
+      console.log('🎯 Making multipart POST request to:', `${this.baseUrl}/with-files`);
       
-      const request$ = this.http.post(`${this.baseUrl}`, formData, {
+      return this.http.post(`${this.baseUrl}/with-files`, formData, {
         headers: headers
       }).pipe(
-        retry(1), // Retry once on failure
+        retry(1),
+        tap({
+          next: (response) => {
+            console.log('✅ Multipart POST successful! Response:', response);
+            this.invalidateCache();
+          },
+          error: (error) => {
+            console.error('❌ Multipart POST failed! Error:', error);
+          }
+        }),
         catchError(this.handleError)
       );
       
-      // Add tap operators to log request progress and handle cache invalidation
-      return request$.pipe(
-        // Log when request starts
-        tap({
-          next: (response) => {
-            console.log('✅ HTTP POST successful! Response:', response);
-            console.log('💾 Response indicates candidate created with ID:', (response as any)?.id);
-            // Clear cache after successful creation to ensure fresh data
-            this.invalidateCache();
-            console.log('📋 Cache cleared after successful candidate creation');
-          },
-          error: (error) => {
-            console.error('❌ HTTP POST failed! Error:', error);
-          }
-        })
-      );
-      
     } catch (error) {
-      console.error('❌ Error in addCandidate preparation:', error);
+      console.error('❌ Error preparing multipart data:', error);
       return throwError(() => ({
         technical: 'Failed to prepare candidate data: ' + (error as Error).message,
         user: 'Please check the form data and try again.',

@@ -30,7 +30,7 @@ public class RedisConfig {
     private boolean sslEnabled;
 
     @Bean
-    @Profile("supabase")
+    @Profile("neon")
     public RedisConnectionFactory upstashRedisConnectionFactory() {
         if (redisUrl == null || redisUrl.isEmpty()) {
             // Fallback to default Upstash configuration if URL is not set
@@ -89,7 +89,7 @@ public class RedisConfig {
     }
 
     @Bean
-    @Profile("!supabase")
+    @Profile("!neon")
     public RedisConnectionFactory localRedisConnectionFactory() {
         return new LettuceConnectionFactory("localhost", 6379);
     }

@@ -371,8 +371,8 @@ export class CandidateService {
       const hasFiles = resumeFile || profilePicture;
       
       if (hasFiles) {
-        // Use multipart/form-data when files are present
-        console.log('Using multipart/form-data for update with files');
+        // Use multipart/form-data endpoint when files are present
+        console.log('Using multipart/form-data for update with files - endpoint: /with-files');
         const formData = new FormData();
         formData.append('data', new Blob([JSON.stringify(candidate)], { type: 'application/json' }));
         
@@ -386,19 +386,19 @@ export class CandidateService {
           console.log('Profile picture included:', profilePicture.name);
         }
         
-        return this.http.put(`${this.baseUrl}/${id}`, formData, {
+        return this.http.put(`${this.baseUrl}/${id}/with-files`, formData, {
           headers: this.getAuthHeaders()
         }).pipe(
           tap(response => {
             // Clear cache after successful update
             this.invalidateCache();
-            console.log('[PERFORMANCE] Cache cleared after candidate update');
+            console.log('[PERFORMANCE] Cache cleared after candidate update with files');
           }),
           retry(1),
           catchError(this.handleError)
         );
       } else {
-        // Use application/json for field-only updates
+        // Use application/json endpoint for field-only updates
         console.log('Using application/json for field-only update');
         const headers = {
           ...this.getAuthHeaders(),
@@ -411,7 +411,7 @@ export class CandidateService {
           tap(response => {
             // Clear cache after successful update
             this.invalidateCache();
-            console.log('[PERFORMANCE] Cache cleared after candidate update');
+            console.log('[PERFORMANCE] Cache cleared after candidate update (JSON only)');
           }),
           retry(1),
           catchError(this.handleError)

@@ -129,49 +129,92 @@ public class CandidateController {
     }
 
     /**
-     * Update candidate - supports both JSON and multipart
+     * Update candidate - JSON only (no files)
      */
     @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN') or hasRole('INTERNAL_SERVICE')")
-    @RequestMapping(value = "/{id}", 
-                   method = RequestMethod.PUT,
-                   consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE},
-                   produces = MediaType.APPLICATION_JSON_VALUE)
-    public CandidateResponse updateCandidate(
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateCandidateJson(
             @PathVariable Long id,
-            @RequestPart(value = "data", required = false) @Valid CandidateUpdateRequest dataFromPart,
-            @RequestBody(required = false) @Valid CandidateUpdateRequest dataFromJson,
+            @RequestBody @Valid CandidateUpdateRequest data) {
+        
+        try {
+            // Validate ID from path
+            if (id == null || id <= 0) {
+                throw new IllegalArgumentException("Invalid candidate ID: " + id);
+            }
+            
+            log.info("Updating candidate (JSON only) with ID: {}", id);
+            
+            // Set the ID from path variable (overrides any ID in the request body)
+            data.setId(id);
+            CandidateResponse response = candidateService.updateCandidate(data, null, null);
+            log.info("Successfully updated candidate with ID: {}", id);
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error updating candidate: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Validation Error",
+                "message", e.getMessage(),
+                "timestamp", java.time.Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            log.error("Unexpected error updating candidate: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Internal Server Error",
+                "message", "An unexpected error occurred while updating the candidate",
+                "details", e.getMessage(),
+                "timestamp", java.time.Instant.now().toString()
+            ));
+        }
+    }
+    
+    /**
+     * Update candidate with multipart form data (for file uploads)
+     */
+    @PreAuthorize("hasRole('RECRUITER') or hasRole('ADMIN') or hasRole('INTERNAL_SERVICE')")
+    @PutMapping(value = "/{id}/with-files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updateCandidateWithFiles(
+            @PathVariable Long id,
+            @RequestPart(value = "data") @Valid CandidateUpdateRequest data,
             @RequestPart(value = "resume", required = false) MultipartFile resume,
             @RequestPart(value = "profilePic", required = false) MultipartFile profilePic,
             HttpServletRequest request) {
         
-        // Validate ID from path
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Invalid candidate ID: " + id);
-        }
-        
-        // Determine which data to use based on content type
-        CandidateUpdateRequest data;
-        String contentType = request.getContentType();
-        
-        if (contentType != null && contentType.startsWith(MediaType.APPLICATION_JSON_VALUE)) {
-            // JSON request
-            if (dataFromJson == null) {
-                throw new IllegalArgumentException("Request body is required for JSON content type");
+        try {
+            // Validate ID from path
+            if (id == null || id <= 0) {
+                throw new IllegalArgumentException("Invalid candidate ID: " + id);
             }
-            data = dataFromJson;
-        } else if (contentType != null && contentType.startsWith(MediaType.MULTIPART_FORM_DATA_VALUE)) {
-            // Multipart request
-            if (dataFromPart == null) {
-                throw new IllegalArgumentException("'data' part is required for multipart content type");
-            }
-            data = dataFromPart;
-        } else {
-            throw new IllegalArgumentException("Unsupported content type: " + contentType);
+            
+            log.info("Updating candidate with files, ID: {}", id);
+            log.debug("Request details - Content-Type: {}, Parts: data=present, resume={}, profilePic={}", 
+                     request.getContentType(), 
+                     resume != null ? resume.getOriginalFilename() + " (" + resume.getSize() + " bytes)" : "not provided",
+                     profilePic != null ? profilePic.getOriginalFilename() + " (" + profilePic.getSize() + " bytes)" : "not provided");
+            
+            // Set the ID from path variable (overrides any ID in the request body)
+            data.setId(id);
+            CandidateResponse response = candidateService.updateCandidate(data, resume, profilePic);
+            log.info("Successfully updated candidate with files, ID: {}", id);
+            return ResponseEntity.ok(response);
+            
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error updating candidate with files: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Validation Error",
+                "message", e.getMessage(),
+                "timestamp", java.time.Instant.now().toString()
+            ));
+        } catch (Exception e) {
+            log.error("Unexpected error updating candidate with files: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "error", "Internal Server Error",
+                "message", "An unexpected error occurred while updating the candidate with files",
+                "details", e.getMessage(),
+                "timestamp", java.time.Instant.now().toString()
+            ));
         }
-        
-        // Set the ID from path variable (overrides any ID in the request body)
-        data.setId(id);
-        return candidateService.updateCandidate(data, resume, profilePic);
     }
 
     /**

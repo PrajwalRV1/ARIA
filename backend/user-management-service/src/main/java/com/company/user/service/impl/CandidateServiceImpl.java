@@ -191,11 +191,26 @@ public class CandidateServiceImpl implements CandidateService {
             FileUploadResult resumeResult = processResumeFile(resume);
             FileUploadResult profilePicResult = processProfilePicFile(profilePic);
             
-            // Update candidate
-            updateCandidateFromRequest(existingCandidate, request, resumeResult, profilePicResult);
+            // Update audit fields in request
+            String currentUserEmail = tenantContextUtil.getCurrentRecruiterId();
             
-            // Save updated candidate with PostgreSQL enum casting
-            Candidate savedCandidate = candidateRepository.updateWithEnumCasting(existingCandidate);
+            // Validate recruiter context for updates
+            if (StringUtils.hasText(request.getRecruiterId()) && 
+                !request.getRecruiterId().equals(existingCandidate.getRecruiterId())) {
+                // Only allow if current user matches the new recruiter ID (prevent unauthorized transfers)
+                if (currentUserEmail == null || !currentUserEmail.equals(request.getRecruiterId())) {
+                    throw new AccessDeniedException(
+                        "Access denied: You cannot transfer candidates to another recruiter");
+                }
+            }
+            
+            // Use field-based update to avoid Hibernate auto-flush issues with enum casting
+            Candidate savedCandidate = candidateRepository.updateCandidateFields(
+                existingCandidate.getId(), 
+                request,
+                resumeResult.url, resumeResult.fileName, resumeResult.fileSize,
+                profilePicResult.url, profilePicResult.fileName, profilePicResult.fileSize
+            );
             log.info("Successfully updated candidate with ID: {}", savedCandidate.getId());
             
             // Clear related caches after update
@@ -387,16 +402,16 @@ public class CandidateServiceImpl implements CandidateService {
         String tenantId = tenantContextUtil.getCurrentTenantId();
         String recruiterId = tenantContextUtil.getCurrentRecruiterId();
         
-        // Use tenant-aware repository method
+        // Use custom enum casting repository method to avoid PostgreSQL type issues
         List<Candidate> candidates;
         if (recruiterId != null && !recruiterId.trim().isEmpty()) {
-            // Recruiter-specific filtering within their tenant
-            candidates = candidateRepository.findByStatusAndTenantAndRecruiter(
-                status, tenantId, recruiterId);
+            // Recruiter-specific filtering within their tenant using enum casting
+            candidates = candidateRepository.findByStatusWithEnumCasting(
+                status.name(), tenantId, recruiterId);
         } else {
-            // Admin filtering within their tenant
-            candidates = candidateRepository.findByStatusAndTenant(
-                status, tenantId);
+            // Admin filtering within their tenant using enum casting
+            candidates = candidateRepository.findByStatusWithEnumCasting(
+                status.name(), tenantId);
         }
         
         return candidates.stream()

@@ -14,7 +14,7 @@ import java.util.Map;
  * Exposes the comprehensive InterviewEmailService via REST endpoints
  */
 @RestController
-@RequestMapping("/api/email/interview")
+@RequestMapping("/email/interview")
 @CrossOrigin(origins = {"http://localhost:4200", "https://localhost:4200", "http://localhost:8081", "https://localhost:8081"}, allowCredentials = "true")
 @Slf4j
 public class InterviewEmailController {

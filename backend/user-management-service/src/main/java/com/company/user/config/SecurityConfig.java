@@ -53,6 +53,7 @@ public class SecurityConfig {
         configuration.addAllowedOriginPattern("http://127.0.0.1:*");
         configuration.addAllowedOriginPattern("https://127.0.0.1:*");
         configuration.addAllowedOriginPattern("https://aria-frontend-*.onrender.com");
+        configuration.addAllowedOriginPattern("https://aria-interview-orchestrator-*.onrender.com");
         
         // Set allowed methods
         configuration.addAllowedMethod("GET");
@@ -122,7 +123,7 @@ public class SecurityConfig {
                         // SECURE: All candidate operations require authentication
                         .requestMatchers("/candidates/**").authenticated()
                         // Email service endpoints (accessible by internal services and authenticated users)
-                        .requestMatchers("/api/email/**").hasAnyRole("INTERNAL_SERVICE", "USER", "ADMIN")
+                        .requestMatchers("/email/**").permitAll()
                         // Authenticated endpoints (require valid JWT token)
                         .requestMatchers("/candidates/**").authenticated()
                         .requestMatchers("/api/interview/**").authenticated()

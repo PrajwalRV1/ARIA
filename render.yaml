@@ -4,8 +4,8 @@ services:
     name: aria-frontend
     env: node
     plan: free
-    buildCommand: cd frontend && npm ci && npm install -g serve && npm run build
-    startCommand: cd frontend && npx serve -s dist/frontend -l $PORT
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: cd frontend && npm run serve:ssr:frontend
     envVars:
       - key: NODE_ENV
         value: production

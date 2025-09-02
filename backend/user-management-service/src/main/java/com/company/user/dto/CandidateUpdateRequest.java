@@ -91,6 +91,11 @@ public class CandidateUpdateRequest {
             return;
         }
         
+        // Allow staying in the same status (no-op updates)
+        if (currentStatus.equals(status)) {
+            return;
+        }
+        
         // Define valid status transitions (same as in Candidate entity)
         boolean validTransition = switch (currentStatus) {
             case PENDING -> status == CandidateStatus.APPLIED || 
@@ -112,7 +117,8 @@ public class CandidateUpdateRequest {
                               status == CandidateStatus.REJECTED ||
                               status == CandidateStatus.ON_HOLD;
                               
-            case COMPLETED -> status == CandidateStatus.UNDER_REVIEW;
+            case COMPLETED -> status == CandidateStatus.UNDER_REVIEW ||
+                            status == CandidateStatus.REJECTED;  // Allow rejection after completion
             
             case UNDER_REVIEW -> status == CandidateStatus.SELECTED ||
                                status == CandidateStatus.REJECTED ||
@@ -123,12 +129,12 @@ public class CandidateUpdateRequest {
                           status == CandidateStatus.REJECTED ||
                           status == CandidateStatus.WITHDRAWN;
                           
-            case SELECTED, REJECTED, WITHDRAWN -> false; // Terminal states
+            case SELECTED, REJECTED, WITHDRAWN -> false; // Terminal states - no transitions allowed
         };
         
         if (!validTransition) {
             throw new IllegalArgumentException(
-                String.format("Invalid status transition from %s to %s", currentStatus, status)
+                String.format("Invalid status transition from %s to %s. Please ensure status changes follow the proper workflow.", currentStatus, status)
             );
         }
     }

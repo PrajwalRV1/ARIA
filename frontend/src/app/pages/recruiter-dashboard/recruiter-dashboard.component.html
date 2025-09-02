@@ -102,6 +102,7 @@
                     <label class="dropdown-label">Round:</label>
                     <select
                       class="round-select"
+                      [attr.data-candidate-id]="card.id"
                       [value]="card.interviewRound || ''"
                       (change)="onInterviewRoundChange(card, $event)"
                       [disabled]="isUpdatingCandidate(card.id)"
@@ -126,6 +127,7 @@
                     <label class="dropdown-label">Status:</label>
                     <select
                       class="status-select"
+                      [attr.data-candidate-id]="card.id"
                       [value]="card.status"
                       (change)="onStatusChange(card, $event)"
                       [disabled]="isUpdatingCandidate(card.id)"

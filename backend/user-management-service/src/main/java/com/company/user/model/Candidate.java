@@ -22,7 +22,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "candidates", 
        uniqueConstraints = {
-           @UniqueConstraint(name = "uk_candidate_email_requisition", 
+           @UniqueConstraint(name = "uk_candidates_email_requisition", 
                            columnNames = {"email", "requisition_id"})
        },
        indexes = {
@@ -65,7 +65,7 @@ public class Candidate {
     private String email;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^[+]?[0-9]{10,15}$", message = "Phone number must be 10-15 digits")
+    @Pattern(regexp = "^[+]?[0-9\\s\\-\\(\\)]{10,20}$", message = "Phone number must be 10-20 characters with digits, spaces, hyphens, or parentheses")
     @Column(nullable = false, length = 20)
     private String phone;
 

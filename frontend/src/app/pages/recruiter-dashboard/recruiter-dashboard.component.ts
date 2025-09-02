@@ -234,16 +234,25 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
   // Helper method to ensure dropdown values are synchronized with data
   private updateDropdownValues() {
     this.candidates.forEach(candidate => {
-      // Find and update status dropdowns
+      // Find and update status dropdowns with attribute-based selectors
       const statusSelect = document.querySelector(`select.status-select[data-candidate-id="${candidate.id}"]`) as HTMLSelectElement;
-      if (statusSelect && statusSelect.value !== candidate.status) {
-        statusSelect.value = candidate.status;
+      if (statusSelect) {
+        if (statusSelect.value !== candidate.status) {
+          statusSelect.value = candidate.status;
+          // Trigger change event to ensure UI updates
+          statusSelect.dispatchEvent(new Event('change'));
+        }
       }
       
-      // Find and update interview round dropdowns
+      // Find and update interview round dropdowns with attribute-based selectors
       const roundSelect = document.querySelector(`select.round-select[data-candidate-id="${candidate.id}"]`) as HTMLSelectElement;
-      if (roundSelect && roundSelect.value !== (candidate.interviewRound || '')) {
-        roundSelect.value = candidate.interviewRound || '';
+      if (roundSelect) {
+        const expectedRound = candidate.interviewRound || '';
+        if (roundSelect.value !== expectedRound) {
+          roundSelect.value = expectedRound;
+          // Trigger change event to ensure UI updates
+          roundSelect.dispatchEvent(new Event('change'));
+        }
       }
     });
   }

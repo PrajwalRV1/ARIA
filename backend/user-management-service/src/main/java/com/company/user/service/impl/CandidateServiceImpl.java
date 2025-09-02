@@ -169,10 +169,19 @@ public class CandidateServiceImpl implements CandidateService {
             }
             
             // Check for email conflicts (excluding current candidate)
-            if (!existingCandidate.getEmail().equals(request.getEmail())) {
-                if (candidateRepository.existsByEmailAndRequisitionId(request.getEmail(), request.getRequisitionId())) {
+            if (!existingCandidate.getEmail().equals(request.getEmail()) || 
+                !existingCandidate.getRequisitionId().equals(request.getRequisitionId())) {
+                
+                // Use tenant-aware existence check for security
+                boolean conflictExists = (recruiterId != null && !recruiterId.trim().isEmpty()) ?
+                    candidateRepository.existsByEmailAndRequisitionIdAndTenantIdAndRecruiterId(
+                        request.getEmail(), request.getRequisitionId(), tenantId, recruiterId) :
+                    candidateRepository.existsByEmailAndRequisitionIdAndTenantId(
+                        request.getEmail(), request.getRequisitionId(), tenantId);
+                
+                if (conflictExists) {
                     throw new BadRequestException(
-                        String.format("Another candidate with email '%s' already exists for requisition '%s'", 
+                        String.format("Another candidate with email '%s' already exists for requisition '%s' in your organization", 
                                     request.getEmail(), request.getRequisitionId())
                     );
                 }

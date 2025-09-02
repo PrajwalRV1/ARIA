@@ -44,6 +44,7 @@ public class SecurityConfig {
         
         // Set allowed origins - use both explicit and patterns
         configuration.addAllowedOrigin("https://aria-frontend-tc4z.onrender.com");
+        configuration.addAllowedOrigin("https://aria-frontend-fs01.onrender.com");
         configuration.addAllowedOrigin(corsOrigins.trim());
         
         // Add origin patterns for flexibility
@@ -110,6 +111,7 @@ public class SecurityConfig {
                                 "/cors-test",      // /api/auth/cors-test
                                 "/test",           // /api/auth/test
                                 "/health",         // /api/auth/health (if exists)
+                                "/api/user/sessions/**", // /api/auth/api/user/sessions/** (session management endpoints)
                                 "/candidates/debug-multipart", // /api/auth/candidates/debug-multipart (debugging)
                                 "/actuator/**",    // /api/auth/actuator/**
                                 "/h2-console/**",  // /api/auth/h2-console/**

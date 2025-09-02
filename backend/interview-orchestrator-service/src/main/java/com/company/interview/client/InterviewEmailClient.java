@@ -101,7 +101,7 @@ public class InterviewEmailClient {
         try {
             log.info("📧 Sending candidate invitation via InterviewEmailService to: {}", request.getCandidateEmail());
             
-            String url = userManagementUrl + "/api/email/interview/candidate-invitation";
+            String url = userManagementUrl + "/email/interview/candidate-invitation";
             
             HttpHeaders headers = createServiceHeaders();
             HttpEntity<CandidateInvitationRequest> entity = new HttpEntity<>(request, headers);
@@ -129,7 +129,7 @@ public class InterviewEmailClient {
         try {
             log.info("📧 Sending recruiter notification via InterviewEmailService to: {}", request.getRecruiterEmail());
             
-            String url = userManagementUrl + "/api/email/interview/recruiter-notification";
+            String url = userManagementUrl + "/email/interview/recruiter-notification";
             
             HttpHeaders headers = createServiceHeaders();
             HttpEntity<RecruiterNotificationRequest> entity = new HttpEntity<>(request, headers);
@@ -157,7 +157,7 @@ public class InterviewEmailClient {
         try {
             log.info("🤖 Sending AI Avatar activation notification for session: {}", sessionId);
             
-            String url = userManagementUrl + "/api/email/interview/ai-avatar-activation";
+            String url = userManagementUrl + "/email/interview/ai-avatar-activation";
             
             Map<String, Object> request = Map.of(
                 "sessionId", sessionId,
@@ -186,7 +186,7 @@ public class InterviewEmailClient {
         try {
             log.info("🏁 Sending interview completion notification for session: {}", request.getSessionId());
             
-            String url = userManagementUrl + "/api/email/interview/completion";
+            String url = userManagementUrl + "/email/interview/completion";
             
             HttpHeaders headers = createServiceHeaders();
             HttpEntity<InterviewCompletionRequest> entity = new HttpEntity<>(request, headers);

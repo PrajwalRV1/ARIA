@@ -319,7 +319,7 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
     console.log('🔑 Current recruiter ID from token:', currentRecruiterId);
     console.log('👤 Current user from token:', currentUser);
     
-    const candidateData = {
+    const candidateData: any = {
       id: this.popupMode === 'edit' && this.selectedCandidate ? this.selectedCandidate.id : null, // Include ID for updates
       requisitionId: payload.requisitionId,
       name: payload.name,  // Already mapped correctly in popup component
@@ -337,9 +337,17 @@ export class RecruiterDashboardComponent implements OnInit, OnDestroy {
       skills: payload.skills || [],
       source: payload.source || null,
       notes: payload.notes || null,
-      tags: payload.tags || null,
-      recruiterId: currentRecruiterId || payload.recruiterId || null  // Use JWT recruiterId first
+      tags: payload.tags || null
     };
+    
+    // Only add recruiterId for new candidates (create mode)
+    // For updates, let the backend preserve the existing recruiterId to avoid transfer conflicts
+    if (this.popupMode === 'add') {
+      candidateData.recruiterId = currentRecruiterId || payload.recruiterId || null;
+      console.log('🔑 Adding recruiterId for new candidate:', candidateData.recruiterId);
+    } else {
+      console.log('🔄 Skipping recruiterId for update to avoid transfer conflicts');
+    }
     
     console.log('📋 Prepared candidate data to be sent to backend:', candidateData);
     console.log('🔑 Final recruiterId being sent:', candidateData.recruiterId);

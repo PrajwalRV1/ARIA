@@ -194,14 +194,25 @@ public class CandidateServiceImpl implements CandidateService {
             // Update audit fields in request
             String currentUserEmail = tenantContextUtil.getCurrentRecruiterId();
             
-            // Validate recruiter context for updates
+            // Validate recruiter context for updates - prevent unauthorized transfers
+            // Only check if the request is explicitly trying to change the recruiterId
             if (StringUtils.hasText(request.getRecruiterId()) && 
                 !request.getRecruiterId().equals(existingCandidate.getRecruiterId())) {
+                
+                log.debug("[UPDATE] Recruiter ID change detected - from '{}' to '{}'", 
+                        existingCandidate.getRecruiterId(), request.getRecruiterId());
+                
                 // Only allow if current user matches the new recruiter ID (prevent unauthorized transfers)
                 if (currentUserEmail == null || !currentUserEmail.equals(request.getRecruiterId())) {
+                    log.warn("[UPDATE] Attempted unauthorized recruiter transfer from '{}' to '{}' by user '{}'", 
+                            existingCandidate.getRecruiterId(), request.getRecruiterId(), currentUserEmail);
                     throw new AccessDeniedException(
                         "Access denied: You cannot transfer candidates to another recruiter");
                 }
+            } else if (!StringUtils.hasText(request.getRecruiterId())) {
+                // If no recruiterId provided in request, keep the existing one (don't change it)
+                request.setRecruiterId(existingCandidate.getRecruiterId());
+                log.debug("[UPDATE] No recruiter ID in request, preserving existing: '{}'", existingCandidate.getRecruiterId());
             }
             
             // Use field-based update to avoid Hibernate auto-flush issues with enum casting
